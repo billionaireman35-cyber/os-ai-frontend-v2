@@ -1,11 +1,12 @@
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  MessageSquare, 
-  Wallet, 
-  Radio, 
-  Users, 
-  Code, 
+import {
+  MessageSquare,
+  Wallet,
+  Radio,
+  Users,
+  Code,
   ShieldCheck,
   ChevronLeft,
   ChevronRight
@@ -19,7 +20,7 @@ const navItems = [
   { to: '/developer', label: 'Foundry', icon: Code },
 ];
 
-export function Sidebar({ expanded, setExpanded }) {
+export function Sidebar() {
   const { user } = useAuth();
   const isFounder = user?.stake_tier === 'founder' || user?.is_founder;
   const [expanded, setExpanded] = useState(window.innerWidth >= 768);
@@ -27,7 +28,7 @@ export function Sidebar({ expanded, setExpanded }) {
     const handleResize = () => setExpanded(window.innerWidth >= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-}, []);
+  }, []);
 
   return (
     <aside
