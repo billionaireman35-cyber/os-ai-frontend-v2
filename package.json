@@ -12,6 +12,7 @@
     "@fingerprintjs/fingerprintjs": "^3.4.1",
     "@headlessui/react": "^1.7.15",
     "@heroicons/react": "^2.0.18",
+    "@walletconnect/core": "^2.23.10",
     "@walletconnect/web3wallet": "^1.16.1",
     "axios": "^1.4.0",
     "ethers": "^5.7.2",
