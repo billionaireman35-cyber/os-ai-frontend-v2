@@ -306,7 +306,6 @@ function SafeWallet() {
             </div>
             <div>
               <label className="text-[11px] text-muted font-mono uppercase tracking-wide">Chain</label>
-              <div className="grid grid-cols-1 tablet:grid-cols-2 landscape:grid-cols-3 gap-3">
               <select
                 value={proposeChain}
                 onChange={(e) => setProposeChain(e.target.value)}
