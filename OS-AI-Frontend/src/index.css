@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-void text-bone font-sans antialiased;
+    min-height: 100dvh;
+  }
+  input, textarea {
+    font-size: 16px;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-line rounded-full;
+  }
+}
+
+@layer components {
+  .ledger-card {
+    @apply bg-panel border border-line rounded-lg;
+  }
+  .press-soft {
+    @apply transition-all duration-200 active:scale-[0.97];
+  }
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+}
