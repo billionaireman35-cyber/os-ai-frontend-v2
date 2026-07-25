@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { WalletProvider } from './context/WalletContext';
@@ -16,10 +15,9 @@ import PrivacyTerms from './pages/PrivacyTerms';
 import Developer from './pages/Developer';
 
 function Shell() {
-  const [expanded, setExpanded] = useState(false);
   return (
     <div className="flex h-screen bg-void overflow-hidden">
-      <Sidebar expanded={expanded} setExpanded={setExpanded} />
+      <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Omnibar />
         <main className="flex-1 min-h-0 overflow-y-auto">
