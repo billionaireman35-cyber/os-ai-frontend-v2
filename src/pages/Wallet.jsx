@@ -4,7 +4,7 @@ import { useWallet } from '../context/WalletContext';
 import { api } from '../utils/api';
 import { signSend, broadcastTx } from '../utils/ethers';
 import { ethers } from 'ethers';
-import { SwapModal } from '../components/SwapModal';
+import { SwapModal } from '../components/modal/SwapModal';
 
 // ... (chains, TOKEN_ADDRESSES, etc.)
 

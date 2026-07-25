@@ -1,7 +1,7 @@
 import { FuelGauge } from '../ui/FuelGauge';
 import { UserProfileDropdown } from '../ui/UserProfileDropdown';
 import { Bell, Circle } from 'lucide-react';
-import { WalletConnectButton } from '../components/WalletConnectButton';
+import { WalletConnectButton } from '../WalletConnectButton';
 
 // Inside the header, near the bell icon:
 <WalletConnectButton />
