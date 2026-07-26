@@ -1,15 +1,209 @@
 import { useState, useEffect } from 'react';
 import { ShieldCheck, Users, Send, ArrowUpDown, Lock, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import { signSend, broadcastTx } from '../utils/ethers';
 import { ethers } from 'ethers';
 import { SwapModal } from '../components/modal/SwapModal';
 
-// ... (chains, TOKEN_ADDRESSES, etc.)
+const NATIVE_SYMBOLS = { polygon: 'POL', ethereum: 'ETH', bsc: 'BNB', arbitrum: 'ETH', base: 'ETH' };
 
 function SendModal({ isOpen, onClose, asset, onSent }) {
-  // ... (as previously defined)
+  const [to, setTo] = useState('');
+  const [amount, setAmount] = useState('');
+  const [password, setPassword] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!isOpen || !asset) return null;
+
+  const handleSend = async () => {
+    setError('');
+    if (!to || !amount || !password) {
+      setError('All fields are required');
+      return;
+    }
+    setSending(true);
+    try {
+      const seedRes = await api.get('/wallet/seed');
+      const encryptedSeed = seedRes.data.encrypted_seed;
+
+      let tokenAddress = null;
+      if (asset.symbol === 'CLOSE') {
+        tokenAddress = import.meta.env.VITE_CLOSE_CONTRACT;
+      } else if (asset.symbol !== NATIVE_SYMBOLS[asset.chain]) {
+        throw new Error('Sending this token is not yet supported');
+      }
+
+      const amountWei = ethers.utils.parseUnits(amount, 18).toString();
+      const signedTx = await signSend(encryptedSeed, password, to, amountWei, tokenAddress, asset.chain);
+      await broadcastTx(signedTx, asset.chain);
+
+      onSent();
+    } catch (e) {
+      setError(e.message || 'Failed to send');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-panel2 border border-line rounded-lg w-full max-w-md p-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-[16px] font-display text-bone">Send {asset.symbol}</h3>
+          <button onClick={onClose} className="text-muted hover:text-bone">
+            <X size={18} />
+          </button>
+        </div>
+        <p className="text-[12px] text-muted">Available: {asset.balance} {asset.symbol}</p>
+
+        {error && (
+          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2 text-[12px] text-red-400">
+            <AlertCircle size={14} /> {error}
+          </div>
+        )}
+
+        <div>
+          <label className="text-[11px] text-muted font-mono uppercase tracking-wide">Recipient</label>
+          <input
+            type="text"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className="w-full bg-panel border border-line rounded-md px-3 py-2.5 text-[14px] text-bone"
+            placeholder="0x..."
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-muted font-mono uppercase tracking-wide">Amount</label>
+          <input
+            type="text"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="w-full bg-panel border border-line rounded-md px-3 py-2.5 text-[14px] text-bone"
+            placeholder="0.0"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-muted font-mono uppercase tracking-wide">Wallet Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full bg-panel border border-line rounded-md px-3 py-2.5 text-[14px] text-bone"
+            placeholder="Enter your wallet password"
+          />
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSend}
+            disabled={sending}
+            className="flex-1 bg-brass hover:bg-brassLight text-void font-semibold rounded-md py-2.5 press-soft touch-target disabled:opacity-50"
+          >
+            {sending ? 'Sending…' : 'Send'}
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 bg-panel border border-line text-muted hover:text-bone rounded-md py-2.5 press-soft touch-target"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StandardWallet() {
+  const { user } = useAuth();
+  const { balances, totalUsd, loading, fetchBalances, sendTransaction } = useWallet();
+  const [showSend, setShowSend] = useState(false);
+  const [showSwap, setShowSwap] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyAddress = () => {
+    if (user?.wallet_address) {
+      navigator.clipboard.writeText(user.wallet_address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  if (loading && balances.length === 0) {
+    return <p className="text-muted text-[13px]">Loading balances…</p>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="ledger-card p-4 space-y-3">
+        <div>
+          <p className="text-[11px] text-muted font-mono uppercase tracking-wide">Total Balance</p>
+          <p className="text-[28px] font-display text-bone">${totalUsd.toFixed(2)}</p>
+        </div>
+        {user?.wallet_address && (
+          <div className="flex items-center justify-between bg-panel border border-line rounded-md px-3 py-2">
+            <span className="font-mono text-[12px] text-muted truncate">{user.wallet_address}</span>
+            <button onClick={handleCopyAddress} className="text-[11px] text-brass shrink-0 ml-2">
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowSwap(true)}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-brass hover:bg-brassLight text-void text-[13px] font-semibold rounded-md py-2.5 press-soft touch-target"
+          >
+            <ArrowUpDown size={14} /> Swap
+          </button>
+          <button
+            onClick={fetchBalances}
+            className="flex-1 bg-panel border border-line text-muted hover:text-bone text-[13px] rounded-md py-2.5 press-soft touch-target"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {balances.length === 0 ? (
+          <p className="text-muted text-[13px]">No assets found.</p>
+        ) : (
+          balances.map((asset, i) => (
+            <div key={`${asset.chain}-${asset.symbol}-${i}`} className="ledger-card p-4 flex items-center justify-between">
+              <div>
+                <p className="text-bone text-[14px] font-medium">{asset.symbol}</p>
+                <p className="text-muted text-[11px] font-mono uppercase">{asset.chain}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-bone text-[14px] font-mono">{asset.balance}</p>
+                <p className="text-muted text-[11px]">${asset.usdValue.toFixed(2)}</p>
+              </div>
+              <button
+                onClick={() => { setSelectedAsset(asset); setShowSend(true); }}
+                className="ml-3 text-[11px] bg-brass/20 hover:bg-brass/30 text-brass px-3 py-1.5 rounded-md touch-target"
+              >
+                <Send size={12} className="inline mr-1" /> Send
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <SendModal
+        isOpen={showSend}
+        onClose={() => setShowSend(false)}
+        asset={selectedAsset}
+        onSent={() => { setShowSend(false); fetchBalances(); }}
+      />
+      <SwapModal
+        isOpen={showSwap}
+        onClose={() => setShowSwap(false)}
+        onSwap={() => { setShowSwap(false); fetchBalances(); }}
+      />
+    </div>
+  );
 }
 
 function SafeWallet() {
@@ -19,14 +213,12 @@ function SafeWallet() {
   const [showCreate, setShowCreate] = useState(false);
   const [showPropose, setShowPropose] = useState(false);
   const [selectedSafe, setSelectedSafe] = useState(null);
-  const [proposals, setProposals] = useState({}); // key: safe_address, value: array of proposals
+  const [proposals, setProposals] = useState({});
 
-  // Create Safe states
   const [owners, setOwners] = useState(['']);
   const [threshold, setThreshold] = useState(1);
   const [chain, setChain] = useState('polygon');
 
-  // Propose states
   const [proposeTo, setProposeTo] = useState('');
   const [proposeAmount, setProposeAmount] = useState('');
   const [proposeToken, setProposeToken] = useState('native');
@@ -38,7 +230,6 @@ function SafeWallet() {
     try {
       const res = await api.get('/wallet/safe/list');
       setSafes(res.data.safes || []);
-      // Fetch proposals for each safe
       for (const safe of res.data.safes) {
         await fetchProposals(safe.safe_address);
       }
@@ -85,7 +276,7 @@ function SafeWallet() {
       const res = await api.post('/wallet/safe/propose', {
         safe_address: selectedSafe.safe_address,
         to: proposeTo,
-        value: proposeAmount, // wei; we'll convert in UI
+        value: proposeAmount,
         token: proposeToken,
         chain: proposeChain,
       });
@@ -94,7 +285,7 @@ function SafeWallet() {
       setProposeTo('');
       setProposeAmount('');
       setSelectedSafe(null);
-      fetchSafes(); // refresh
+      fetchSafes();
     } catch (e) {
       alert(e.response?.data?.detail || 'Proposal failed');
     }
@@ -104,17 +295,13 @@ function SafeWallet() {
     const password = prompt('Enter your wallet password to sign:');
     if (!password) return;
     try {
-      // Get encrypted seed
       const seedRes = await api.get('/wallet/seed');
       const encryptedSeed = seedRes.data.encrypted_seed;
-      // Fetch the safe_tx_hash from the proposal
       const proposalsList = proposals[safeAddress] || [];
       const proposal = proposalsList.find(p => p.id === txId);
       if (!proposal) throw new Error('Proposal not found');
-      // Sign the safe_tx_hash with ethers
       const wallet = await ethers.Wallet.fromEncryptedJson(encryptedSeed, password);
-      const signature = await wallet.signMessage(proposal.safe_tx_hash); // need to include safe_tx_hash in proposal data
-      // Send signature to backend
+      const signature = await wallet.signMessage(proposal.safe_tx_hash);
       await api.post('/wallet/safe/sign', { tx_id: txId, signature });
       alert('Signed successfully');
       fetchProposals(safeAddress);
@@ -216,7 +403,6 @@ function SafeWallet() {
                 </button>
               </div>
 
-              {/* Proposals list */}
               <div className="mt-2 space-y-2">
                 <p className="text-[11px] text-muted font-mono uppercase tracking-wide">Proposals</p>
                 {!proposals[safe.safe_address] || proposals[safe.safe_address].length === 0 ? (
@@ -266,7 +452,6 @@ function SafeWallet() {
         )}
       </div>
 
-      {/* Propose Modal */}
       {showPropose && selectedSafe && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-panel2 border border-line rounded-lg w-full max-w-md p-6 space-y-4">

@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { api } from './api';
 
 // CLOSE contract ABI (only the burn function)
 const CLOSE_ABI = [
