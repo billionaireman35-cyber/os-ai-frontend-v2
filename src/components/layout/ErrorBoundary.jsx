@@ -12,8 +12,6 @@ export class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    // Hook up to a real logging endpoint later — for now, keep it visible
-    // in dev tools so issues surface during testing.
     console.error('OS AI crashed:', error, info);
   }
 
