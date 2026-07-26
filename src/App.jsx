@@ -13,6 +13,7 @@ import Sanctum from './pages/Sanctum';
 import About from './pages/About';
 import PrivacyTerms from './pages/PrivacyTerms';
 import Developer from './pages/Developer';
+import Workspaces from './pages/Workspaces';
 
 function Shell() {
   return (
@@ -29,6 +30,7 @@ function Shell() {
             <Route path="/about" element={<About />} />
             <Route path="/privacy-terms" element={<PrivacyTerms />} />
             <Route path="/developer" element={<Developer />} />
+            <Route path="/hustle-hub" element={<Workspaces />} />
           </Routes>
         </main>
       </div>
