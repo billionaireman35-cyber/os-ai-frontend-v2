@@ -57,24 +57,21 @@ export function UserProfileDropdown() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Avatar button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 touch-target text-muted hover:text-bone transition-colors"
+        className="flex items-center gap-2 touch-target text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
       >
         <div className="w-8 h-8 rounded-full bg-brass/20 flex items-center justify-center text-brass font-semibold text-sm">
           {user.name ? user.name.charAt(0).toUpperCase() : 'G'}
         </div>
-        <span className="hidden tablet:block text-sm font-medium">
+        <span className="hidden tablet:block text-sm font-medium text-[var(--color-text-primary)]">
           {user.name || 'Guest'}
         </span>
       </button>
 
-      {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-12 w-72 bg-panel2 border border-line rounded-lg shadow-2xl z-50 overflow-hidden">
-          {/* Header with name and balance */}
-          <div className="px-4 py-3 border-b border-line">
+        <div className="absolute right-0 top-12 w-72 bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-lg shadow-2xl z-50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--color-line)]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 rounded-full bg-brass/20 flex items-center justify-center text-brass font-semibold text-lg">
@@ -87,7 +84,7 @@ export function UserProfileDropdown() {
                         type="text"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        className="bg-panel border border-line rounded px-2 py-1 text-sm text-bone focus:outline-none focus:border-brass"
+                        className="bg-[var(--color-panel)] border border-[var(--color-line)] rounded px-2 py-1 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-brass"
                         autoFocus
                         onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                       />
@@ -99,23 +96,23 @@ export function UserProfileDropdown() {
                       </button>
                       <button
                         onClick={() => { setIsEditingName(false); setNewName(user.name || ''); }}
-                        className="text-xs text-muted hover:text-bone"
+                        className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                       >
                         Cancel
                       </button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <span className="text-sm font-medium text-bone">{user.name}</span>
+                      <span className="text-sm font-medium text-[var(--color-text-primary)]">{user.name}</span>
                       <button
                         onClick={() => setIsEditingName(true)}
-                        className="text-muted hover:text-bone"
+                        className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                       >
                         <Edit3 size={12} />
                       </button>
                     </div>
                   )}
-                  <div className="flex items-center gap-1 text-xs text-muted">
+                  <div className="flex items-center gap-1 text-xs text-[var(--color-text-muted)]">
                     <Mail size={12} />
                     <span>{user.email}</span>
                   </div>
@@ -123,63 +120,61 @@ export function UserProfileDropdown() {
               </div>
             </div>
             <div className="mt-2 flex items-center justify-between text-xs">
-              <span className="text-muted">CLOSE Balance</span>
-              <span className="font-mono text-bone">{user.close_balance || 0} CLOSE</span>
+              <span className="text-[var(--color-text-muted)]">CLOSE Balance</span>
+              <span className="font-mono text-[var(--color-text-primary)]">{user.close_balance || 0} CLOSE</span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted">Wallet Value</span>
-              <span className="font-mono text-bone">${totalUsd.toFixed(2)}</span>
+              <span className="text-[var(--color-text-muted)]">Wallet Value</span>
+              <span className="font-mono text-[var(--color-text-primary)]">${totalUsd.toFixed(2)}</span>
             </div>
           </div>
 
-          {/* Wallet address */}
-          <div className="px-4 py-2 border-b border-line flex items-center justify-between text-xs">
+          <div className="px-4 py-2 border-b border-[var(--color-line)] flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Wallet size={14} className="text-muted" />
-              <span className="font-mono text-bone">{shortAddress}</span>
+              <Wallet size={14} className="text-[var(--color-text-muted)]" />
+              <span className="font-mono text-[var(--color-text-primary)]">{shortAddress}</span>
             </div>
             <button
               onClick={handleCopyAddress}
-              className="text-muted hover:text-bone"
+              className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
             >
               {copied ? <Check size={14} className="text-teal" /> : <Copy size={14} />}
             </button>
           </div>
 
-          {/* Menu items */}
           <div className="py-1">
             <button
               onClick={() => {/* open search modal */}}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted hover:text-bone hover:bg-white/5 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-white/5 transition-colors"
             >
               <Search size={16} />
               Search
             </button>
             <button
               onClick={() => {/* open change password modal */}}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted hover:text-bone hover:bg-white/5 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-white/5 transition-colors"
             >
               <Lock size={16} />
               Change Password
             </button>
             <button
               onClick={() => window.location.href='/about'}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted hover:text-bone hover:bg-white/5 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-white/5 transition-colors"
             >
               <FileText size={16} />
               About
             </button>
             <button
               onClick={() => window.location.href='/privacy-terms'}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted hover:text-bone hover:bg-white/5 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-white/5 transition-colors"
             >
               <Shield size={16} />
               Terms & Privacy
             </button>
-            <div className="border-t border-line my-1" />
+            <div className="border-t border-[var(--color-line)] my-1" />
             <button
               onClick={logout}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-alert hover:bg-alert/10 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 transition-colors"
             >
               <LogOut size={16} />
               Logout

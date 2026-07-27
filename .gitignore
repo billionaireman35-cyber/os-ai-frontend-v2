@@ -2,6 +2,3 @@ node_modules
 dist
 .env.local
 .DS_Store
-node_modules/
-.env
-dist/

@@ -97,17 +97,17 @@ export default function Developer() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    if (loading) return <div className="p-4 text-muted">Loading...</div>;
+    if (loading) return <div className="p-4 text-[var(--color-text-muted)]">Loading...</div>;
 
     return (
         <div className="p-4 tablet:p-6 space-y-6 max-w-4xl">
-            <h1 className="text-2xl font-display text-bone">Foundry</h1>
-            <p className="text-[13px] text-muted">API keys and webhooks to integrate with OS AI</p>
+            <h1 className="text-2xl font-display text-[var(--color-text-primary)]">Foundry</h1>
+            <p className="text-[13px] text-[var(--color-text-muted)]">API keys and webhooks to integrate with OS AI</p>
 
             {/* API Keys */}
             <div>
                 <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-[13px] text-muted font-mono uppercase tracking-wide">API Keys</h2>
+                    <h2 className="text-[13px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">API Keys</h2>
                     <button
                         onClick={() => setShowKeyForm(true)}
                         className="text-brass hover:text-brassLight text-[13px] font-medium flex items-center gap-1"
@@ -119,22 +119,22 @@ export default function Developer() {
                 {showKeyForm && (
                     <div className="ledger-card p-4 space-y-3 mb-3">
                         <div>
-                            <label className="text-[11px] text-muted font-mono uppercase tracking-wide">Label</label>
+                            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Label</label>
                             <input
                                 type="text"
                                 value={newKeyLabel}
                                 onChange={(e) => setNewKeyLabel(e.target.value)}
-                                className="w-full bg-panel border border-line rounded-md px-3 py-2.5 text-[14px] text-bone"
+                                className="w-full bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
                                 placeholder="Production key"
                             />
                         </div>
                         <div>
-                            <label className="text-[11px] text-muted font-mono uppercase tracking-wide">Scopes</label>
+                            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Scopes</label>
                             <input
                                 type="text"
                                 value={newKeyScopes}
                                 onChange={(e) => setNewKeyScopes(e.target.value)}
-                                className="w-full bg-panel border border-line rounded-md px-3 py-2.5 text-[14px] text-bone"
+                                className="w-full bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
                                 placeholder="chat,research,portfolio"
                             />
                         </div>
@@ -147,7 +147,7 @@ export default function Developer() {
                             </button>
                             <button
                                 onClick={() => { setShowKeyForm(false); setNewKeyLabel(''); }}
-                                className="bg-panel border border-line text-muted hover:text-bone rounded-md px-4 py-2 press-soft touch-target"
+                                className="bg-[var(--color-panel)] border border-[var(--color-line)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] rounded-md px-4 py-2 press-soft touch-target"
                             >
                                 Cancel
                             </button>
@@ -157,32 +157,32 @@ export default function Developer() {
 
                 {newKey && (
                     <div className="ledger-card border-brass/30 p-4 mb-3">
-                        <p className="text-[11px] text-muted font-mono uppercase">Your new API key</p>
+                        <p className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase">Your new API key</p>
                         <div className="flex items-center gap-2 mt-1">
-                            <code className="bg-panel px-3 py-2 rounded-md text-[13px] text-bone font-mono break-all">
+                            <code className="bg-[var(--color-panel)] px-3 py-2 rounded-md text-[13px] text-[var(--color-text-primary)] font-mono break-all">
                                 {newKey}
                             </code>
-                            <button onClick={() => copyToClipboard(newKey)} className="text-muted hover:text-bone">
+                            <button onClick={() => copyToClipboard(newKey)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
                                 {copied ? <Check size={16} className="text-teal" /> : <Copy size={16} />}
                             </button>
                         </div>
-                        <p className="text-[11px] text-alert mt-1">Store this securely – it won't be shown again</p>
+                        <p className="text-[11px] text-[var(--color-danger)] mt-1">Store this securely – it won't be shown again</p>
                     </div>
                 )}
 
                 {apiKeys.length === 0 ? (
-                    <p className="text-[13px] text-muted">No API keys yet.</p>
+                    <p className="text-[13px] text-[var(--color-text-muted)]">No API keys yet.</p>
                 ) : (
                     <div className="space-y-2">
                         {apiKeys.map((key) => (
                             <div key={key.id} className="ledger-card p-3 flex items-center justify-between">
                                 <div>
-                                    <p className="text-[14px] text-bone">{key.label}</p>
-                                    <p className="text-[11px] text-muted font-mono">{key.scopes} · {key.is_active ? 'active' : 'inactive'}</p>
+                                    <p className="text-[14px] text-[var(--color-text-primary)]">{key.label}</p>
+                                    <p className="text-[11px] text-[var(--color-text-muted)] font-mono">{key.scopes} · {key.is_active ? 'active' : 'inactive'}</p>
                                 </div>
                                 <button
                                     onClick={() => deleteApiKey(key.id)}
-                                    className="text-alert hover:text-alert/70"
+                                    className="text-[var(--color-danger)] hover:text-[var(--color-danger)]/70"
                                 >
                                     <Trash2 size={16} />
                                 </button>
@@ -195,7 +195,7 @@ export default function Developer() {
             {/* Webhooks */}
             <div>
                 <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-[13px] text-muted font-mono uppercase tracking-wide">Webhooks</h2>
+                    <h2 className="text-[13px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Webhooks</h2>
                     <button
                         onClick={() => setShowWebhookForm(true)}
                         className="text-brass hover:text-brassLight text-[13px] font-medium flex items-center gap-1"
@@ -207,22 +207,22 @@ export default function Developer() {
                 {showWebhookForm && (
                     <div className="ledger-card p-4 space-y-3 mb-3">
                         <div>
-                            <label className="text-[11px] text-muted font-mono uppercase tracking-wide">URL</label>
+                            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">URL</label>
                             <input
                                 type="url"
                                 value={newWebhookUrl}
                                 onChange={(e) => setNewWebhookUrl(e.target.value)}
-                                className="w-full bg-panel border border-line rounded-md px-3 py-2.5 text-[14px] text-bone"
+                                className="w-full bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
                                 placeholder="https://example.com/webhook"
                             />
                         </div>
                         <div>
-                            <label className="text-[11px] text-muted font-mono uppercase tracking-wide">Events</label>
+                            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Events</label>
                             <input
                                 type="text"
                                 value={newWebhookEvents}
                                 onChange={(e) => setNewWebhookEvents(e.target.value)}
-                                className="w-full bg-panel border border-line rounded-md px-3 py-2.5 text-[14px] text-bone"
+                                className="w-full bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
                                 placeholder="new_message"
                             />
                         </div>
@@ -235,7 +235,7 @@ export default function Developer() {
                             </button>
                             <button
                                 onClick={() => { setShowWebhookForm(false); setNewWebhookUrl(''); }}
-                                className="bg-panel border border-line text-muted hover:text-bone rounded-md px-4 py-2 press-soft touch-target"
+                                className="bg-[var(--color-panel)] border border-[var(--color-line)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] rounded-md px-4 py-2 press-soft touch-target"
                             >
                                 Cancel
                             </button>
@@ -244,18 +244,18 @@ export default function Developer() {
                 )}
 
                 {webhooks.length === 0 ? (
-                    <p className="text-[13px] text-muted">No webhooks yet.</p>
+                    <p className="text-[13px] text-[var(--color-text-muted)]">No webhooks yet.</p>
                 ) : (
                     <div className="space-y-2">
                         {webhooks.map((hook) => (
                             <div key={hook.id} className="ledger-card p-3 flex items-center justify-between">
                                 <div>
-                                    <p className="text-[14px] text-bone break-all">{hook.url}</p>
-                                    <p className="text-[11px] text-muted font-mono">{hook.events} · {hook.is_active ? 'active' : 'inactive'}</p>
+                                    <p className="text-[14px] text-[var(--color-text-primary)] break-all">{hook.url}</p>
+                                    <p className="text-[11px] text-[var(--color-text-muted)] font-mono">{hook.events} · {hook.is_active ? 'active' : 'inactive'}</p>
                                 </div>
                                 <button
                                     onClick={() => deleteWebhook(hook.id)}
-                                    className="text-alert hover:text-alert/70"
+                                    className="text-[var(--color-danger)] hover:text-[var(--color-danger)]/70"
                                 >
                                     <Trash2 size={16} />
                                 </button>

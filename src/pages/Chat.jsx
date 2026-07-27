@@ -1,7 +1,9 @@
-import { useState, useRef } from 'react';
-import { Send, Fingerprint, CheckCircle2, Plus } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Send, Fingerprint, CheckCircle2, Plus, ChevronDown } from 'lucide-react';
 import { api } from '../utils/api';
 import { signBurn, signSend, broadcastTx } from '../utils/ethers';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 function IntentCard({ intent, onConfirm }) {
   const [status, setStatus] = useState('ready');
@@ -12,11 +14,9 @@ function IntentCard({ intent, onConfirm }) {
     setStatus('signing');
     setError(null);
     try {
-      // Fetch encrypted seed from backend
       const seedRes = await api.get('/wallet/seed');
       const encryptedSeed = seedRes.data.encrypted_seed;
 
-      // Prompt for password
       const password = prompt('Enter your wallet password to sign this transaction:');
       if (!password) {
         setStatus('ready');
@@ -27,9 +27,7 @@ function IntentCard({ intent, onConfirm }) {
       let chain = intent.chain || 'polygon';
 
       if (intent.action === 'send') {
-        // Send tokens
-        const tokenAddress = intent.token === 'CLOSE' ? intent.contract : null; // we need to pass token address
-        // For now, we assume intent includes tokenAddress
+        const tokenAddress = intent.token === 'CLOSE' ? intent.contract : null;
         signedTx = await signSend(
           encryptedSeed,
           password,
@@ -39,7 +37,6 @@ function IntentCard({ intent, onConfirm }) {
           chain
         );
       } else if (intent.action === 'burn') {
-        // Burn CLOSE
         const contractAddress = intent.contract || import.meta.env.VITE_CLOSE_CONTRACT;
         signedTx = await signBurn(
           encryptedSeed,
@@ -52,11 +49,10 @@ function IntentCard({ intent, onConfirm }) {
         throw new Error('Unsupported action');
       }
 
-      // Broadcast
       const broadcastRes = await broadcastTx(signedTx, chain);
       setHash(broadcastRes.tx_hash);
       setStatus('done');
-      onConfirm?.(broadcastRes.tx_hash);
+      if (onConfirm) onConfirm(broadcastRes.tx_hash);
     } catch (e) {
       setError(e.message || 'Transaction failed');
       setStatus('ready');
@@ -65,8 +61,8 @@ function IntentCard({ intent, onConfirm }) {
 
   return (
     <div className="mt-2 w-full max-w-md ledger-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-line">
-        <span className="text-[10px] font-mono tracking-[0.14em] text-muted uppercase">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--color-line)]">
+        <span className="text-[10px] font-mono tracking-[0.14em] text-[var(--color-text-muted)] uppercase">
           Transaction Intent
         </span>
         <span
@@ -79,21 +75,21 @@ function IntentCard({ intent, onConfirm }) {
       </div>
       <div className="px-4 py-3 space-y-1.5 text-[13px]">
         <div className="flex justify-between">
-          <span className="text-muted">Action</span>
-          <span className="text-bone">{intent.action}</span>
+          <span className="text-[var(--color-text-muted)]">Action</span>
+          <span className="text-[var(--color-text-primary)]">{intent.action}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted">Route</span>
-          <span className="font-mono text-bone">{intent.chain || 'polygon'}</span>
+          <span className="text-[var(--color-text-muted)]">Route</span>
+          <span className="font-mono text-[var(--color-text-primary)]">{intent.chain || 'polygon'}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted">Amount</span>
-          <span className="font-mono text-bone">{intent.amount} {intent.token || 'CLOSE'}</span>
+          <span className="text-[var(--color-text-muted)]">Amount</span>
+          <span className="font-mono text-[var(--color-text-primary)]">{intent.amount} {intent.token || 'CLOSE'}</span>
         </div>
         {intent.to_address && (
           <div className="flex justify-between">
-            <span className="text-muted">To</span>
-            <span className="font-mono text-bone text-xs truncate max-w-[120px]">{intent.to_address}</span>
+            <span className="text-[var(--color-text-muted)]">To</span>
+            <span className="font-mono text-[var(--color-text-primary)] text-xs truncate max-w-[120px]">{intent.to_address}</span>
           </div>
         )}
       </div>
@@ -117,12 +113,12 @@ function IntentCard({ intent, onConfirm }) {
               <span className="text-teal flex items-center gap-1">
                 <CheckCircle2 size={13} /> settled
               </span>
-              <span className="text-muted truncate max-w-[150px]">{hash}</span>
+              <span className="text-[var(--color-text-muted)] truncate max-w-[150px]">{hash}</span>
             </div>
           </div>
         )}
         {error && (
-          <div className="text-[11px] text-alert font-mono py-1.5">
+          <div className="text-[11px] text-[var(--color-danger)] font-mono py-1.5">
             ❌ {error}
           </div>
         )}
@@ -132,122 +128,293 @@ function IntentCard({ intent, onConfirm }) {
 }
 
 export default function Chat() {
-  const [messages, setMessages] = useState([
-    { role: 'agent', text: "OS AI online. Ask me to check balances, swap, stake, or send." },
-  ]);
+  const [chats, setChats] = useState([]);
+  const [selectedChatId, setSelectedChatId] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [loadingChats, setLoadingChats] = useState(true);
+  const [showChatList, setShowChatList] = useState(false);
   const scrollRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [input]);
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        const res = await api.get('/chat/chats');
+        setChats(res.data || []);
+        if (res.data && res.data.length > 0) {
+          setSelectedChatId(res.data[0].id);
+        }
+      } catch (e) {
+        console.error('Failed to fetch chats:', e);
+      } finally {
+        setLoadingChats(false);
+      }
+    };
+    fetchChats();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedChatId) {
+      setMessages([]);
+      return;
+    }
+    const fetchMessages = async () => {
+      try {
+        const res = await api.get(`/chat/chats/${selectedChatId}/messages`);
+        setMessages(res.data || []);
+      } catch (e) {
+        console.error('Failed to fetch messages:', e);
+        setMessages([]);
+      }
+    };
+    fetchMessages();
+  }, [selectedChatId]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const send = async () => {
     const text = input.trim();
     if (!text || sending) return;
-    const next = [...messages, { role: 'user', text }];
-    setMessages(next);
+
+    const messagesPayload = messages.map(m => ({
+      role: m.role,
+      content: m.content,
+    }));
+    const userMessage = { role: 'user', content: text };
+    const newMessages = [...messagesPayload, userMessage];
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
     setInput('');
     setSending(true);
+
+    const aiMessageIndex = messages.length + 1;
+    setMessages(prev => [...prev, { role: 'assistant', content: '', loading: true }]);
+
     try {
-      const res = await api.post('/chat', { messages: next, chat_id: `chat_${Date.now()}` });
-      if (res.data.type === 'transaction') {
-        // The backend returns a transaction intent
-        // We'll add it as an intent card
-        setMessages((m) => [
-          ...m,
-          { role: 'agent', text: res.data.message },
-          { role: 'intent', intent: res.data.tx_intent },
-        ]);
-      } else {
-        setMessages((m) => [...m, { role: 'agent', text: res.data.content }]);
-        // If the response contains a burn_payload, we handle it automatically
-        if (res.data.burn_payload) {
-          // The backend expects automatic burn after AI response.
-          // We'll trigger the burn confirmation directly.
-          // We'll create a new intent card for the burn.
-          const burnIntent = {
-            action: 'burn',
-            amount: res.data.burn_payload.amount,
-            token: 'CLOSE',
-            chain: res.data.burn_payload.chain,
-            contract: res.data.burn_payload.contract,
-          };
-          setMessages((m) => [
-            ...m,
-            { role: 'agent', text: 'A burn transaction is required to continue.' },
-            { role: 'intent', intent: burnIntent },
-          ]);
+      const token = localStorage.getItem('token');
+      const chatId = selectedChatId || `chat_${Date.now()}`;
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          messages: messagesPayload.concat(userMessage),
+          chat_id: chatId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+
+      setMessages(prev => {
+        const updated = [...prev];
+        if (updated[aiMessageIndex]) {
+          updated[aiMessageIndex] = { ...updated[aiMessageIndex], loading: false };
+        }
+        return updated;
+      });
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const payload = line.slice(6);
+            if (payload === '[DONE]') continue;
+            try {
+              const data = JSON.parse(payload);
+              const content = data.content || '';
+              if (content) {
+                fullText += content;
+                setMessages(prev => {
+                  const updated = [...prev];
+                  if (updated[aiMessageIndex]) {
+                    updated[aiMessageIndex] = { ...updated[aiMessageIndex], content: fullText };
+                  }
+                  return updated;
+                });
+              }
+            } catch (e) {
+              // ignore
+            }
+          }
         }
       }
+
+      if (!selectedChatId) {
+        const res = await api.get('/chat/chats');
+        setChats(res.data || []);
+        if (res.data && res.data.length > 0) {
+          setSelectedChatId(res.data[0].id);
+        }
+      } else {
+        setChats(prevChats => {
+          const updated = prevChats.map(c =>
+            c.id === selectedChatId ? { ...c, updated: new Date().toISOString() } : c
+          );
+          return updated.sort((a, b) => new Date(b.updated) - new Date(a.updated));
+        });
+      }
     } catch (e) {
-      setMessages((m) => [...m, { role: 'agent', text: 'Sorry, something went wrong reaching the server.' }]);
+      setMessages(prev => {
+        const updated = [...prev];
+        if (updated[aiMessageIndex]) {
+          updated[aiMessageIndex] = { ...updated[aiMessageIndex], content: '⚠️ Failed to stream response.' };
+        }
+        return updated;
+      });
     } finally {
       setSending(false);
     }
   };
 
   const newChat = () => {
-    setMessages([
-      { role: 'agent', text: "OS AI online. Ask me to check balances, swap, stake, or send." },
-    ]);
+    setSelectedChatId(null);
+    setMessages([]);
+    setShowChatList(false);
+  };
+
+  const selectChat = (chatId) => {
+    setSelectedChatId(chatId);
+    setShowChatList(false);
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-2 border-b border-line">
-        <div className="flex gap-2">
+    <div className="flex flex-col h-full max-w-[800px] mx-auto w-full px-4 tablet:px-6">
+      <div className="flex items-center justify-between py-3 border-b border-[var(--color-line)]">
+        <div className="flex items-center gap-2">
           <button
             onClick={newChat}
-            className="flex items-center gap-1 text-xs font-mono text-muted hover:text-bone bg-panel border border-line rounded-md px-3 py-1.5"
+            className="flex items-center gap-1 text-xs font-mono text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-1.5"
           >
             <Plus size={14} /> New Chat
           </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowChatList(!showChatList)}
+              className="flex items-center gap-1 text-xs font-mono text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-2 py-1.5"
+            >
+              Recent <ChevronDown size={12} />
+            </button>
+            {showChatList && (
+              <div className="absolute left-0 top-full mt-1 w-48 bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                {loadingChats ? (
+                  <div className="p-2 text-[var(--color-text-muted)] text-[11px]">Loading...</div>
+                ) : chats.length === 0 ? (
+                  <div className="p-2 text-[var(--color-text-muted)] text-[11px]">No chats yet</div>
+                ) : (
+                  chats.map(chat => (
+                    <div
+                      key={chat.id}
+                      onClick={() => selectChat(chat.id)}
+                      className={`p-2 cursor-pointer hover:bg-white/5 text-[12px] ${selectedChatId === chat.id ? 'bg-brass/10 text-brass' : 'text-[var(--color-text-primary)]'}`}
+                    >
+                      {chat.title || 'New Chat'}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
-          <span className="text-xs text-muted font-mono">Memory: {messages.length > 5 ? 'enabled' : 'idle'}</span>
+          <span className="text-xs text-[var(--color-text-muted)] font-mono">Memory: {messages.length > 5 ? 'enabled' : 'idle'}</span>
         </div>
       </div>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 tablet:px-6 py-5 space-y-3">
-        {messages.map((m, i) =>
-          m.role === 'intent' ? (
-            <IntentCard
-              key={i}
-              intent={m.intent}
-              onConfirm={(txHash) => {
-                // Optionally update the message with the tx hash
-                setMessages((prev) =>
-                  prev.map((msg, idx) =>
-                    idx === i ? { ...msg, settled: true, txHash } : msg
-                  )
-                );
-              }}
-            />
-          ) : (
+
+      <div ref={scrollRef} className="flex-1 overflow-y-auto py-5 space-y-4">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <h2 className="text-3xl font-display text-[var(--color-text-primary)]">Good evening</h2>
+            <p className="text-[var(--color-text-muted)] mt-2 text-[15px]">How can OS AI help you today?</p>
+            <div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-md">
+              <button className="ledger-card p-4 text-left hover:border-brass/30 transition-colors">
+                <div className="text-brass text-xl">🔬</div>
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)] mt-1">Research</p>
+                <p className="text-[11px] text-[var(--color-text-muted)]">Deep dive into topics</p>
+              </button>
+              <button className="ledger-card p-4 text-left hover:border-brass/30 transition-colors">
+                <div className="text-brass text-xl">💻</div>
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)] mt-1">Coding</p>
+                <p className="text-[11px] text-[var(--color-text-muted)]">Write, review, debug</p>
+              </button>
+              <button className="ledger-card p-4 text-left hover:border-brass/30 transition-colors">
+                <div className="text-brass text-xl">📈</div>
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)] mt-1">Crypto</p>
+                <p className="text-[11px] text-[var(--color-text-muted)]">Market insights, trading</p>
+              </button>
+              <button className="ledger-card p-4 text-left hover:border-brass/30 transition-colors">
+                <div className="text-brass text-xl">🌍</div>
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)] mt-1">Everyday</p>
+                <p className="text-[11px] text-[var(--color-text-muted)]">General assistance</p>
+              </button>
+            </div>
+          </div>
+        ) : (
+          messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-[85%] tablet:max-w-[70%] rounded-lg px-3.5 py-2 text-[14px] leading-relaxed ${
-                  m.role === 'user' ? 'bg-brass text-void font-medium' : 'ledger-card text-bone px-4 py-3'
+                className={`max-w-[85%] tablet:max-w-[70%] rounded-lg px-4 py-2.5 text-[14px] leading-relaxed ${
+                  m.role === 'user' ? 'bg-brass text-void font-medium' : 'ledger-card text-[var(--color-text-primary)] px-4 py-3'
                 }`}
               >
-                {m.text}
+                {m.loading ? (
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 rounded-full bg-brass animate-pulse" />
+                    <span className="text-[var(--color-text-muted)] text-[13px]">Thinking…</span>
+                  </div>
+                ) : (
+                  m.content
+                )}
               </div>
             </div>
-          )
+          ))
         )}
       </div>
-      <div className="border-t border-line px-3 tablet:px-4 py-3 flex items-center gap-2">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && send()}
-          placeholder="Ask OS AI…"
-          className="flex-1 bg-panel border border-line rounded-md px-3 py-2.5 text-[14px] text-bone placeholder-muted focus:outline-none focus:border-brass"
-        />
-        <button
-          onClick={send}
-          disabled={sending}
-          className="bg-brass hover:bg-brassLight disabled:opacity-50 text-void rounded-md p-2.5 press-soft touch-target"
-        >
-          <Send size={16} />
-        </button>
+
+      <div className="border-t border-[var(--color-line)] py-4">
+        <div className="flex items-end gap-2 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-xl px-3 py-2 focus-within:border-brass transition-colors">
+          <button className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] touch-target">
+            📎
+          </button>
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
+            placeholder="Ask OS AI…"
+            className="flex-1 bg-transparent border-none outline-none resize-none text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] min-h-[24px] max-h-[200px]"
+            rows={1}
+          />
+          <button
+            onClick={send}
+            disabled={sending}
+            className="bg-brass hover:bg-brassLight disabled:opacity-50 text-void rounded-full p-2 press-soft touch-target"
+          >
+            <Send size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );

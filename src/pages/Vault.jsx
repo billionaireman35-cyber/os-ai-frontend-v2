@@ -110,13 +110,13 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
 }
 
 function StandardWallet() {
-  const { assets, totalUsd, loading, error, fetchBalances } = useWallet();
+  const { balances, totalUsd, loading, error, fetchBalances } = useWallet();
   const [chain, setChain] = useState('all');
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendAsset, setSendAsset] = useState(null);
   const [showSwapModal, setShowSwapModal] = useState(false);
 
-  const filtered = chain === 'all' ? assets : assets.filter((a) => a.chain === chain);
+  const filtered = chain === 'all' ? balances : balances.filter((a) => a.chain === chain);
 
   const createWallet = async () => {
     const password = prompt('Enter a password to encrypt your wallet:');
@@ -150,7 +150,7 @@ function StandardWallet() {
         <button onClick={createWallet} className="bg-brass hover:bg-brassLight text-void text-[13px] font-semibold rounded-md px-4 py-2 press-soft touch-target flex items-center gap-1">
           <Lock size={16} /> Create Wallet
         </button>
-        <button onClick={() => { if (assets.length === 0) { alert('No assets to send. Create a wallet and add funds first.'); return; } setSendAsset({ symbol: 'CLOSE', chain: 'polygon' }); setShowSendModal(true); }} className="bg-teal/20 hover:bg-teal/30 text-teal text-[13px] font-semibold rounded-md px-4 py-2 press-soft touch-target flex items-center gap-1">
+        <button onClick={() => { if (balances.length === 0) { alert('No assets to send. Create a wallet and add funds first.'); return; } setSendAsset({ symbol: 'CLOSE', chain: 'polygon' }); setShowSendModal(true); }} className="bg-teal/20 hover:bg-teal/30 text-teal text-[13px] font-semibold rounded-md px-4 py-2 press-soft touch-target flex items-center gap-1">
           <Send size={16} /> Send
         </button>
         <button onClick={() => setShowSwapModal(true)} className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-[13px] font-semibold rounded-md px-4 py-2 press-soft touch-target flex items-center gap-1">

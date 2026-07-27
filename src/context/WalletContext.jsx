@@ -9,10 +9,16 @@ export function WalletProvider({ children }) {
   const [balances, setBalances] = useState([]);
   const [totalUsd, setTotalUsd] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchBalances = async () => {
-    if (!user) return;
+    if (!user) {
+      setBalances([]);
+      setTotalUsd(0);
+      return;
+    }
     setLoading(true);
+    setError(null);
     try {
       const res = await api.get('/wallet/balance');
       const data = res.data;
@@ -43,20 +49,21 @@ export function WalletProvider({ children }) {
           chain: 'close',
           symbol: 'CLOSE',
           balance: data.close.balance,
-          usdValue: 0,
+          usdValue: data.close.usd || 0,
         });
       }
       setBalances(items);
       setTotalUsd(total);
     } catch (e) {
       console.error('Failed to fetch balances', e);
+      setError(e);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (user) fetchBalances();
+    fetchBalances();
   }, [user]);
 
   const sendTransaction = async (to, amount, token, chain, signedTx) => {
@@ -65,10 +72,16 @@ export function WalletProvider({ children }) {
   };
 
   return (
-    <WalletContext.Provider value={{ balances, totalUsd, loading, fetchBalances, sendTransaction }}>
+    <WalletContext.Provider value={{ balances, totalUsd, loading, error, fetchBalances, sendTransaction }}>
       {children}
     </WalletContext.Provider>
   );
 }
 
-export const useWallet = () => useContext(WalletContext);
+export const useWallet = () => {
+  const context = useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWallet must be used within a WalletProvider');
+  }
+  return context;
+};

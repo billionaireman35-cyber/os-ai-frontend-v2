@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { X, RefreshCw } from 'lucide-react';
-import { api } from '../../utils/api';
+import { api } from '../utils/api';
 import { ethers } from 'ethers';
-import { signSend, broadcastTx } from '../../utils/ethers';
+import { signSend, broadcastTx } from '../utils/ethers';
 
 // Token list – we'll maintain for each chain
 // Polygon tokens
