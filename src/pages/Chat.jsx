@@ -204,6 +204,9 @@ export default function Chat() {
 
     try {
       const token = localStorage.getItem('token');
+console.log("Token:", token);
+console.log("Token:", token);
+      const response = await fetch(`${API_BASE}/chat/stream`, { ... });
       const chatId = selectedChatId || `chat_${Date.now()}`;
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
