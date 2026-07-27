@@ -204,9 +204,15 @@ export default function Chat() {
 
     try {
       const token = localStorage.getItem('token');
-console.log("Token:", token);
-console.log("Token:", token);
-      const response = await fetch(`${API_BASE}/chat/stream`, { ... });
+    if (!token) { alert("Please log in to chat."); setSending(false); return; }
+      console.log('Token being sent:', token);  // debug
+
+      if (!token) {
+        alert('Please log in to chat.');
+        setSending(false);
+        return;
+      }
+
       const chatId = selectedChatId || `chat_${Date.now()}`;
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
@@ -259,7 +265,7 @@ console.log("Token:", token);
                 });
               }
             } catch (e) {
-              // ignore
+              // ignore parse errors
             }
           }
         }
@@ -351,28 +357,6 @@ console.log("Token:", token);
           <div className="flex flex-col items-center justify-center h-full text-center">
             <h2 className="text-3xl font-display text-[var(--color-text-primary)]">Good evening</h2>
             <p className="text-[var(--color-text-muted)] mt-2 text-[15px]">How can OS AI help you today?</p>
-            <div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-md">
-              <button className="ledger-card p-4 text-left hover:border-brass/30 transition-colors">
-                <div className="text-brass text-xl">🔬</div>
-                <p className="text-[13px] font-medium text-[var(--color-text-primary)] mt-1">Research</p>
-                <p className="text-[11px] text-[var(--color-text-muted)]">Deep dive into topics</p>
-              </button>
-              <button className="ledger-card p-4 text-left hover:border-brass/30 transition-colors">
-                <div className="text-brass text-xl">💻</div>
-                <p className="text-[13px] font-medium text-[var(--color-text-primary)] mt-1">Coding</p>
-                <p className="text-[11px] text-[var(--color-text-muted)]">Write, review, debug</p>
-              </button>
-              <button className="ledger-card p-4 text-left hover:border-brass/30 transition-colors">
-                <div className="text-brass text-xl">📈</div>
-                <p className="text-[13px] font-medium text-[var(--color-text-primary)] mt-1">Crypto</p>
-                <p className="text-[11px] text-[var(--color-text-muted)]">Market insights, trading</p>
-              </button>
-              <button className="ledger-card p-4 text-left hover:border-brass/30 transition-colors">
-                <div className="text-brass text-xl">🌍</div>
-                <p className="text-[13px] font-medium text-[var(--color-text-primary)] mt-1">Everyday</p>
-                <p className="text-[11px] text-[var(--color-text-muted)]">General assistance</p>
-              </button>
-            </div>
           </div>
         ) : (
           messages.map((m, i) => (

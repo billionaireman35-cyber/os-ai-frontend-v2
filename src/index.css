@@ -46,26 +46,31 @@
     color: var(--color-text-primary);
     font-family: Inter, system-ui, -apple-system, sans-serif;
     transition: background-color 0.3s ease, color 0.3s ease;
-    font-size: 20px; /* Increased from 18px */
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.7;
   }
 
-  h1 { font-size: 2.5rem; }
-  h2 { font-size: 2rem; }
-  h3 { font-size: 1.6rem; }
+  h1 { font-size: 3.2rem; font-weight: 700; }
+  h2 { font-size: 2.6rem; font-weight: 700; }
+  h3 { font-size: 2rem; font-weight: 600; }
   p, li, input, textarea, button, select, a {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
   }
   .font-mono {
-    font-size: 1rem;
+    font-size: 1.1rem;
+    font-weight: 500;
   }
 
   input, textarea {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-thumb {
     background: var(--color-line);
@@ -80,7 +85,7 @@
   .ledger-card {
     background-color: var(--color-panel);
     border: 1px solid var(--color-line);
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
   }
 
   .glass-soft {
@@ -100,8 +105,8 @@
   }
 
   .touch-target {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
     display: flex;
     align-items: center;
     justify-content: center;

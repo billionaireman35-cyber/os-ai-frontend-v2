@@ -20,7 +20,6 @@ import {
   Coins,
   Moon,
   Sun,
-  Lock
 } from 'lucide-react';
 import { api } from '../../utils/api';
 
@@ -38,7 +37,6 @@ export function Sidebar({ expanded, setExpanded }) {
   const navigate = useNavigate();
   const isFounder = user?.stake_tier === 'founder' || user?.is_founder;
 
-  // Easter egg for founder login
   const [tapCount, setTapCount] = useState(0);
   const [showFounderModal, setShowFounderModal] = useState(false);
   const [founderKey, setFounderKey] = useState('');
@@ -54,7 +52,7 @@ export function Sidebar({ expanded, setExpanded }) {
 
   const handleFounderLogin = async () => {
     try {
-      const res = await api.post('/founder', { code: founderKey });
+      const res = await api.post('/founder/', { code: founderKey });
       localStorage.setItem('token', res.data.token);
       window.location.reload();
     } catch (e) {
@@ -70,10 +68,9 @@ export function Sidebar({ expanded, setExpanded }) {
   return (
     <aside
       className={`shrink-0 h-full bg-[var(--color-panel2)] border-r border-[var(--color-line)] flex flex-col transition-[width] duration-300 ease-out ${
-        expanded ? 'w-80' : 'w-16'
+        expanded ? 'w-90' : 'w-16'
       }`}
     >
-      {/* Logo / Brand – with Easter egg */}
       <div
         className="h-14 flex items-center px-4 border-b border-[var(--color-line)] cursor-pointer select-none"
         onClick={handleLogoClick}
@@ -144,18 +141,18 @@ export function Sidebar({ expanded, setExpanded }) {
       {expanded && (
         <div className="px-4 py-3 border-t border-[var(--color-line)]">
           <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">Quick Actions</p>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            <button className="flex items-center gap-2 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-1.5 text-[12px] text-[var(--color-text-primary)] hover:bg-white/5 touch-target">
-              <Sparkles size={14} className="text-brass" /> Research
+          <div className="flex flex-wrap gap-2 mt-2">
+            <button className="flex items-center gap-1.5 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-full px-3 py-1 text-[12px] text-[var(--color-text-primary)] hover:bg-white/5 touch-target">
+              <Sparkles size={12} className="text-brass" /> Research
             </button>
-            <button className="flex items-center gap-2 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-1.5 text-[12px] text-[var(--color-text-primary)] hover:bg-white/5 touch-target">
-              <Code size={14} className="text-brass" /> Coding
+            <button className="flex items-center gap-1.5 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-full px-3 py-1 text-[12px] text-[var(--color-text-primary)] hover:bg-white/5 touch-target">
+              <Code size={12} className="text-brass" /> Coding
             </button>
-            <button className="flex items-center gap-2 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-1.5 text-[12px] text-[var(--color-text-primary)] hover:bg-white/5 touch-target">
-              <BarChart size={14} className="text-brass" /> Crypto
+            <button className="flex items-center gap-1.5 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-full px-3 py-1 text-[12px] text-[var(--color-text-primary)] hover:bg-white/5 touch-target">
+              <BarChart size={12} className="text-brass" /> Crypto
             </button>
-            <button className="flex items-center gap-2 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-1.5 text-[12px] text-[var(--color-text-primary)] hover:bg-white/5 touch-target">
-              <Globe size={14} className="text-brass" /> Everyday
+            <button className="flex items-center gap-1.5 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-full px-3 py-1 text-[12px] text-[var(--color-text-primary)] hover:bg-white/5 touch-target">
+              <Globe size={12} className="text-brass" /> Everyday
             </button>
           </div>
         </div>
@@ -206,7 +203,6 @@ export function Sidebar({ expanded, setExpanded }) {
         {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
       </button>
 
-      {/* Founder Login Modal */}
       {showFounderModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-lg w-full max-w-md p-6 space-y-4">
