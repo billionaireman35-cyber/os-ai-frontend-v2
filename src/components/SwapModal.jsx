@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { X, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { X } from 'lucide-react';
 import { api } from '../utils/api';
 import { ethers } from 'ethers';
-import { TOKENS } from '../utils/tokens';
+import { fetchTokens } from '../utils/tokens';
 import { signSend, broadcastTx } from '../utils/ethers';
 
 export function SwapModal({ isOpen, onClose, onSwap }) {
   const [chain, setChain] = useState('polygon');
+  const [tokens, setTokens] = useState([]);
   const [fromToken, setFromToken] = useState('');
   const [toToken, setToToken] = useState('');
   const [amount, setAmount] = useState('');
@@ -14,32 +15,34 @@ export function SwapModal({ isOpen, onClose, onSwap }) {
   const [quote, setQuote] = useState(null);
   const [error, setError] = useState(null);
   const [txHash, setTxHash] = useState(null);
-  const [step, setStep] = useState('input'); // 'input' | 'quote' | 'confirm' | 'done'
+  const [step, setStep] = useState('input');
 
-  // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      const tokens = TOKENS[chain] || [];
-      if (tokens.length > 0) {
-        setFromToken(tokens[0].address);
-        setToToken(tokens[1]?.address || tokens[0].address);
-      }
-      setAmount('');
-      setQuote(null);
-      setError(null);
-      setTxHash(null);
-      setStep('input');
+      loadTokens(chain);
     }
   }, [isOpen, chain]);
 
+  const loadTokens = async (chainName) => {
+    const tokenList = await fetchTokens(chainName);
+    setTokens(tokenList);
+    if (tokenList.length > 0) {
+      setFromToken(tokenList[0].address);
+      setToToken(tokenList[1]?.address || tokenList[0].address);
+    }
+    setAmount('');
+    setQuote(null);
+    setError(null);
+    setTxHash(null);
+    setStep('input');
+  };
+
   const getSymbol = (address) => {
-    const tokens = TOKENS[chain] || [];
     const token = tokens.find(t => t.address.toLowerCase() === address.toLowerCase());
     return token ? token.symbol : address.slice(0, 6);
   };
 
   const getDecimals = (address) => {
-    const tokens = TOKENS[chain] || [];
     const token = tokens.find(t => t.address.toLowerCase() === address.toLowerCase());
     return token ? token.decimals : 18;
   };
@@ -77,19 +80,14 @@ export function SwapModal({ isOpen, onClose, onSwap }) {
     setLoading(true);
     setError(null);
     try {
-      // Get encrypted seed
       const seedRes = await api.get('/wallet/seed');
       const encryptedSeed = seedRes.data.encrypted_seed;
-
-      // Build transaction from 1inch
       const buildRes = await api.post('/swap/build', {
         chain,
-        from_address: seedRes.data.address, // we need wallet address
+        from_address: seedRes.data.address,
         quote: quote.quote,
       });
-
       const txData = buildRes.data;
-      // Sign and broadcast
       const provider = new ethers.providers.JsonRpcProvider(import.meta.env.VITE_POLYGON_RPC);
       const wallet = await ethers.Wallet.fromEncryptedJson(encryptedSeed, password);
       const signer = wallet.connect(provider);
@@ -105,9 +103,7 @@ export function SwapModal({ isOpen, onClose, onSwap }) {
       setTxHash(broadcastRes.tx_hash);
       setStep('done');
       onSwap?.(broadcastRes.tx_hash);
-      setTimeout(() => {
-        onClose();
-      }, 3000);
+      setTimeout(() => onClose(), 3000);
     } catch (e) {
       setError(e.message || 'Swap failed');
     } finally {
@@ -116,8 +112,6 @@ export function SwapModal({ isOpen, onClose, onSwap }) {
   };
 
   if (!isOpen) return null;
-
-  const tokens = TOKENS[chain] || [];
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -133,7 +127,7 @@ export function SwapModal({ isOpen, onClose, onSwap }) {
           <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Chain</label>
           <select
             value={chain}
-            onChange={(e) => setChain(e.target.value)}
+            onChange={(e) => { setChain(e.target.value); loadTokens(e.target.value); }}
             className="w-full bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] mt-1"
           >
             <option value="polygon">Polygon</option>
