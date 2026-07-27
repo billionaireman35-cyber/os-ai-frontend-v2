@@ -204,9 +204,6 @@ export default function Chat() {
 
     try {
       const token = localStorage.getItem('token');
-    if (!token) { alert("Please log in to chat."); setSending(false); return; }
-      console.log('Token being sent:', token);  // debug
-
       if (!token) {
         alert('Please log in to chat.');
         setSending(false);
