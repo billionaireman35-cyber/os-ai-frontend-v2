@@ -46,25 +46,25 @@
     color: var(--color-text-primary);
     font-family: Inter, system-ui, -apple-system, sans-serif;
     transition: background-color 0.3s ease, color 0.3s ease;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 500;
     line-height: 1.7;
   }
 
-  h1 { font-size: 3.2rem; font-weight: 700; }
-  h2 { font-size: 2.6rem; font-weight: 700; }
-  h3 { font-size: 2rem; font-weight: 600; }
+  h1 { font-size: 2.8rem; font-weight: 700; }
+  h2 { font-size: 2.2rem; font-weight: 700; }
+  h3 { font-size: 1.8rem; font-weight: 600; }
   p, li, input, textarea, button, select, a {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 500;
   }
   .font-mono {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 500;
   }
 
   input, textarea {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 500;
   }
 
@@ -97,11 +97,10 @@
   }
 
   .press-soft {
-    transition: all 0.2s;
+    transition: all 0.15s;
   }
   .press-soft:active {
     transform: scale(0.97);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 
   .touch-target {
