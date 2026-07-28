@@ -17,8 +17,11 @@ import Developer from './pages/Developer';
 import HustleHub from './pages/HustleHub';
 import { useState } from 'react';
 
+console.log('App.jsx loaded');
+
 function Shell() {
   const [expanded, setExpanded] = useState(true);
+  console.log('Shell rendered');
   return (
     <div className="flex h-screen bg-[var(--color-bg)] overflow-hidden">
       <Sidebar expanded={expanded} setExpanded={setExpanded} />
@@ -42,6 +45,7 @@ function Shell() {
 }
 
 function App() {
+  console.log('App rendered');
   return (
     <AuthProvider>
       <WalletProvider>

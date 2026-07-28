@@ -1,5 +1,4 @@
 import { Component } from 'react';
-import { AlertTriangle } from 'lucide-react';
 
 export class ErrorBoundary extends Component {
   constructor(props) {
@@ -18,20 +17,15 @@ export class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen w-full bg-[var(--color-bg)] flex items-center justify-center px-4">
-          <div className="ledger-card max-w-md w-full p-6 text-center space-y-4">
-            <AlertTriangle size={48} className="text-[var(--color-danger)] mx-auto" />
-            <h2 className="text-xl font-display text-[var(--color-text-primary)]">Something went wrong</h2>
-            <p className="text-[var(--color-text-muted)] text-sm">
-              {this.state.error?.message || 'Unknown error'}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-brass hover:bg-brassLight text-void font-semibold rounded-md px-4 py-2"
-            >
-              Reload
-            </button>
-          </div>
+        <div style={{ padding: '2rem', background: '#0A1114', color: '#E9E4D8', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+          <h1 style={{ fontSize: '2rem', color: '#ef4444' }}>Something went wrong</h1>
+          <p style={{ marginTop: '1rem' }}>{this.state.error?.message || 'Unknown error'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: '#c98a3e', border: 'none', borderRadius: '0.5rem', color: '#0A1114', fontWeight: 'bold' }}
+          >
+            Reload
+          </button>
         </div>
       );
     }
