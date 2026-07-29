@@ -57,6 +57,8 @@ export function WalletProvider({ children }) {
     } catch (e) {
       console.error('Failed to fetch balances', e);
       setError(e);
+      setBalances([]);
+      setTotalUsd(0);
     } finally {
       setLoading(false);
     }
