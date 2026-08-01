@@ -4,7 +4,10 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 export function useFingerprint() {
   const [fp, setFp] = useState(null);
   useEffect(() => {
-    FingerprintJS.load().then(fp => fp.get()).then(result => setFp(result.visitorId));
+    FingerprintJS.load()
+      .then((agent) => agent.get())
+      .then((result) => setFp(result.visitorId))
+      .catch(() => setFp(null));
   }, []);
   return fp;
 }

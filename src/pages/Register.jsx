@@ -64,91 +64,91 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[var(--color-bg)] flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <p className="font-display font-semibold text-2xl text-[var(--color-text-primary)]">OS AI</p>
-          <p className="text-[13px] text-[var(--color-text-muted)] font-mono mt-1">create your account</p>
+          <p className="font-display font-bold text-3xl text-[var(--text-primary)]">OS AI</p>
+          <p className="text-sm text-[var(--text-muted)] font-mono mt-1">create your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="ledger-card p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="glass-card p-6 space-y-4">
           <div>
-            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Name</label>
+            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Name</label>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
+              className="input-base mt-1"
               placeholder="Your name"
             />
           </div>
 
           <div>
-            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Email</label>
-            <div className="flex gap-2">
+            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Email</label>
+            <div className="flex gap-2 mt-1">
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 flex-1 bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
+                className="input-base flex-1"
                 placeholder="you@domain.com"
               />
               <button
                 type="button"
                 onClick={handleSendCode}
                 disabled={sendingCode || countdown > 0}
-                className="mt-1 px-3 py-2.5 bg-brass/20 hover:bg-brass/30 text-brass text-[12px] font-medium rounded-md disabled:opacity-50 transition-colors touch-target"
+                className="btn-secondary whitespace-nowrap text-sm"
               >
                 {sendingCode ? 'Sending…' : countdown > 0 ? `${countdown}s` : 'Send Code'}
               </button>
             </div>
-            {codeError && <p className="text-[11px] text-[var(--color-danger)] mt-1">{codeError}</p>}
+            {codeError && <p className="text-xs text-[var(--danger)] mt-1">{codeError}</p>}
             {codeSuccess && (
-              <p className="text-[11px] text-[var(--color-success)] mt-1">
+              <p className="text-xs text-[var(--success)] mt-1">
                 ✅ Code sent to {email}. Check your inbox (and spam folder).
               </p>
             )}
           </div>
 
           <div>
-            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Password</label>
+            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
+              className="input-base mt-1"
               placeholder="••••••••"
             />
           </div>
 
           <div>
-            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Verification code</label>
+            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Verification code</label>
             <input
               required
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="mt-1 w-full bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
+              className="input-base mt-1"
               placeholder="6-digit code"
             />
           </div>
 
-          {error && <p className="text-[12px] text-[var(--color-danger)] font-mono">{error}</p>}
+          {error && <p className="text-sm text-[var(--danger)] font-mono">{error}</p>}
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-brass hover:bg-brassLight disabled:opacity-50 text-void text-[14px] font-semibold rounded-md py-2.5 press-soft touch-target"
+            className="btn-primary w-full justify-center text-[16px]"
           >
-            <Fingerprint size={16} />
+            <Fingerprint size={18} />
             {submitting ? 'Creating…' : 'Create account'}
           </button>
         </form>
 
-        <p className="text-center text-[13px] text-[var(--color-text-muted)] mt-5">
+        <p className="text-center text-sm text-[var(--text-muted)] mt-5">
           Already have an account?{' '}
-          <Link to="/login" className="text-brass hover:text-brassLight font-medium">
+          <Link to="/login" className="text-[var(--accent-indigo)] hover:text-[var(--accent-hover)] font-medium">
             Sign in
           </Link>
         </p>

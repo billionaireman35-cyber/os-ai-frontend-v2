@@ -4,10 +4,19 @@ export default {
   theme: {
     extend: {
       screens: {
-        'tablet': '768px',
-        'landscape': '1024px',
+        'phone': '360px', 'mobile': '480px', 'tablet': '768px',
+        'landscape': '1024px', 'laptop': '1280px', 'desktop': '1536px'
       },
-    },
+      colors: {
+        void: 'var(--bg-main)',
+        bone: 'var(--text-main)',
+        line: 'var(--border)',
+        panel: 'var(--bg-panel)',
+        card: 'var(--bg-card)',
+        accent: 'var(--accent)',
+        muted: 'var(--text-muted)'
+      }
+    }
   },
-  plugins: [],
+  plugins: []
 }

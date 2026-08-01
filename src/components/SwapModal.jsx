@@ -1,224 +1,80 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
-import { api } from '../utils/api';
-import { ethers } from 'ethers';
-import { fetchTokens } from '../utils/tokens';
-import { signSend, broadcastTx } from '../utils/ethers';
 
 export function SwapModal({ isOpen, onClose, onSwap }) {
-  const [chain, setChain] = useState('polygon');
-  const [tokens, setTokens] = useState([]);
-  const [fromToken, setFromToken] = useState('');
-  const [toToken, setToToken] = useState('');
+  const [fromToken, setFromToken] = useState('MATIC');
+  const [toToken, setToToken] = useState('CLOSE');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [quote, setQuote] = useState(null);
   const [error, setError] = useState(null);
-  const [txHash, setTxHash] = useState(null);
-  const [step, setStep] = useState('input');
-
-  useEffect(() => {
-    if (isOpen) {
-      loadTokens(chain);
-    }
-  }, [isOpen, chain]);
-
-  const loadTokens = async (chainName) => {
-    const tokenList = await fetchTokens(chainName);
-    setTokens(tokenList);
-    if (tokenList.length > 0) {
-      setFromToken(tokenList[0].address);
-      setToToken(tokenList[1]?.address || tokenList[0].address);
-    }
-    setAmount('');
-    setQuote(null);
-    setError(null);
-    setTxHash(null);
-    setStep('input');
-  };
-
-  const getSymbol = (address) => {
-    const token = tokens.find(t => t.address.toLowerCase() === address.toLowerCase());
-    return token ? token.symbol : address.slice(0, 6);
-  };
-
-  const getDecimals = (address) => {
-    const token = tokens.find(t => t.address.toLowerCase() === address.toLowerCase());
-    return token ? token.decimals : 18;
-  };
-
-  const getQuote = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      setError('Enter a valid amount');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const decimals = getDecimals(fromToken);
-      const amountInWei = ethers.utils.parseUnits(amount, decimals).toString();
-      const res = await api.post('/swap/quote', {
-        from_token: fromToken,
-        to_token: toToken,
-        amount: parseFloat(amount),
-        chain,
-        slippage: 0.5,
-      });
-      setQuote(res.data);
-      setStep('quote');
-    } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to get quote');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const executeSwap = async () => {
-    if (!quote) return;
-    const password = prompt('Enter your wallet password to sign the swap:');
-    if (!password) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const seedRes = await api.get('/wallet/seed');
-      const encryptedSeed = seedRes.data.encrypted_seed;
-      const buildRes = await api.post('/swap/build', {
-        chain,
-        from_address: seedRes.data.address,
-        quote: quote.quote,
-      });
-      const txData = buildRes.data;
-      const provider = new ethers.providers.JsonRpcProvider(import.meta.env.VITE_POLYGON_RPC);
-      const wallet = await ethers.Wallet.fromEncryptedJson(encryptedSeed, password);
-      const signer = wallet.connect(provider);
-      const tx = {
-        to: txData.to,
-        data: txData.data,
-        value: txData.value || '0x0',
-        gasLimit: txData.gas,
-        gasPrice: txData.gasPrice,
-      };
-      const signedTx = await signer.signTransaction(tx);
-      const broadcastRes = await broadcastTx(signedTx, chain);
-      setTxHash(broadcastRes.tx_hash);
-      setStep('done');
-      onSwap?.(broadcastRes.tx_hash);
-      setTimeout(() => onClose(), 3000);
-    } catch (e) {
-      setError(e.message || 'Swap failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!isOpen) return null;
 
+  const getQuote = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setQuote({ amount_out: amount * 0.98, fee_usd: 0.01, slippage: 0.5 });
+      setLoading(false);
+    }, 500);
+  };
+
+  const executeSwap = () => {
+    alert('Swap executed (mock)');
+    onClose();
+    if (onSwap) onSwap('0xmock');
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-lg w-full max-w-md p-6 space-y-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
         <div className="flex justify-between items-center">
-          <h3 className="text-[16px] font-display text-[var(--color-text-primary)]">Swap Tokens</h3>
-          <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] touch-target">
-            <X size={20} />
-          </button>
+          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Swap Tokens</h3>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] touch"><X size={24} /></button>
         </div>
-
         <div>
-          <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Chain</label>
-          <select
-            value={chain}
-            onChange={(e) => { setChain(e.target.value); loadTokens(e.target.value); }}
-            className="w-full bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] mt-1"
-          >
-            <option value="polygon">Polygon</option>
-            <option value="ethereum">Ethereum</option>
-            <option value="bsc">BSC</option>
-            <option value="arbitrum">Arbitrum</option>
-            <option value="base">Base</option>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">From</label>
+          <select value={fromToken} onChange={(e) => setFromToken(e.target.value)} className="input-base">
+            <option>MATIC</option>
+            <option>CLOSE</option>
+            <option>OSINA</option>
           </select>
         </div>
-
         <div>
-          <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">From</label>
-          <select
-            value={fromToken}
-            onChange={(e) => setFromToken(e.target.value)}
-            className="w-full bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] mt-1"
-          >
-            {tokens.map((t) => (
-              <option key={t.address} value={t.address}>{t.symbol}</option>
-            ))}
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">To</label>
+          <select value={toToken} onChange={(e) => setToToken(e.target.value)} className="input-base">
+            <option>CLOSE</option>
+            <option>MATIC</option>
+            <option>OSINA</option>
           </select>
         </div>
-
         <div>
-          <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">To</label>
-          <select
-            value={toToken}
-            onChange={(e) => setToToken(e.target.value)}
-            className="w-full bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] mt-1"
-          >
-            {tokens.map((t) => (
-              <option key={t.address} value={t.address}>{t.symbol}</option>
-            ))}
-          </select>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount</label>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-base" placeholder="0.0" />
         </div>
-
-        <div>
-          <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Amount</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full bg-[var(--color-panel)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] mt-1 focus:outline-none focus:border-brass"
-            placeholder="0.0"
-          />
-        </div>
-
-        {step === 'input' && (
-          <button
-            onClick={getQuote}
-            disabled={loading}
-            className="w-full bg-brass hover:bg-brassLight disabled:opacity-50 text-void font-semibold rounded-md py-2.5 press-soft touch-target"
-          >
+        {quote && (
+          <div className="glass-card p-3 space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-[var(--text-muted)]">Output</span>
+              <span className="text-[var(--text-primary)] font-mono">{quote.amount_out} {toToken}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-muted)]">Fee</span>
+              <span className="text-[var(--accent-brass)] font-mono">${quote.fee_usd}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-muted)]">Slippage</span>
+              <span className="text-[var(--text-primary)] font-mono">{quote.slippage}%</span>
+            </div>
+            <button onClick={executeSwap} className="btn-primary w-full justify-center mt-2">Confirm Swap</button>
+          </div>
+        )}
+        {!quote && (
+          <button onClick={getQuote} disabled={loading} className="btn-primary w-full justify-center">
             {loading ? 'Getting quote…' : 'Get Quote'}
           </button>
         )}
-
-        {step === 'quote' && quote && (
-          <div className="ledger-card p-3 space-y-1 text-[13px]">
-            <div className="flex justify-between">
-              <span className="text-[var(--color-text-muted)]">Output</span>
-              <span className="text-[var(--color-text-primary)] font-mono">
-                {quote.amount_out} {getSymbol(toToken)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[var(--color-text-muted)]">Fee</span>
-              <span className="text-brass font-mono">${quote.fee_usd.toFixed(4)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[var(--color-text-muted)]">Slippage</span>
-              <span className="text-[var(--color-text-primary)] font-mono">{quote.slippage}%</span>
-            </div>
-            <button
-              onClick={executeSwap}
-              disabled={loading}
-              className="w-full bg-brass hover:bg-brassLight disabled:opacity-50 text-void font-semibold rounded-md py-2.5 press-soft touch-target mt-2"
-            >
-              {loading ? 'Swapping…' : 'Confirm Swap'}
-            </button>
-          </div>
-        )}
-
-        {step === 'done' && (
-          <div className="text-center space-y-2">
-            <p className="text-[var(--color-success)] text-[14px] font-medium">✅ Swap executed!</p>
-            <p className="text-[11px] text-[var(--color-text-muted)] font-mono break-all">Tx: {txHash}</p>
-          </div>
-        )}
-
-        {error && <p className="text-[12px] text-[var(--color-danger)] font-mono">{error}</p>}
+        {error && <p className="text-sm text-[var(--danger)] font-mono">{error}</p>}
       </div>
     </div>
   );

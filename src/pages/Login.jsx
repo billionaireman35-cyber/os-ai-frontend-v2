@@ -26,52 +26,52 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[var(--color-bg)] flex items-center justify-center px-4">
+    <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <p className="font-display font-semibold text-2xl text-[var(--color-text-primary)]">OS AI</p>
-          <p className="text-[13px] text-[var(--color-text-muted)] font-mono mt-1">sign in to OS AI</p>
+          <p className="font-display font-bold text-3xl text-[var(--text-primary)]">OS AI</p>
+          <p className="text-sm text-[var(--text-muted)] font-mono mt-1">sign in to OS AI</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="ledger-card p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="glass-card p-6 space-y-4">
           <div>
-            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Email</label>
+            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
+              className="input-base mt-1"
               placeholder="you@domain.com"
             />
           </div>
           <div>
-            <label className="text-[11px] text-[var(--color-text-muted)] font-mono uppercase tracking-wide">Password</label>
+            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-md px-3 py-2.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
+              className="input-base mt-1"
               placeholder="••••••••"
             />
           </div>
 
-          {error && <p className="text-[12px] text-[var(--color-danger)] font-mono">{error}</p>}
+          {error && <p className="text-sm text-[var(--danger)] font-mono">{error}</p>}
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-brass hover:bg-brassLight disabled:opacity-50 text-void text-[14px] font-semibold rounded-md py-2.5 press-soft touch-target"
+            className="btn-primary w-full justify-center text-[16px]"
           >
-            <Fingerprint size={16} />
+            <Fingerprint size={18} />
             {submitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 
-        <p className="text-center text-[13px] text-[var(--color-text-muted)] mt-5">
+        <p className="text-center text-sm text-[var(--text-muted)] mt-5">
           New here?{' '}
-          <Link to="/register" className="text-brass hover:text-brassLight font-medium">
+          <Link to="/register" className="text-[var(--accent-indigo)] hover:text-[var(--accent-hover)] font-medium">
             Create an account
           </Link>
         </p>

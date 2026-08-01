@@ -7,8 +7,8 @@ export function RequireAuth({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-void flex items-center justify-center">
-        <p className="text-[13px] text-muted font-mono">loading OS AI…</p>
+      <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center">
+        <p className="text-[var(--text-muted)] font-mono">Loading OS AI…</p>
       </div>
     );
   }

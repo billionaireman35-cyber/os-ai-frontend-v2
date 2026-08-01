@@ -1,38 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-    <title>OS AI</title>
-    <style>
-      body { margin:0; padding:0; background:#0A1114; color:#E9E4D8; font-family:Inter, sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; flex-direction:column; }
-      #root { width:100%; }
-      .fallback { text-align:center; padding:2rem; display:none; }
-      .fallback h1 { font-size:3rem; color:#c98a3e; margin:0; }
-      .fallback p { font-size:1.2rem; margin:1rem 0; color:#7c8683; }
-      .error-box { background:#121b1e; padding:1rem; border-radius:0.5rem; color:#ef4444; font-family:monospace; max-width:80%; margin:1rem auto; overflow:auto; font-size:0.8rem; display:none; }
-    </style>
-    <script>
-      // Capture errors
-      window.onerror = function(message, source, lineno, colno, error) {
-        var box = document.getElementById('error-box');
-        if (box) {
-          box.style.display = 'block';
-          box.textContent = message + (error?.stack ? '\n' + error.stack : '');
-        }
-        console.error('Global error:', message, source, lineno, colno, error);
-      };
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <div class="fallback"><h1>OS AI</h1><p>Loading...</p><div class="error-box" id="error-box"></div></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OS AI — Sovereign Intelligence</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
 </html>

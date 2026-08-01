@@ -15,19 +15,28 @@ import About from './pages/About';
 import PrivacyTerms from './pages/PrivacyTerms';
 import Developer from './pages/Developer';
 import HustleHub from './pages/HustleHub';
+import Settings from './pages/Settings';
 import { useState } from 'react';
-
-console.log('App.jsx loaded');
+import { MessageSquare, Wallet, Radio, Settings as SettingsIcon } from 'lucide-react';
 
 function Shell() {
   const [expanded, setExpanded] = useState(true);
-  console.log('Shell rendered');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    if (window.innerWidth < 1024) {
+      setMobileSidebarOpen(!mobileSidebarOpen);
+    } else {
+      setExpanded(!expanded);
+    }
+  };
+
   return (
-    <div className="flex h-screen bg-[var(--color-bg)] overflow-hidden">
-      <Sidebar expanded={expanded} setExpanded={setExpanded} />
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${expanded ? 'backdrop-blur-sm' : ''}`}>
-        <Omnibar />
-        <main className="flex-1 min-h-0 overflow-y-auto">
+    <div className="flex h-screen bg-[var(--bg-primary)] overflow-hidden">
+      <Sidebar expanded={expanded} setExpanded={setExpanded} mobileOpen={mobileSidebarOpen} setMobileOpen={setMobileSidebarOpen} />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Omnibar toggleSidebar={toggleSidebar} />
+        <main className="flex-1 min-h-0 overflow-y-auto pb-16 lg:pb-0">
           <Routes>
             <Route path="/" element={<Chat />} />
             <Route path="/vault" element={<Vault />} />
@@ -37,15 +46,34 @@ function Shell() {
             <Route path="/privacy-terms" element={<PrivacyTerms />} />
             <Route path="/developer" element={<Developer />} />
             <Route path="/hustle-hub" element={<HustleHub />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
+        {/* Mobile Bottom Navigation */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)] border-t border-[var(--border-color)] flex items-center justify-around h-16 z-40">
+          <button onClick={() => window.location.href = '/'} className="flex flex-col items-center text-[var(--text-muted)] hover:text-[var(--text-primary)] touch">
+            <MessageSquare size={20} />
+            <span className="text-[10px] mt-0.5">Chat</span>
+          </button>
+          <button onClick={() => window.location.href = '/vault'} className="flex flex-col items-center text-[var(--text-muted)] hover:text-[var(--text-primary)] touch">
+            <Wallet size={20} />
+            <span className="text-[10px] mt-0.5">Vault</span>
+          </button>
+          <button onClick={() => window.location.href = '/pulse'} className="flex flex-col items-center text-[var(--text-muted)] hover:text-[var(--text-primary)] touch">
+            <Radio size={20} />
+            <span className="text-[10px] mt-0.5">Pulse</span>
+          </button>
+          <button onClick={() => window.location.href = '/settings'} className="flex flex-col items-center text-[var(--text-muted)] hover:text-[var(--text-primary)] touch">
+            <SettingsIcon size={20} />
+            <span className="text-[10px] mt-0.5">Settings</span>
+          </button>
+        </nav>
       </div>
     </div>
   );
 }
 
 function App() {
-  console.log('App rendered');
   return (
     <AuthProvider>
       <WalletProvider>
