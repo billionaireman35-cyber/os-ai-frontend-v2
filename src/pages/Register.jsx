@@ -1,154 +1,155 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Fingerprint } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { api } from '../utils/api';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
 
 export default function Register() {
-  const { register } = useAuth();
   const navigate = useNavigate();
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [code, setCode] = useState('');
-  const [error, setError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [codeSent, setCodeSent] = useState(false);
-  const [sendingCode, setSendingCode] = useState(false);
-  const [codeError, setCodeError] = useState(null);
-  const [codeSuccess, setCodeSuccess] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const [codeSending, setCodeSending] = useState(false);
 
   const handleSendCode = async () => {
-    if (!email || !email.includes('@')) {
-      setCodeError('Please enter a valid email address first.');
+    if (!email) {
+      setError('Please enter your email first.');
       return;
     }
-    setSendingCode(true);
-    setCodeError(null);
+    setCodeSending(true);
+    setError('');
     try {
-      await api.post('/auth/send-code', { email, purpose: 'verification' });
+      const response = await fetch(`${API_BASE}/auth/send-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, purpose: 'verification' }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to send code.');
+      }
+      // If staging returns the code, auto‑fill it
+      if (data.code) {
+        setVerificationCode(data.code);
+      }
       setCodeSent(true);
-      setCodeSuccess(true);
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
     } catch (err) {
-      setCodeError(err.response?.data?.detail || 'Failed to send code. Try again.');
-      setCodeSent(false);
+      setError(err.message || 'Could not send verification code.');
     } finally {
-      setSendingCode(false);
+      setCodeSending(false);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSubmitting(true);
+    setLoading(true);
+    setError('');
     try {
-      await register(email, password, name, code);
-      navigate('/');
+      const response = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          verification_code: verificationCode,
+          fingerprint: 'web_' + Date.now(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Registration failed.');
+      }
+      // Registration succeeded – store token and redirect
+      localStorage.setItem('token', data.token);
+      navigate('/chat');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed.');
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <p className="font-display font-bold text-3xl text-[var(--text-primary)]">OS AI</p>
-          <p className="text-sm text-[var(--text-muted)] font-mono mt-1">create your account</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="glass-card p-6 space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+      <div className="max-w-md w-full bg-gray-800 p-8 rounded-xl shadow-xl">
+        <h2 className="text-2xl font-bold text-white text-center mb-6">Create your account</h2>
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-2 rounded-lg mb-4 text-sm">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Name</label>
+            <label className="block text-sm font-medium text-gray-300">Name</label>
             <input
-              required
+              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="input-base mt-1"
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Your name"
+              required
             />
           </div>
-
           <div>
-            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Email</label>
-            <div className="flex gap-2 mt-1">
+            <label className="block text-sm font-medium text-gray-300">Email</label>
+            <div className="flex gap-2">
               <input
                 type="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input-base flex-1"
-                placeholder="you@domain.com"
+                className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="you@example.com"
+                required
               />
               <button
                 type="button"
                 onClick={handleSendCode}
-                disabled={sendingCode || countdown > 0}
-                className="btn-secondary whitespace-nowrap text-sm"
+                disabled={codeSending || codeSent}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm whitespace-nowrap"
               >
-                {sendingCode ? 'Sending…' : countdown > 0 ? `${countdown}s` : 'Send Code'}
+                {codeSending ? 'Sending...' : codeSent ? 'Sent ✓' : 'Send Code'}
               </button>
             </div>
-            {codeError && <p className="text-xs text-[var(--danger)] mt-1">{codeError}</p>}
-            {codeSuccess && (
-              <p className="text-xs text-[var(--success)] mt-1">
-                ✅ Code sent to {email}. Check your inbox (and spam folder).
-              </p>
-            )}
           </div>
-
           <div>
-            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Password</label>
+            <label className="block text-sm font-medium text-gray-300">Password</label>
             <input
               type="password"
-              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="input-base mt-1"
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Verification code</label>
-            <input
               required
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="input-base mt-1"
-              placeholder="6-digit code"
+              minLength={8}
             />
           </div>
-
-          {error && <p className="text-sm text-[var(--danger)] font-mono">{error}</p>}
-
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Verification Code</label>
+            <input
+              type="text"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value.toUpperCase())}
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="6-digit code"
+              required
+              maxLength={6}
+            />
+          </div>
           <button
             type="submit"
-            disabled={submitting}
-            className="btn-primary w-full justify-center text-[16px]"
+            disabled={loading || !codeSent}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg transition"
           >
-            <Fingerprint size={18} />
-            {submitting ? 'Creating…' : 'Create account'}
+            {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
-
-        <p className="text-center text-sm text-[var(--text-muted)] mt-5">
+        <p className="mt-4 text-center text-gray-400 text-sm">
           Already have an account?{' '}
-          <Link to="/login" className="text-[var(--accent-indigo)] hover:text-[var(--accent-hover)] font-medium">
+          <Link to="/login" className="text-blue-400 hover:underline">
             Sign in
           </Link>
         </p>
