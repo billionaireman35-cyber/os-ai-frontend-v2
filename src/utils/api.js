@@ -1,10 +1,13 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Use VITE_API_BASE_URL (matches your .env.local) with fallback
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://os-ai-backend-v2-1.onrender.com/api';
 
 export const api = axios.create({
   baseURL: API_BASE,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 api.interceptors.request.use((config) => {
