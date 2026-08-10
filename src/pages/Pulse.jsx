@@ -10,7 +10,12 @@ export default function Pulse() {
   const [liveTokens, setLiveTokens] = useState([]);
 
   useEffect(() => {
-    api.get('/market/news').then((res) => setNews(res.data)).catch(() => setNews([]));
+    api.get('/market/news')
+      .then((res) => {
+        // ✅ Fix: extract the news array from the response
+        setNews(res.data?.news || []);
+      })
+      .catch(() => setNews([]));
   }, []);
 
   useEffect(() => {
@@ -27,7 +32,7 @@ export default function Pulse() {
               const newTokens = data.data.filter(
                 (t) => !prev.some((p) => p.tokenAddress === t.tokenAddress && p.chainId === t.chainId)
               );
-              return [...newTokens, ...prev].slice(0, 100); // longer feed
+              return [...newTokens, ...prev].slice(0, 100);
             });
           }
         } catch (e) { /* ignore */ }
@@ -85,9 +90,9 @@ export default function Pulse() {
           ) : (
             news.map((a, i) => (
               <div key={i} className="glass p-4">
-                <h3 className="text-lg text-[var(--color-text-primary)] font-bold">{a.headline}</h3>
+                <h3 className="text-lg text-[var(--color-text-primary)] font-bold">{a.title || a.headline}</h3>
                 <p className="text-sm text-[var(--color-text-muted)] font-mono mt-1">
-                  {a.source} · {new Date(a.publishedAt).toLocaleTimeString()}
+                  {a.source || 'Unknown'} · {a.publishedAt ? new Date(a.publishedAt).toLocaleTimeString() : ''}
                 </p>
               </div>
             ))
