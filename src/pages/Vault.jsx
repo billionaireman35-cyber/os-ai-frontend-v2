@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign, BarChart, Wallet, RefreshCw, Loader2 } from 'lucide-react';
+import { 
+  ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign, 
+  BarChart, Wallet, RefreshCw, Loader2, Copy, CheckCircle 
+} from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
@@ -11,14 +14,7 @@ import { WalletAnalytics } from '../components/wallet/WalletAnalytics';
 import { ToastContainer, useToast } from '../components/ui/Toast';
 
 const chains = ['all', 'polygon', 'ethereum', 'bsc', 'arbitrum', 'base'];
-
-const chainLogos = {
-  polygon: '🟣',
-  ethereum: '💎',
-  bsc: '🟡',
-  arbitrum: '🔵',
-  base: '🔷',
-};
+const chainLogos = { polygon: '🟣', ethereum: '💎', bsc: '🟡', arbitrum: '🔵', base: '🔷' };
 
 function SendModal({ isOpen, onClose, asset, onSent }) {
   const [to, setTo] = useState('');
@@ -26,13 +22,10 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-
   if (!isOpen || !asset) return null;
-
   const handleSend = async (password) => {
     if (!password) { setError('Password required'); return; }
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const res = await api.post('/wallet/send', {
         chain: asset.chain,
@@ -50,7 +43,6 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
       setShowPasswordModal(false);
     }
   };
-
   return (
     <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -79,7 +71,6 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
           </div>
         </div>
       </div>
-
       <Modal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
@@ -107,6 +98,7 @@ function StandardWallet() {
   const [showSellModal, setShowSellModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const filtered = Array.isArray(assets) ? (chain === 'all' ? assets : assets.filter((a) => a.chain === chain)) : [];
 
@@ -117,12 +109,9 @@ function StandardWallet() {
       const res = await api.post('/wallet/create', { password });
       if (res.data?.wallet) {
         const { address } = res.data.wallet;
-        addToast(`Wallet created! Address: ${address.slice(0, 10)}... Private key encrypted.`, 'success', 6000);
-        // Refresh user profile to get the new wallet_address
+        addToast(`Wallet created! Address: ${address.slice(0, 10)}...`, 'success', 6000);
         const userRes = await api.get('/auth/me');
-        if (setUser && userRes.data) {
-          setUser(userRes.data);
-        }
+        if (setUser && userRes.data) setUser(userRes.data);
         fetchBalances();
         setShowPasswordModal(false);
       } else {
@@ -135,69 +124,90 @@ function StandardWallet() {
     }
   };
 
-  useEffect(() => {
-    if (user) fetchBalances();
-  }, [user]);
+  useEffect(() => { if (user) fetchBalances(); }, [user]);
 
   const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error) || 'Unknown error');
+
+  const copyAddress = () => {
+    if (user?.wallet_address) {
+      navigator.clipboard.writeText(user.wallet_address);
+      setCopied(true);
+      addToast('Address copied!', 'info', 2000);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const hasWallet = !!user?.wallet_address;
 
   return (
     <div className="space-y-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      <div className="flex flex-col tablet:flex-row justify-between items-start tablet:items-end gap-4">
-        <div>
-          <p className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Total balance</p>
-          <p className="text-4xl font-mono font-bold text-[#d4af37] mt-1">${totalUsd.toFixed(2)}</p>
+      {/* Wallet Card */}
+      {hasWallet ? (
+        <div className="glass-card p-6 border border-[#d4af37]/20 bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] rounded-2xl shadow-xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                <Wallet size={16} className="text-[#d4af37]" />
+                <span>OS Vaults Wallet</span>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xl font-mono text-[var(--text-primary)]">{user.wallet_address.slice(0, 8)}...{user.wallet_address.slice(-6)}</span>
+                <button onClick={copyAddress} className="text-[var(--text-muted)] hover:text-[#d4af37] transition">
+                  {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
+                </button>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Total Balance</p>
+              <p className="text-3xl font-mono font-bold text-[#d4af37]">${totalUsd.toFixed(2)}</p>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {chains.map((c) => (
-            <button
-              key={c}
-              onClick={() => setChain(c)}
-              className={`px-4 py-2 rounded-full text-sm font-mono touch transition-all ${
-                chain === c ? 'bg-[#d4af37] text-black font-bold' : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-color)]'
-              }`}
-            >
-              {c.toUpperCase()}
-            </button>
-          ))}
+      ) : (
+        <div className="glass-card p-6 border border-dashed border-[#d4af37]/30 text-center">
+          <p className="text-[var(--text-muted)]">No wallet found. Create one to start.</p>
         </div>
-      </div>
+      )}
 
-      <div className="flex gap-3 flex-wrap">
-        <button
-          onClick={() => setShowPasswordModal(true)}
-          disabled={creating}
-          className="bg-[#d4af37] hover:bg-[#c4a030] text-black font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition disabled:opacity-50"
-        >
-          <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
-        </button>
-        <button
-          onClick={() => { if (filtered.length === 0) { addToast('No assets. Create a wallet and add funds first.', 'warning'); return; } setSendAsset(filtered[0]); setShowSendModal(true); }}
-          className="btn-primary flex items-center gap-2"
-        >
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-3">
+        {!hasWallet && (
+          <button onClick={() => setShowPasswordModal(true)} disabled={creating} className="bg-[#d4af37] hover:bg-[#c4a030] text-black font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition disabled:opacity-50">
+            <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
+          </button>
+        )}
+        <button onClick={() => { if (!hasWallet) { addToast('Create a wallet first.', 'warning'); return; } if (filtered.length === 0) { addToast('No assets to send.', 'warning'); return; } setSendAsset(filtered[0]); setShowSendModal(true); }} className="btn-primary flex items-center gap-2" disabled={!hasWallet}>
           <Send size={18} /> Send
         </button>
-        <button onClick={() => setShowSwapModal(true)} className="btn-secondary flex items-center gap-2">
+        <button onClick={() => { if (!hasWallet) { addToast('Create a wallet first.', 'warning'); return; } setShowSwapModal(true); }} className="btn-secondary flex items-center gap-2" disabled={!hasWallet}>
           <ArrowUpDown size={18} /> Swap
         </button>
-        <button onClick={() => setShowBuyModal(true)} className="btn-primary flex items-center gap-2" style={{ background: 'var(--success)', color: 'white' }}>
+        <button onClick={() => { if (!hasWallet) { addToast('Create a wallet first.', 'warning'); return; } setShowBuyModal(true); }} className="btn-primary flex items-center gap-2" style={{ background: 'var(--success)', color: 'white' }} disabled={!hasWallet}>
           <CreditCard size={18} /> Buy
         </button>
-        <button onClick={() => setShowSellModal(true)} className="btn-secondary flex items-center gap-2" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
+        <button onClick={() => { if (!hasWallet) { addToast('Create a wallet first.', 'warning'); return; } setShowSellModal(true); }} className="btn-secondary flex items-center gap-2" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} disabled={!hasWallet}>
           <DollarSign size={18} /> Sell
         </button>
-        <button onClick={() => fetchBalances()} className="btn-secondary flex items-center gap-2">
+        <button onClick={fetchBalances} className="btn-secondary flex items-center gap-2">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
         </button>
       </div>
 
+      {/* Chain Selector */}
+      <div className="flex gap-2 flex-wrap">
+        {chains.map((c) => (
+          <button key={c} onClick={() => setChain(c)} className={`px-4 py-2 rounded-full text-sm font-mono touch transition-all ${chain === c ? 'bg-[#d4af37] text-black font-bold' : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-color)]'}`}>
+            {c.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* Asset List */}
       {loading && (
-        <div className="grid grid-cols-1 tablet:grid-cols-2 landscape:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="glass-card px-5 py-4 animate-pulse h-20 bg-white/5 rounded-xl" />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3].map((i) => <div key={i} className="glass-card px-5 py-4 animate-pulse h-20 bg-white/5 rounded-xl" />)}
         </div>
       )}
 
@@ -209,12 +219,12 @@ function StandardWallet() {
       )}
 
       {!loading && !error && (
-        <div className="grid grid-cols-1 tablet:grid-cols-2 landscape:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.length === 0 ? (
-            <p className="text-[var(--text-muted)] text-sm col-span-full">No assets on this chain yet. Create a wallet and add funds.</p>
+            <p className="text-[var(--text-muted)] text-sm col-span-full">No assets on this chain yet.</p>
           ) : (
             filtered.map((a, i) => (
-              <div key={i} className="glass-card px-5 py-4 flex items-center justify-between border border-white/5 hover:border-[#d4af37]/30 transition-all">
+              <div key={i} className="glass-card px-4 py-3 flex items-center justify-between border border-white/5 hover:border-[#d4af37]/30 transition-all rounded-xl">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{chainLogos[a.chain] || '🪙'}</span>
                   <div>
@@ -223,7 +233,7 @@ function StandardWallet() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <p className="font-mono text-[#d4af37] text-lg">${a.usdValue.toFixed(2)}</p>
+                  <p className="font-mono text-[#d4af37] text-lg">${(a.usdValue || 0).toFixed(2)}</p>
                   <button onClick={() => { setSendAsset(a); setShowSendModal(true); }} className="text-[var(--text-muted)] hover:text-[#d4af37] transition"><Send size={16} /></button>
                 </div>
               </div>
@@ -232,10 +242,10 @@ function StandardWallet() {
         </div>
       )}
 
-      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} onSent={(txHash) => { addToast(`Transaction sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
-      <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} onSwap={(txHash) => { addToast(`Swap executed: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
-      <BuyModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onBuy={() => { addToast('Buy initiated. Check your wallet.', 'info'); fetchBalances(); }} />
-      <SellModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} onSell={() => { addToast('Sell initiated. Check your email for confirmation.', 'info'); fetchBalances(); }} />
+      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <BuyModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onBuy={() => { addToast('Buy initiated.', 'info'); fetchBalances(); }} />
+      <SellModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} onSell={() => { addToast('Sell initiated.', 'info'); fetchBalances(); }} />
 
       <Modal
         isOpen={showPasswordModal}
@@ -272,23 +282,16 @@ function SafeWallet() {
 
 export default function Vault() {
   const [tab, setTab] = useState('standard');
-
   return (
     <div className="p-4 tablet:p-6 space-y-6">
       <h1 className="text-3xl font-display font-bold text-[var(--text-primary)] flex items-center gap-2">
-        <Wallet size={28} className="text-[#d4af37]" /> OS Vault
+        <Wallet size={28} className="text-[#d4af37]" /> OS Vaults
       </h1>
       <p className="text-sm text-[var(--text-muted)]">Multi-chain non-custodial asset hub</p>
       <div className="flex gap-2 glass-card p-1 w-fit border border-white/5">
-        <button onClick={() => setTab('standard')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all ${tab === 'standard' ? 'bg-[#d4af37] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
-          Portfolio
-        </button>
-        <button onClick={() => setTab('analytics')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'analytics' ? 'bg-[#d4af37] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
-          <BarChart size={16} /> Analytics
-        </button>
-        <button onClick={() => setTab('safe')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'safe' ? 'bg-[#d4af37] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
-          <ShieldCheck size={16} /> Safe
-        </button>
+        <button onClick={() => setTab('standard')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all ${tab === 'standard' ? 'bg-[#d4af37] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
+        <button onClick={() => setTab('analytics')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'analytics' ? 'bg-[#d4af37] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
+        <button onClick={() => setTab('safe')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'safe' ? 'bg-[#d4af37] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
       </div>
       {tab === 'standard' && <StandardWallet />}
       {tab === 'analytics' && <WalletAnalytics />}

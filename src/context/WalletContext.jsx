@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
 
+const CLOSE_CONTRACT = import.meta.env.VITE_CLOSE_CONTRACT || '0x3c6833cFDdED80fE76474a3Cb2Cc050Daec91fe8';
+
 const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
@@ -25,6 +27,8 @@ export function WalletProvider({ children }) {
       const data = res.data.balances || {};
       const items = [];
       let total = 0;
+
+      // Chain balances
       for (const [chain, chainData] of Object.entries(data)) {
         const native = chainData.native;
         if (native && native.balance > 0) {
@@ -44,11 +48,25 @@ export function WalletProvider({ children }) {
               symbol,
               balance: token.balance,
               usdValue: token.usd || 0,
+              address: token.address,
             });
             total += token.usd || 0;
           }
         }
       }
+
+      // ✅ Include internal CLOSE with contract address
+      if (res.data.close && res.data.close.balance > 0) {
+        items.push({
+          chain: 'polygon',
+          symbol: 'CLOSE',
+          balance: res.data.close.balance,
+          usdValue: res.data.close.usd || 0,
+          address: CLOSE_CONTRACT,  // <-- contract address for sending
+        });
+        total += res.data.close.usd || 0;
+      }
+
       setAssets(items);
       setTotalUsd(total);
     } catch (e) {

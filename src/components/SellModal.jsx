@@ -18,18 +18,22 @@ export function SellModal({ isOpen, onClose, onSell }) {
         currency_code: currency,
         crypto_amount: parseFloat(cryptoAmount) || undefined,
       });
-      window.open(res.data.url, '_blank');
-      onSell?.();
-      onClose();
+      if (res.data?.url) {
+        window.open(res.data.url, '_blank');
+        onSell?.();
+        onClose();
+      } else {
+        throw new Error('No URL returned from MoonPay');
+      }
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to initiate sell');
+      setError(e.response?.data?.detail || e.message || 'Failed to initiate sell');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
         <div className="flex justify-between items-center">
           <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Sell Crypto</h3>

@@ -18,12 +18,15 @@ export function BuyModal({ isOpen, onClose, onBuy }) {
         currency_code: currency,
         fiat_amount: fiatAmount,
       });
-      // Redirect to MoonPay
-      window.open(res.data.url, '_blank');
-      onBuy?.();
-      onClose();
+      if (res.data?.url) {
+        window.open(res.data.url, '_blank');
+        onBuy?.();
+        onClose();
+      } else {
+        throw new Error('No URL returned from MoonPay');
+      }
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to initiate buy');
+      setError(e.response?.data?.detail || e.message || 'Failed to initiate buy');
     } finally {
       setLoading(false);
     }
