@@ -6,58 +6,55 @@ const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
   const { user } = useAuth();
-  const [balances, setBalances] = useState([]);
+  const [assets, setAssets] = useState([]);
   const [totalUsd, setTotalUsd] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchBalances = async () => {
     if (!user) {
-      setBalances([]);
+      setAssets([]);
       setTotalUsd(0);
+      setError(null);
       return;
     }
     setLoading(true);
     setError(null);
     try {
       const res = await api.get('/wallet/balance');
-      const data = res.data;
+      const data = res.data.balances || {};
       const items = [];
       let total = 0;
       for (const [chain, chainData] of Object.entries(data)) {
-        if (chain === 'close') continue;
         const native = chainData.native;
-        items.push({
-          chain,
-          symbol: native.symbol,
-          balance: native.balance,
-          usdValue: native.usd || 0,
-        });
-        total += native.usd || 0;
-        for (const [symbol, token] of Object.entries(chainData.tokens || {})) {
+        if (native && native.balance > 0) {
           items.push({
             chain,
-            symbol,
-            balance: token.balance,
-            usdValue: token.usd || 0,
+            symbol: native.symbol || chain.toUpperCase(),
+            balance: native.balance,
+            usdValue: native.usd || 0,
           });
-          total += token.usd || 0;
+          total += native.usd || 0;
+        }
+        const tokens = chainData.tokens || {};
+        for (const [symbol, token] of Object.entries(tokens)) {
+          if (token.balance > 0) {
+            items.push({
+              chain,
+              symbol,
+              balance: token.balance,
+              usdValue: token.usd || 0,
+            });
+            total += token.usd || 0;
+          }
         }
       }
-      if (data.close) {
-        items.push({
-          chain: 'close',
-          symbol: 'CLOSE',
-          balance: data.close.balance,
-          usdValue: data.close.usd || 0,
-        });
-      }
-      setBalances(items);
+      setAssets(items);
       setTotalUsd(total);
     } catch (e) {
       console.error('Failed to fetch balances', e);
-      setError(e);
-      setBalances([]);
+      setError(e.message || 'Failed to fetch balances');
+      setAssets([]);
       setTotalUsd(0);
     } finally {
       setLoading(false);
@@ -68,13 +65,8 @@ export function WalletProvider({ children }) {
     fetchBalances();
   }, [user]);
 
-  const sendTransaction = async (to, amount, token, chain, signedTx) => {
-    const res = await api.post('/wallet/send', { to, amount, token, chain, signed_tx: signedTx });
-    return res.data;
-  };
-
   return (
-    <WalletContext.Provider value={{ balances, totalUsd, loading, error, fetchBalances, sendTransaction }}>
+    <WalletContext.Provider value={{ assets, totalUsd, loading, error, fetchBalances }}>
       {children}
     </WalletContext.Provider>
   );
