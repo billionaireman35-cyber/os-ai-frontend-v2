@@ -2,28 +2,27 @@ import React, { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { api } from '../utils/api';
 
-export function BuyModal({ isOpen, onClose, onBuy }) {
+export function SellModal({ isOpen, onClose, onSell }) {
   const [currency, setCurrency] = useState('eth');
-  const [fiatAmount, setFiatAmount] = useState(50);
+  const [cryptoAmount, setCryptoAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   if (!isOpen) return null;
 
-  const handleBuy = async () => {
+  const handleSell = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post('/moonpay/buy', {
+      const res = await api.post('/moonpay/sell', {
         currency_code: currency,
-        fiat_amount: fiatAmount,
+        crypto_amount: parseFloat(cryptoAmount) || undefined,
       });
-      // Redirect to MoonPay
       window.open(res.data.url, '_blank');
-      onBuy?.();
+      onSell?.();
       onClose();
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to initiate buy');
+      setError(e.response?.data?.detail || 'Failed to initiate sell');
     } finally {
       setLoading(false);
     }
@@ -33,7 +32,7 @@ export function BuyModal({ isOpen, onClose, onBuy }) {
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
         <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Buy Crypto</h3>
+          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Sell Crypto</h3>
           <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
         </div>
         <div>
@@ -47,13 +46,13 @@ export function BuyModal({ isOpen, onClose, onBuy }) {
           </select>
         </div>
         <div>
-          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount (USD)</label>
-          <input type="number" value={fiatAmount} onChange={(e) => setFiatAmount(parseFloat(e.target.value))} className="input-base" min={10} step={5} />
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount (Crypto)</label>
+          <input type="number" value={cryptoAmount} onChange={(e) => setCryptoAmount(e.target.value)} className="input-base" placeholder="0.0" step="0.01" min="0" />
         </div>
         {error && <p className="text-sm text-[var(--danger)] font-mono">{error}</p>}
         <div className="flex gap-2">
-          <button onClick={handleBuy} disabled={loading} className="btn-primary flex-1 justify-center">
-            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Buy with MoonPay'}
+          <button onClick={handleSell} disabled={loading} className="btn-primary flex-1 justify-center" style={{ backgroundColor: 'var(--danger)', hover: 'var(--danger-dark)' }}>
+            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Sell with MoonPay'}
           </button>
           <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
         </div>

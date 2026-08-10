@@ -1,497 +1,280 @@
-import { useState, useRef, useEffect } from 'react';
-import { Send, Plus, ChevronDown, Sparkles, Mic, MicOff, ThumbsUp, Heart, Brain, Meh, Rocket } from 'lucide-react';
-import { api } from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Copy, Check } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-
-const REACTIONS = [
-  { icon: ThumbsUp, label: '👍', key: 'like' },
-  { icon: Heart, label: '❤️', key: 'love' },
-  { icon: Brain, label: '🧠', key: 'brain' },
-  { icon: Meh, label: '🤔', key: 'think' },
-  { icon: Rocket, label: '🚀', key: 'rocket' },
-];
-
-const MODELS_BY_TIER = {
-  founder: ['claude-3.5-sonnet', 'gpt-4o', 'mistral-large', 'llama-3.3-70b', 'gemini-pro'],
-  enterprise: ['gpt-4o', 'claude-3.5-sonnet', 'mistral-large'],
-  pro: ['claude-3.5-haiku', 'gpt-4o-mini', 'mistral-small'],
-  builder: ['mistral-small', 'llama-3.3-70b'],
-  guest: ['llama-3.3-70b'],
-};
-
-const MODEL_DISPLAY_NAMES = {
-  'claude-3.5-sonnet': 'Claude 3.5 Sonnet',
-  'gpt-4o': 'GPT-4o',
-  'mistral-large': 'Mistral Large',
-  'llama-3.3-70b': 'Llama 3.3 70B',
-  'gemini-pro': 'Gemini Pro',
-  'claude-3.5-haiku': 'Claude 3.5 Haiku',
-  'gpt-4o-mini': 'GPT-4o Mini',
-  'mistral-small': 'Mistral Small',
-};
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
 
 export default function Chat() {
-  const { user } = useAuth();
-  const tier = user?.stake_tier || 'guest';
-  const availableModels = MODELS_BY_TIER[tier] || MODELS_BY_TIER['guest'];
-
-  const [chats, setChats] = useState([]);
-  const [selectedChatId, setSelectedChatId] = useState(null);
+  const location = useLocation();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const [loadingChats, setLoadingChats] = useState(true);
-  const [showChatList, setShowChatList] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [reactions, setReactions] = useState({});
-  const [suggestions, setSuggestions] = useState([]);
-  const [selectedModel, setSelectedModel] = useState(() => {
-    return localStorage.getItem('os-ai-selected-model') || availableModels[0] || 'llama-3.3-70b';
-  });
-  const [showModelDropdown, setShowModelDropdown] = useState(false);
-  const scrollRef = useRef(null);
-  const textareaRef = useRef(null);
-  const recognitionRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [chatId, setChatId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
+  // Auto-scroll to bottom
   useEffect(() => {
-    if (!availableModels.includes(selectedModel)) {
-      setSelectedModel(availableModels[0] || 'llama-3.3-70b');
-    }
-  }, [tier, availableModels]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
+  // Handle quick action from URL query param (side bar)
   useEffect(() => {
-    localStorage.setItem('os-ai-selected-model', selectedModel);
-  }, [selectedModel]);
-
-  // Voice Recognition
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US';
-
-      recognitionRef.current.onresult = (event) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            setInput(transcript);
-            setIsListening(false);
-          }
-        }
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode');
+    if (mode) {
+      const promptMap = {
+        research: 'Research: ',
+        coding: 'Code: ',
+        crypto: 'Crypto: ',
+        everyday: 'Everyday: '
       };
-
-      recognitionRef.current.onerror = () => setIsListening(false);
-      recognitionRef.current.onend = () => setIsListening(false);
+      const prefix = promptMap[mode] || '';
+      setInput(prefix);
+      window.history.replaceState({}, document.title, '/');
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, []);
+  }, [location]);
 
-  const toggleVoiceInput = () => {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
+  const getToken = () => localStorage.getItem('token');
+
+  const copyToClipboard = (text, id) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+      }).catch(() => fallbackCopy(text, id));
     } else {
-      if (recognitionRef.current) {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } else {
-        alert('Voice input is not supported in this browser.');
-      }
+      fallbackCopy(text, id);
     }
   };
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-    }
-  }, [input]);
+  const fallbackCopy = (text, id) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
-  useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const res = await api.get('/chat/chats');
-        setChats(res.data || []);
-        if (res.data && res.data.length > 0 && !selectedChatId) {
-          setSelectedChatId(res.data[0].id);
-        }
-      } catch (e) {
-        console.error('Failed to fetch chats:', e);
-      } finally {
-        setLoadingChats(false);
-      }
-    };
-    fetchChats();
-  }, []);
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
 
-  useEffect(() => {
-    if (!selectedChatId) {
-      setMessages([]);
-      setSuggestions([]);
-      return;
-    }
-    const fetchMessages = async () => {
-      try {
-        const res = await api.get(`/chat/chats/${selectedChatId}/messages`);
-        setMessages(res.data || []);
-        setSuggestions([]);
-      } catch (e) {
-        console.error('Failed to fetch messages:', e);
-        setMessages([]);
-      }
-    };
-    fetchMessages();
-  }, [selectedChatId]);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const send = async () => {
-    const text = input.trim();
-    if (!text || sending) return;
-
-    const messagesPayload = messages.map(m => ({
-      role: m.role,
-      content: m.content,
-    }));
-    const userMessage = { role: 'user', content: text };
-    const newMessages = [...messagesPayload, userMessage];
-    setMessages(prev => [...prev, { role: 'user', content: text }]);
+    const userMessage = { role: 'user', content: input, createdAt: new Date().toISOString() };
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
-    setSending(true);
-
-    const aiMessageIndex = messages.length + 1;
-    setMessages(prev => [...prev, { role: 'assistant', content: '', loading: true }]);
-    setSuggestions([]);
+    setLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Please log in to chat.');
-        setSending(false);
-        return;
-      }
+      const token = getToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
-          messages: messagesPayload.concat(userMessage),
-          chat_id: selectedChatId || undefined,
-          model: selectedModel,
+          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          chat_id: chatId,
         }),
       });
 
+      // Handle non-2xx responses gracefully
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error ${response.status}: ${errorText}`);
+        const errorData = await response.json();
+        // If it's a 402 (payment required), show the message from backend
+        if (response.status === 402 && errorData.content) {
+          setMessages(prev => [
+            ...prev,
+            { role: 'assistant', content: errorData.content, model: 'system', createdAt: new Date().toISOString() }
+          ]);
+          setLoading(false);
+          return;
+        }
+        throw new Error(errorData.detail || errorData.content || 'Chat request failed');
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let fullText = '';
+      let assistantMessage = { role: 'assistant', content: '', id: Date.now().toString(), createdAt: new Date().toISOString() };
+      let done = false;
 
-      setMessages(prev => {
-        const updated = [...prev];
-        if (updated[aiMessageIndex]) {
-          updated[aiMessageIndex] = { ...updated[aiMessageIndex], loading: false };
-        }
-        return updated;
-      });
+      setMessages(prev => [...prev, { ...assistantMessage, content: '' }]);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        if (readerDone) { done = true; break; }
+        const chunk = decoder.decode(value, { stream: true });
         const lines = chunk.split('\n');
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const payload = line.slice(6);
-            if (payload === '[DONE]') continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') { done = true; break; }
             try {
-              const data = JSON.parse(payload);
-              const content = data.content || '';
-              if (content) {
-                fullText += content;
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                assistantMessage.content += parsed.content;
                 setMessages(prev => {
-                  const updated = [...prev];
-                  if (updated[aiMessageIndex]) {
-                    updated[aiMessageIndex] = { ...updated[aiMessageIndex], content: fullText };
+                  const last = prev[prev.length - 1];
+                  if (last && last.role === 'assistant' && last.id === assistantMessage.id) {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = { ...assistantMessage };
+                    return updated;
+                  } else {
+                    return [...prev, { ...assistantMessage }];
                   }
-                  return updated;
                 });
               }
-            } catch (e) {
-              console.error('Failed to parse stream chunk:', e);
-            }
+            } catch (e) {}
           }
         }
       }
-
-      const res = await api.get('/chat/chats');
-      setChats(res.data || []);
-      if (res.data && res.data.length > 0) {
-        const newChat = res.data[0];
-        setSelectedChatId(newChat.id);
-      }
-
-      // Generate suggestions
-      try {
-        const suggestionMessages = [
-          { role: 'system', content: 'Based on the user\'s last message, suggest 3 follow-up questions or actions the user might want to take. Return only the suggestions as a JSON array of strings.' },
-          { role: 'user', content: text }
-        ];
-        const suggRes = await api.post('/chat', {
-          messages: suggestionMessages,
-          chat_id: selectedChatId || undefined,
-          model: selectedModel,
-        });
-        if (suggRes.data && suggRes.data.content) {
-          try {
-            const parsed = JSON.parse(suggRes.data.content);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setSuggestions(parsed.slice(0, 3));
-            }
-          } catch (e) {
-            const matches = suggRes.data.content.match(/\["(.*?)"\]/s);
-            if (matches) {
-              const items = matches[1].split('","').map(s => s.replace(/^"|"$/g, ''));
-              setSuggestions(items.slice(0, 3));
-            }
-          }
-        }
-      } catch (e) {
-        setSuggestions([
-          'Tell me more about that.',
-          'Can you give an example?',
-          'How does this apply to crypto?'
-        ]);
-      }
-
-    } catch (e) {
-      console.error('Send error:', e);
-      setMessages(prev => {
-        const updated = [...prev];
-        if (updated[aiMessageIndex]) {
-          updated[aiMessageIndex] = { ...updated[aiMessageIndex], content: '⚠️ Failed to stream response.' };
-        }
-        return updated;
-      });
+    } catch (error) {
+      console.error('Chat error:', error);
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: '⚠️ Error: ' + error.message, createdAt: new Date().toISOString() }
+      ]);
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
 
-  const handleReaction = (msgIndex, reactionKey) => {
-    const msgId = messages[msgIndex]?.id || `msg-${msgIndex}`;
-    setReactions(prev => {
-      const current = prev[msgId] || {};
-      const newCount = (current[reactionKey] || 0) + 1;
-      return {
-        ...prev,
-        [msgId]: { ...current, [reactionKey]: newCount }
-      };
-    });
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const newChat = () => {
-    setSelectedChatId(null);
-    setMessages([]);
-    setShowChatList(false);
-    setSuggestions([]);
+  // Dynamic greeting based on device time
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
   };
-
-  const selectChat = (chatId) => {
-    setSelectedChatId(chatId);
-    setShowChatList(false);
-    setSuggestions([]);
-  };
-
-  const applySuggestion = (suggestion) => {
-    setInput(suggestion);
-    setTimeout(() => send(), 100);
-  };
-
-  const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex flex-col h-full w-full px-4 tablet:px-6">
-      <div className="flex items-center justify-between py-4 border-b border-[var(--border-color)]">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={newChat}
-            className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl px-4 py-2.5 touch transition-all hover:border-[var(--accent-indigo)]"
-          >
-            <Plus size={16} /> New Chat
-          </button>
-          <div className="relative">
-            <button
-              onClick={() => setShowChatList(!showChatList)}
-              className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl px-3 py-2.5 touch transition-all"
-            >
-              <span className="font-mono text-[13px]">Recent</span>
-              <ChevronDown size={14} className={`transition-transform ${showChatList ? 'rotate-180' : ''}`} />
-            </button>
-            {showChatList && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto animate-slide-up">
-                {loadingChats ? (
-                  <div className="p-4 text-[var(--text-muted)] text-sm">Loading...</div>
-                ) : chats.length === 0 ? (
-                  <div className="p-4 text-[var(--text-muted)] text-sm">No chats yet</div>
-                ) : (
-                  chats.map(chat => (
-                    <div
-                      key={chat.id}
-                      onClick={() => selectChat(chat.id)}
-                      className={`px-4 py-3 cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors text-sm ${
-                        selectedChatId === chat.id ? 'bg-[var(--accent-indigo)]/10 text-[var(--accent-indigo)]' : 'text-[var(--text-primary)]'
-                      }`}
-                    >
-                      <div className="font-medium">{chat.title || 'New Chat'}</div>
-                      <div className="text-xs text-[var(--text-muted)]">{new Date(chat.updated).toLocaleDateString()}</div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-          {/* Model Selector */}
-          <div className="relative">
-            <button
-              onClick={() => setShowModelDropdown(!showModelDropdown)}
-              className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl px-3 py-2.5 touch transition-all"
-            >
-              <span className="font-mono text-[13px]">{MODEL_DISPLAY_NAMES[selectedModel] || selectedModel}</span>
-              <ChevronDown size={14} className={`transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} />
-            </button>
-            {showModelDropdown && (
-              <div className="absolute left-0 top-full mt-2 w-56 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto animate-slide-up">
-                {availableModels.map(model => (
-                  <div
-                    key={model}
-                    onClick={() => {
-                      setSelectedModel(model);
-                      setShowModelDropdown(false);
-                    }}
-                    className={`px-4 py-2.5 cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors text-sm ${
-                      selectedModel === model ? 'bg-[var(--accent-indigo)]/10 text-[var(--accent-indigo)]' : 'text-[var(--text-primary)]'
-                    }`}
-                  >
-                    {MODEL_DISPLAY_NAMES[model] || model}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-[var(--text-muted)] bg-[var(--bg-tertiary)] px-3 py-1.5 rounded-full">
-            Memory: {messages.length > 5 ? 'enabled' : 'idle'}
-          </span>
-        </div>
-      </div>
-
-      <div ref={scrollRef} className="flex-1 overflow-y-auto py-6 space-y-4">
-        {!hasMessages ? (
-          <div className="flex flex-col items-center justify-center h-full text-center max-w-2xl mx-auto space-y-4">
-            <div className="w-20 h-20 rounded-full bg-[var(--accent-indigo)]/10 flex items-center justify-center text-4xl">
-              <Sparkles className="w-10 h-10 text-[var(--accent-indigo)]" />
+    <div className="flex flex-col h-full bg-[#0a0a0a] text-white">
+      {/* Messages Container */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        {messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
+            <div className="mb-6">
+              <span className="text-5xl font-light text-[#d4af37]">✦</span>
             </div>
-            <h2 className="text-3xl font-display font-bold text-[var(--text-primary)]">Good evening</h2>
-            <p className="text-[var(--text-secondary)] text-[16px]">How can OS AI help you today?</p>
+            <p className="text-2xl font-light text-white/80">{getGreeting()}</p>
+            <p className="text-sm max-w-sm mt-2 text-gray-400">
+              I'm OS AI. How can I help you today?
+            </p>
           </div>
-        ) : (
-          messages.map((m, i) => {
-            const msgId = m.id || `msg-${i}`;
-            const msgReactions = reactions[msgId] || {};
-            return (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up group`}>
-                <div className="max-w-[80%]">
-                  <div className={m.role === 'user' ? 'message-user' : 'message-agent'}>
-                    {m.loading ? (
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-[var(--accent-indigo)] animate-pulse-soft" />
-                        <span className="text-[var(--text-muted)] text-sm">Thinking… <span className="inline-block w-1 h-1 rounded-full bg-[var(--accent-indigo)] animate-pulse-soft mx-0.5"/><span className="inline-block w-1 h-1 rounded-full bg-[var(--accent-indigo)] animate-pulse-soft mx-0.5" style={{ animationDelay: "0.2s" }}/><span className="inline-block w-1 h-1 rounded-full bg-[var(--accent-indigo)] animate-pulse-soft mx-0.5" style={{ animationDelay: "0.4s" }}/></span>
-                      </div>
-                    ) : (
-                      <div className="whitespace-pre-wrap break-words">{m.content}</div>
-                    )}
+        )}
+
+        {messages.map((msg, idx) => {
+          const isUser = msg.role === 'user';
+          const isSystem = msg.role === 'assistant' && msg.model === 'system';
+          const msgId = msg.id || `msg-${idx}`;
+          const isCopied = copiedId === msgId;
+          const timestamp = msg.createdAt || Date.now();
+
+          return (
+            <div
+              key={idx}
+              className={`flex ${isUser ? 'justify-end' : 'justify-start'} group`}
+            >
+              <div className={`max-w-[80%] relative ${isUser ? 'order-2' : 'order-1'}`}>
+                {!isUser && !isSystem && (
+                  <div className="flex items-center gap-2 mb-1 text-xs text-gray-500">
+                    <span className="font-medium text-[#d4af37]">OS AI</span>
+                    <span>{formatTime(timestamp)}</span>
+                    {msg.model && <span className="text-gray-600">• {msg.model}</span>}
                   </div>
-                  {!m.loading && (
-                    <div className="flex gap-1 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {REACTIONS.map(({ icon: Icon, label, key }) => (
-                        <button
-                          key={key}
-                          onClick={() => handleReaction(i, key)}
-                          className="text-xs touch p-1 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors flex items-center gap-0.5"
-                        >
-                          <Icon size={14} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]" />
-                          {msgReactions[key] > 0 && (
-                            <span className="text-[10px] text-[var(--text-muted)]">{msgReactions[key]}</span>
-                          )}
-                        </button>
-                      ))}
+                )}
+                <div
+                  className={`rounded-2xl px-5 py-3 shadow-lg ${
+                    isUser
+                      ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
+                      : isSystem
+                        ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-300'
+                        : 'bg-white/10 backdrop-blur-sm border border-white/10 text-gray-100'
+                  }`}
+                >
+                  {isUser ? (
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                  ) : (
+                    <div className="prose prose-invert prose-sm max-w-none break-words">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content || ' '}
+                      </ReactMarkdown>
                     </div>
                   )}
                 </div>
+                <div className={`flex items-center gap-1 mt-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                  <button
+                    onClick={() => copyToClipboard(msg.content, msgId)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-white p-1 rounded"
+                    aria-label="Copy message"
+                  >
+                    {isCopied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                  </button>
+                  {!isUser && !isSystem && (
+                    <span className="text-[10px] text-gray-600">• {msg.model || 'AI'}</span>
+                  )}
+                </div>
               </div>
-            );
-          })
-        )}
-        {suggestions.length > 0 && !sending && (
-          <div className="flex flex-wrap gap-2 mt-2 justify-center">
-            {suggestions.map((s, idx) => (
-              <button
-                key={idx}
-                onClick={() => applySuggestion(s)}
-                className="glass-card px-4 py-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-indigo)] transition-all touch"
-              >
-                {s}
-              </button>
-            ))}
+            </div>
+          );
+        })}
+
+        {loading && (
+          <div className="flex justify-start">
+            <div className="max-w-[80%] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-3">
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </div>
+            </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-[var(--border-color)] py-4 bg-[var(--bg-primary)] sticky bottom-0">
-        <div className="flex items-end gap-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl px-4 py-2.5 focus-within:border-[var(--accent-indigo)] focus-within:shadow-md transition-all">
-          <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] touch p-1 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
-            📎
-          </button>
-          <button
-            onClick={toggleVoiceInput}
-            className={`touch p-1 rounded-lg transition-colors ${isListening ? 'text-[var(--danger)] bg-[var(--danger)]/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'}`}
-          >
-            {isListening ? <Mic size={18} /> : <MicOff size={18} />}
-          </button>
+      {/* Input Area */}
+      <form onSubmit={sendMessage} className="border-t border-white/10 p-4 bg-[#0f0f0f] flex gap-3 items-end">
+        <div className="flex-1 relative">
           <textarea
-            ref={textareaRef}
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
-            placeholder="Ask OS AI…"
-            className="flex-1 bg-transparent border-none outline-none resize-none text-[17px] text-[var(--text-primary)] placeholder-[var(--text-muted)] min-h-[24px] max-h-[200px] leading-relaxed"
+            placeholder="Type your message..."
             rows={1}
+            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 resize-none transition"
+            style={{ minHeight: '3rem', maxHeight: '10rem' }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(e);
+              }
+            }}
+            disabled={loading}
           />
-          <button
-            onClick={send}
-            disabled={sending}
-            className="bg-[var(--accent-indigo)] hover:bg-[var(--accent-hover)] disabled:opacity-50 text-white rounded-full p-2.5 touch transition-all shadow-sm hover:shadow-md"
-          >
-            <Send size={18} className={sending ? 'opacity-50' : ''} />
-          </button>
         </div>
-      </div>
+        <button
+          type="submit"
+          disabled={loading || !input.trim()}
+          className="bg-[#d4af37] hover:bg-[#c4a030] disabled:opacity-50 text-black font-medium px-6 py-2.5 rounded-2xl transition flex-shrink-0"
+        >
+          Send
+        </button>
+      </form>
     </div>
   );
 }
