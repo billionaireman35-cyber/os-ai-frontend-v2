@@ -37,7 +37,7 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
       const res = await api.post('/wallet/send', {
         chain: asset.chain,
         to_address: to,
-        amount_wei: ethers.utils.parseEther(amount).toString(),
+        amount_wei: (parseFloat(amount) * 1e18).toString(),
         password,
         token_address: asset.address || null,
       });
@@ -97,7 +97,7 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
 
 function StandardWallet() {
   const { assets, totalUsd, loading, error, fetchBalances } = useWallet();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { toasts, addToast, removeToast } = useToast();
   const [chain, setChain] = useState('all');
   const [showSendModal, setShowSendModal] = useState(false);
@@ -108,7 +108,7 @@ function StandardWallet() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  const filtered = chain === 'all' ? (assets || []) : (assets || []).filter((a) => a.chain === chain);
+  const filtered = Array.isArray(assets) ? (chain === 'all' ? assets : assets.filter((a) => a.chain === chain)) : [];
 
   const createWallet = async (password) => {
     if (!password || creating) return;
@@ -118,6 +118,11 @@ function StandardWallet() {
       if (res.data?.wallet) {
         const { address } = res.data.wallet;
         addToast(`Wallet created! Address: ${address.slice(0, 10)}... Private key encrypted.`, 'success', 6000);
+        // Refresh user profile to get the new wallet_address
+        const userRes = await api.get('/auth/me');
+        if (setUser && userRes.data) {
+          setUser(userRes.data);
+        }
         fetchBalances();
         setShowPasswordModal(false);
       } else {
@@ -130,12 +135,10 @@ function StandardWallet() {
     }
   };
 
-  // Auto-fetch on mount
   useEffect(() => {
     if (user) fetchBalances();
   }, [user]);
 
-  // Convert error to string
   const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error) || 'Unknown error');
 
   return (
@@ -171,7 +174,7 @@ function StandardWallet() {
           <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
         </button>
         <button
-          onClick={() => { if (assets.length === 0) { addToast('No assets. Create a wallet and add funds first.', 'warning'); return; } setSendAsset(assets[0]); setShowSendModal(true); }}
+          onClick={() => { if (filtered.length === 0) { addToast('No assets. Create a wallet and add funds first.', 'warning'); return; } setSendAsset(filtered[0]); setShowSendModal(true); }}
           className="btn-primary flex items-center gap-2"
         >
           <Send size={18} /> Send
