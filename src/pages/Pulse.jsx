@@ -11,7 +11,6 @@ export default function Pulse() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredTokens, setFilteredTokens] = useState([]);
 
-  // Fetch top tokens
   const fetchTokens = async () => {
     setLoadingTokens(true);
     setError(null);
@@ -29,7 +28,6 @@ export default function Pulse() {
     }
   };
 
-  // Fetch news
   const fetchNews = async () => {
     setLoadingNews(true);
     try {
@@ -43,16 +41,13 @@ export default function Pulse() {
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchTokens();
     fetchNews();
-    // Refresh tokens every 60 seconds
     const interval = setInterval(fetchTokens, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Search filter
   useEffect(() => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) {
@@ -84,7 +79,7 @@ export default function Pulse() {
   };
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-display font-bold text-[var(--text-primary)]">Market Pulse</h1>
@@ -105,7 +100,6 @@ export default function Pulse() {
         />
       </div>
 
-      {/* Error */}
       {error && (
         <div className="glass-card p-4 text-sm text-yellow-400 border border-yellow-500/30 flex items-center justify-between">
           <span>{error}</span>
@@ -122,7 +116,7 @@ export default function Pulse() {
         {loadingTokens && tokens.length === 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16 bg-white/5 rounded-xl" />
+              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16 bg-[var(--bg-tertiary)] rounded-xl" />
             ))}
           </div>
         ) : filteredTokens.length === 0 ? (
@@ -132,7 +126,7 @@ export default function Pulse() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {filteredTokens.map((token, idx) => (
-              <div key={idx} className="glass-card px-4 py-3 flex items-center justify-between border border-white/5 hover:border-[#d4af37]/30 transition-all rounded-xl">
+              <div key={idx} className="glass-card px-4 py-3 flex items-center justify-between border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
                 <div className="flex items-center gap-3">
                   {token.image && <img src={token.image} alt={token.symbol} className="w-8 h-8 rounded-full" />}
                   <div>
@@ -159,7 +153,7 @@ export default function Pulse() {
         {loadingNews && news.length === 0 ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16 bg-white/5 rounded-xl" />
+              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16 bg-[var(--bg-tertiary)] rounded-xl" />
             ))}
           </div>
         ) : news.length === 0 ? (
@@ -167,7 +161,7 @@ export default function Pulse() {
         ) : (
           <div className="space-y-3">
             {news.map((item, idx) => (
-              <div key={idx} className="glass-card px-4 py-3 flex items-start gap-3 border border-white/5 hover:border-[#d4af37]/20 transition-all rounded-xl">
+              <div key={idx} className="glass-card px-4 py-3 flex items-start gap-3 border border-[var(--border-color)] hover:border-[#d4af37]/20 transition-all rounded-xl">
                 {item.image && <img src={item.image} alt="" className="w-16 h-16 rounded-lg object-cover" />}
                 <div className="flex-1 min-w-0">
                   <p className="text-[var(--text-primary)] font-medium line-clamp-2">{item.title}</p>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -6,10 +6,9 @@ import { api } from '../utils/api';
 import {
   X, Moon, Sun, LogOut, User, Wallet, Copy, CheckCircle,
   Bell, Lock, Eye, Globe, Server, MessageSquare, Languages, Terminal,
-  ChevronRight, ArrowLeft, Save, RefreshCw, AlertTriangle
+  ChevronRight, ArrowLeft, Save, RefreshCw, AlertTriangle, Camera
 } from 'lucide-react';
 
-// ─── Helper to load/save settings ────────────────────────────
 const defaultSettings = {
   notifications: { chat: true, transactions: true },
   privacy: { onlineStatus: true },
@@ -29,37 +28,34 @@ function saveSettings(settings) {
   localStorage.setItem('os-ai-settings', JSON.stringify(settings));
 }
 
-// ─── Main Settings ─────────────────────────────────────────────
 export default function Settings() {
   const navigate = useNavigate();
-  const { user, logout, updateName } = useAuth();
+  const { user, setUser, logout, updateName } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState(loadSettings);
-  const [section, setSection] = useState(null); // null = main, else section key
+  const [section, setSection] = useState(null);
   const [isClosing, setIsClosing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [editingName, setEditingName] = useState(false);
+  const [profilePic, setProfilePic] = useState(user?.profile_picture || null);
+  const fileInputRef = useRef(null);
 
-  // ── Sub‑page state ──────────────────────────────────────────
+  // ── Sub‑page state ──
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
-
   const [exportPassword, setExportPassword] = useState('');
   const [exportError, setExportError] = useState('');
   const [exportSeed, setExportSeed] = useState(null);
-
   const [resetConfirm, setResetConfirm] = useState('');
 
-  // Close overlay with animation
   const closeSettings = () => {
     setIsClosing(true);
     setTimeout(() => navigate(-1), 300);
   };
 
-  // Update and save settings
   const updateSettings = (newSettings) => {
     const merged = { ...settings, ...newSettings };
     setSettings(merged);
@@ -87,6 +83,25 @@ export default function Settings() {
     }
   };
 
+  const handleProfilePicUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result;
+      try {
+        await api.post('/auth/profile-picture', { picture: base64 });
+        const userRes = await api.get('/auth/me');
+        if (setUser) setUser(userRes.data);
+        setProfilePic(base64);
+        alert('Profile picture updated!');
+      } catch (err) {
+        alert('Failed to upload: ' + err.message);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleChangePassword = async () => {
     setPasswordError('');
     setPasswordSuccess('');
@@ -99,17 +114,15 @@ export default function Settings() {
       return;
     }
     try {
-      // We'll use a dedicated endpoint; for now, we'll use the reset flow with a temporary code.
-      // Since we don't have a "change password" endpoint, we'll simulate with a reset.
-      // In production, we need a proper endpoint. I'll add a placeholder.
-      // For now, we'll show success (the real implementation would call a backend).
-      // We'll implement the backend later.
-      // For now, we just show success.
+      await api.post('/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
       setPasswordSuccess('Password updated successfully.');
       setCurrentPassword('');
       setNewPassword('');
     } catch (e) {
-      setPasswordError(e.message || 'Failed to change password.');
+      setPasswordError(e.response?.data?.detail || 'Failed to change password.');
     }
   };
 
@@ -121,8 +134,8 @@ export default function Settings() {
       return;
     }
     try {
-      // This would call a backend endpoint to decrypt and return the seed.
-      // For now, we mock.
+      // In real implementation, call a backend endpoint that decrypts and returns seed
+      // For now we'll simulate
       setExportSeed('mock seed phrase: abandon abandon ...');
     } catch (e) {
       setExportError(e.message || 'Failed to export seed.');
@@ -136,7 +149,6 @@ export default function Settings() {
     }
     try {
       // Call backend to clear wallet for user
-      // For now, just alert.
       alert('Wallet reset functionality will be implemented.');
       setResetConfirm('');
     } catch (e) {
@@ -156,7 +168,6 @@ export default function Settings() {
     { key: 'developer', label: 'Developer', icon: Terminal },
   ];
 
-  // Render main list
   const renderMain = () => (
     <div className="p-4 space-y-1">
       {sections.map(({ key, label, icon: Icon }) => (
@@ -172,7 +183,6 @@ export default function Settings() {
           <ChevronRight size={18} className="text-[var(--text-muted)]" />
         </button>
       ))}
-      {/* Theme toggle inline */}
       <div className="flex items-center justify-between p-3 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors">
         <div className="flex items-center gap-3">
           {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
@@ -196,12 +206,31 @@ export default function Settings() {
     </div>
   );
 
-  // ── Sub‑page renderers ──────────────────────────────────────
+  // ── Profile Sub‑page (with picture upload) ──
   const renderProfile = () => (
     <div className="p-4 space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="w-14 h-14 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-2xl font-bold text-[var(--accent-indigo)]">
-          {user?.name?.charAt(0).toUpperCase() || 'G'}
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-2xl font-bold text-[var(--accent-indigo)] overflow-hidden">
+            {profilePic ? (
+              <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              user?.name?.charAt(0).toUpperCase() || 'G'
+            )}
+          </div>
+          <button
+            onClick={() => fileInputRef.current.click()}
+            className="absolute bottom-0 right-0 bg-[#d4af37] p-1 rounded-full shadow-lg hover:bg-[#c4a030] transition"
+          >
+            <Camera size={16} className="text-black" />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleProfilePicUpload}
+            className="hidden"
+          />
         </div>
         <div>
           {editingName ? (
@@ -427,7 +456,6 @@ export default function Settings() {
     </div>
   );
 
-  // ── Section router ──────────────────────────────────────────
   const renderSection = () => {
     switch (section) {
       case 'profile': return renderProfile();
@@ -443,7 +471,6 @@ export default function Settings() {
     }
   };
 
-  // ── Render ──────────────────────────────────────────────────
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };

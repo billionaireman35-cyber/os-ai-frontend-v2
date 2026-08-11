@@ -6,6 +6,8 @@ import { Copy, Check } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
 
+const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '😡'];
+
 export default function Chat() {
   const location = useLocation();
   const [messages, setMessages] = useState([]);
@@ -143,6 +145,29 @@ export default function Chat() {
     }
   };
 
+  const handleReaction = async (messageId, emoji) => {
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/chat/messages/${messageId}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ emoji })
+      });
+      if (res.ok) {
+        // Refetch the chat messages to get updated reactions
+        if (chatId) {
+          const msgsRes = await fetch(`${API_BASE}/chat/chats/${chatId}/messages`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await msgsRes.json();
+          setMessages(data);
+        }
+      }
+    } catch (e) {
+      console.error('Reaction error:', e);
+    }
+  };
+
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
@@ -158,7 +183,6 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      {/* Messages Container */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
@@ -177,7 +201,8 @@ export default function Chat() {
           const isSystem = msg.role === 'assistant' && msg.model === 'system';
           const msgId = msg.id || `msg-${idx}`;
           const isCopied = copiedId === msgId;
-          const timestamp = msg.createdAt || Date.now();
+          const timestamp = msg.createdAt || msg.created || Date.now();
+          const reactions = msg.reactions || {};
 
           return (
             <div
@@ -193,7 +218,7 @@ export default function Chat() {
                   </div>
                 )}
                 <div
-                  className={`rounded-2xl px-5 py-3 shadow-lg ${
+                  className={`animate-slide-up rounded-2xl px-5 py-3 shadow-lg ${
                     isUser
                       ? 'bg-gradient-to-br from-[#d4af37] to-[#b8962e] text-black'
                       : isSystem
@@ -210,6 +235,29 @@ export default function Chat() {
                       </ReactMarkdown>
                     </div>
                   )}
+                </div>
+                {/* Reactions */}
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {Object.entries(reactions).map(([emoji, users]) => (
+                    <button
+                      key={emoji}
+                      onClick={() => handleReaction(msgId, emoji)}
+                      className="text-sm bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full border border-[var(--border-color)] hover:border-[#d4af37] transition"
+                    >
+                      {emoji} {users.length}
+                    </button>
+                  ))}
+                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {REACTION_EMOJIS.map(emoji => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleReaction(msgId, emoji)}
+                        className="text-sm bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full border border-[var(--border-color)] hover:border-[#d4af37] transition"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className={`flex items-center gap-1 mt-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
                   <button
@@ -242,7 +290,6 @@ export default function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       <form onSubmit={sendMessage} className="border-t border-[var(--border-color)] p-4 bg-[var(--bg-secondary)] flex gap-3 items-end">
         <div className="flex-1 relative">
           <textarea
