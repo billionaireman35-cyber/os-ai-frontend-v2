@@ -9,15 +9,14 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Chat from './pages/Chat';
 import Vault from './pages/Vault';
-import Leaderboard from './pages/Leaderboard';
 import Pulse from './pages/Pulse';
 import Sanctum from './pages/Sanctum';
 import About from './pages/About';
 import PrivacyTerms from './pages/PrivacyTerms';
 import Developer from './pages/Developer';
 import HustleHub from './pages/HustleHub';
-import Sanctum from './pages/Sanctum';
 import Settings from './pages/Settings';
+import Leaderboard from './pages/Leaderboard';
 import { useState } from 'react';
 import { MessageSquare, Wallet, Radio, Settings as SettingsIcon } from 'lucide-react';
 
@@ -43,14 +42,13 @@ function Shell() {
             <Route path="/" element={<Chat />} />
             <Route path="/vault" element={<Vault />} />
             <Route path="/pulse" element={<Pulse />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/sanctum" element={<Sanctum />} />
             <Route path="/about" element={<About />} />
             <Route path="/privacy-terms" element={<PrivacyTerms />} />
             <Route path="/developer" element={<Developer />} />
             <Route path="/hustle-hub" element={<HustleHub />} />
-            <Route path="/sanctum" element={<Sanctum />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
           </Routes>
         </main>
         {/* Mobile Bottom Navigation */}
