@@ -1,126 +1,181 @@
-import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, RefreshCw, TrendingUp, TrendingDown, ExternalLink, Loader2 } from 'lucide-react';
 import { api } from '../utils/api';
 
 export default function Pulse() {
+  const [tokens, setTokens] = useState([]);
   const [news, setNews] = useState([]);
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [wsConnected, setWsConnected] = useState(false);
-  const [liveTokens, setLiveTokens] = useState([]);
+  const [loadingTokens, setLoadingTokens] = useState(false);
+  const [loadingNews, setLoadingNews] = useState(false);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredTokens, setFilteredTokens] = useState([]);
 
-  useEffect(() => {
-    api.get('/market/news')
-      .then((res) => {
-        // ✅ Fix: extract the news array from the response
-        setNews(res.data?.news || []);
-      })
-      .catch(() => setNews([]));
-  }, []);
-
-  useEffect(() => {
-    const wsUrl = `ws://${window.location.hostname}:8000/ws/token-feed`;
-    let ws;
+  // Fetch top tokens
+  const fetchTokens = async () => {
+    setLoadingTokens(true);
+    setError(null);
     try {
-      ws = new WebSocket(wsUrl);
-      ws.onopen = () => setWsConnected(true);
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data && data.data && Array.isArray(data.data)) {
-            setLiveTokens((prev) => {
-              const newTokens = data.data.filter(
-                (t) => !prev.some((p) => p.tokenAddress === t.tokenAddress && p.chainId === t.chainId)
-              );
-              return [...newTokens, ...prev].slice(0, 100);
-            });
-          }
-        } catch (e) { /* ignore */ }
-      };
-      ws.onclose = () => setWsConnected(false);
-      ws.onerror = () => setWsConnected(false);
+      const res = await api.get('/market/top-tokens?limit=20');
+      setTokens(res.data?.tokens || []);
+      setFilteredTokens(res.data?.tokens || []);
     } catch (e) {
-      console.warn('WebSocket not available, token feed disabled');
-    }
-    return () => { if (ws) ws.close(); };
-  }, []);
-
-  const search = async () => {
-    if (query.length < 3) return;
-    try {
-      const res = await api.get(`/market/search`, { params: { q: query } });
-      setResults(res.data.results || []);
-    } catch {
-      setResults([]);
+      console.error('Failed to fetch tokens:', e);
+      setError('Could not load token data');
+      setTokens([]);
+      setFilteredTokens([]);
+    } finally {
+      setLoadingTokens(false);
     }
   };
 
+  // Fetch news
+  const fetchNews = async () => {
+    setLoadingNews(true);
+    try {
+      const res = await api.get('/market/news?limit=5');
+      setNews(res.data?.news || []);
+    } catch (e) {
+      console.error('Failed to fetch news:', e);
+      setNews([]);
+    } finally {
+      setLoadingNews(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchTokens();
+    fetchNews();
+    // Refresh tokens every 60 seconds
+    const interval = setInterval(fetchTokens, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Search filter
+  useEffect(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) {
+      setFilteredTokens(tokens);
+      return;
+    }
+    const filtered = tokens.filter(token =>
+      token.symbol?.toLowerCase().includes(q) ||
+      token.name?.toLowerCase().includes(q)
+    );
+    setFilteredTokens(filtered);
+  }, [searchQuery, tokens]);
+
+  const handleRefresh = () => {
+    fetchTokens();
+    fetchNews();
+  };
+
+  const formatPrice = (price) => {
+    if (!price) return '$0.00';
+    if (price < 0.01) return price.toFixed(6);
+    if (price < 1) return price.toFixed(4);
+    return price.toFixed(2);
+  };
+
+  const formatChange = (change) => {
+    if (change === undefined || change === null) return '0.00%';
+    return change.toFixed(2) + '%';
+  };
+
   return (
-    <div className="p-4 tablet:p-6 space-y-6 max-w-4xl">
-      <h1 className="text-4xl font-display font-bold text-[var(--color-text-primary)]">Pulse</h1>
-      <div className="flex gap-3">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && search()}
-          placeholder="Search token, address, news…"
-          className="flex-1 bg-[var(--color-panel)] border border-[var(--color-line)] rounded-xl px-4 py-3.5 text-lg text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-brass"
-        />
-        <button onClick={search} className="bg-brass hover:bg-brassLight text-void rounded-xl px-5 py-3.5 touch-target touch text-lg font-bold">
-          <Search size={22} />
+    <div className="p-4 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-display font-bold text-[var(--text-primary)]">Market Pulse</h1>
+        <button onClick={handleRefresh} className="p-2 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition">
+          <RefreshCw size={18} className={loadingTokens || loadingNews ? 'animate-spin' : ''} />
         </button>
       </div>
 
-      {results.length > 0 && (
-        <div className="space-y-2">
-          {results.map((item, i) => (
-            <div key={i} className="glass p-4">
-              <p className="text-lg text-[var(--color-text-primary)] font-bold">{item.name || item.symbol}</p>
-              <p className="text-sm text-[var(--color-text-muted)] font-mono">{item.type}</p>
-            </div>
-          ))}
+      {/* Search */}
+      <div className="flex items-center gap-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl px-4 py-3">
+        <Search size={18} className="text-[var(--text-muted)]" />
+        <input
+          type="text"
+          placeholder="Search token, address, news..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="bg-transparent border-none outline-none text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)] w-full"
+        />
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="glass-card p-4 text-sm text-yellow-400 border border-yellow-500/30 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={handleRefresh} className="underline text-white/70 hover:text-white">Retry</button>
         </div>
       )}
 
+      {/* Token Feed */}
       <div>
-        <h2 className="text-sm text-[var(--color-text-muted)] font-mono uppercase tracking-wide mb-3">Market Pulse</h2>
-        <div className="space-y-3">
-          {news.length === 0 ? (
-            <p className="text-[var(--color-text-muted)] text-base">No stories yet.</p>
-          ) : (
-            news.map((a, i) => (
-              <div key={i} className="glass p-4">
-                <h3 className="text-lg text-[var(--color-text-primary)] font-bold">{a.title || a.headline}</h3>
-                <p className="text-sm text-[var(--color-text-muted)] font-mono mt-1">
-                  {a.source || 'Unknown'} · {a.publishedAt ? new Date(a.publishedAt).toLocaleTimeString() : ''}
-                </p>
+        <h2 className="text-sm font-mono uppercase tracking-wider text-[var(--text-muted)] mb-3 flex items-center gap-2">
+          Live Token Feed
+          <span className={`w-2 h-2 rounded-full ${loadingTokens ? 'animate-pulse bg-yellow-400' : 'bg-green-400'}`} />
+        </h2>
+        {loadingTokens && tokens.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16 bg-white/5 rounded-xl" />
+            ))}
+          </div>
+        ) : filteredTokens.length === 0 ? (
+          <div className="text-center text-[var(--text-muted)] py-8">
+            {searchQuery ? 'No tokens match your search.' : 'No token data available.'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {filteredTokens.map((token, idx) => (
+              <div key={idx} className="glass-card px-4 py-3 flex items-center justify-between border border-white/5 hover:border-[#d4af37]/30 transition-all rounded-xl">
+                <div className="flex items-center gap-3">
+                  {token.image && <img src={token.image} alt={token.symbol} className="w-8 h-8 rounded-full" />}
+                  <div>
+                    <p className="font-bold text-[var(--text-primary)]">{token.symbol?.toUpperCase()}</p>
+                    <p className="text-sm text-[var(--text-muted)] truncate max-w-[120px]">{token.name}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-[#d4af37]">${formatPrice(token.current_price)}</p>
+                  <p className={`text-xs flex items-center justify-end gap-1 ${token.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {token.price_change_percentage_24h >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    {formatChange(token.price_change_percentage_24h)}
+                  </p>
+                </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Live token feed */}
+      {/* News Feed */}
       <div>
-        <h2 className="text-sm text-[var(--color-text-muted)] font-mono uppercase tracking-wide mb-3 flex items-center gap-3">
-          Live Token Feed
-          <span className={`text-sm font-mono ${wsConnected ? 'text-teal' : 'text-[var(--color-text-muted)]'}`}>
-            {wsConnected ? '● connected' : '○ disconnected'}
-          </span>
-        </h2>
-        {liveTokens.length === 0 ? (
-          <p className="text-[var(--color-text-muted)] text-base">Waiting for token updates…</p>
+        <h2 className="text-sm font-mono uppercase tracking-wider text-[var(--text-muted)] mb-3">Market Stories</h2>
+        {loadingNews && news.length === 0 ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16 bg-white/5 rounded-xl" />
+            ))}
+          </div>
+        ) : news.length === 0 ? (
+          <div className="text-center text-[var(--text-muted)] py-8">No stories available.</div>
         ) : (
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {liveTokens.map((t, i) => (
-              <div key={i} className="glass p-4 flex items-center gap-4">
-                {t.icon && <img src={t.icon} className="w-10 h-10 rounded-full object-cover" alt="" />}
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg text-[var(--color-text-primary)] font-bold font-mono">{t.tokenAddress.slice(0, 6)}…{t.tokenAddress.slice(-4)}</span>
-                    <span className="text-sm text-[var(--color-text-muted)] font-mono bg-[var(--color-panel)] px-3 py-1 rounded-full">{t.chainId}</span>
-                  </div>
-                  {t.description && <p className="text-base text-[var(--color-text-muted)] truncate font-medium">{t.description}</p>}
+          <div className="space-y-3">
+            {news.map((item, idx) => (
+              <div key={idx} className="glass-card px-4 py-3 flex items-start gap-3 border border-white/5 hover:border-[#d4af37]/20 transition-all rounded-xl">
+                {item.image && <img src={item.image} alt="" className="w-16 h-16 rounded-lg object-cover" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[var(--text-primary)] font-medium line-clamp-2">{item.title}</p>
+                  <p className="text-sm text-[var(--text-muted)] line-clamp-2">{item.description}</p>
+                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#d4af37] hover:underline flex items-center gap-1 mt-1">
+                    Read more <ExternalLink size={12} />
+                  </a>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">{item.source} · {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : ''}</p>
                 </div>
               </div>
             ))}

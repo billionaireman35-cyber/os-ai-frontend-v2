@@ -16,12 +16,10 @@ export default function Chat() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle quick action from URL query param (side bar)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode');
@@ -86,10 +84,8 @@ export default function Chat() {
         }),
       });
 
-      // Handle non-2xx responses gracefully
       if (!response.ok) {
         const errorData = await response.json();
-        // If it's a 402 (payment required), show the message from backend
         if (response.status === 402 && errorData.content) {
           setMessages(prev => [
             ...prev,
@@ -153,7 +149,6 @@ export default function Chat() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Dynamic greeting based on device time
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -163,7 +158,6 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a] text-white">
-      {/* Messages Container */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
@@ -171,9 +165,7 @@ export default function Chat() {
               <span className="text-5xl font-light text-[#d4af37]">✦</span>
             </div>
             <p className="text-2xl font-light text-white/80">{getGreeting()}</p>
-            <p className="text-sm max-w-sm mt-2 text-gray-400">
-              I'm OS AI. How can I help you today?
-            </p>
+            <p className="text-sm max-w-sm mt-2 text-gray-400">I'm OS AI. How can I help you today?</p>
           </div>
         )}
 
@@ -247,7 +239,6 @@ export default function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       <form onSubmit={sendMessage} className="border-t border-white/10 p-4 bg-[#0f0f0f] flex gap-3 items-end">
         <div className="flex-1 relative">
           <textarea

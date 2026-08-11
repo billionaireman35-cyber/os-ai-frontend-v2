@@ -1,132 +1,289 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
-import { Plus, LogIn } from 'lucide-react';
+import { Plus, Users, MessageSquare, X, Send, Copy, CheckCircle, LogIn, UserPlus } from 'lucide-react';
 
 export default function HustleHub() {
   const { user } = useAuth();
-  const [hubs, setHubs] = useState([]);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [selectedWorkspace, setSelectedWorkspace] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [newWorkspaceDesc, setNewWorkspaceDesc] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  const [showJoin, setShowJoin] = useState(false);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [password, setPassword] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
   const [roomCode, setRoomCode] = useState('');
-  const [joinPassword, setJoinPassword] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [copied, setCopied] = useState(false);
+  const messagesEndRef = useRef(null);
 
-  const fetchHubs = async () => {
-    if (!user) return;
+  // Fetch workspaces
+  const fetchWorkspaces = async () => {
     setLoading(true);
     try {
       const res = await api.get('/workspace/list');
-      setHubs(res.data || []);
+      setWorkspaces(res.data || []);
+      if (res.data.length > 0 && !selectedWorkspace) {
+        setSelectedWorkspace(res.data[0]);
+      }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to fetch workspaces', e);
+      setWorkspaces([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchHubs();
-  }, [user]);
+  // Fetch messages for selected workspace
+  const fetchMessages = async (workspaceId) => {
+    if (!workspaceId) return;
+    try {
+      const res = await api.get(`/workspace/${workspaceId}/messages`);
+      setMessages(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch messages', e);
+      setMessages([]);
+    }
+  };
 
-  const createHub = async () => {
-    if (!name.trim()) return;
+  useEffect(() => {
+    fetchWorkspaces();
+  }, []);
+
+  useEffect(() => {
+    if (selectedWorkspace) {
+      fetchMessages(selectedWorkspace.id);
+      // Poll for new messages every 5 seconds
+      const interval = setInterval(() => fetchMessages(selectedWorkspace.id), 5000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedWorkspace]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleCreateWorkspace = async () => {
+    if (!newWorkspaceName.trim()) return;
+    setCreating(true);
     try {
       const res = await api.post('/workspace/create', {
-        name: name.trim(),
-        description,
-        password,
-        is_public: isPublic,
+        name: newWorkspaceName.trim(),
+        description: newWorkspaceDesc.trim(),
+        is_public: true,
       });
-      alert(`Hub created! Room code: ${res.data.room_code}`);
+      const newWs = res.data;
+      setWorkspaces([newWs, ...workspaces]);
+      setSelectedWorkspace(newWs);
+      setNewWorkspaceName('');
+      setNewWorkspaceDesc('');
       setShowCreate(false);
-      setName('');
-      setDescription('');
-      setPassword('');
-      fetchHubs();
     } catch (e) {
-      alert(e.response?.data?.detail || 'Failed to create Hub');
+      console.error('Failed to create workspace', e);
+      alert('Failed to create workspace');
+    } finally {
+      setCreating(false);
     }
   };
 
-  const joinHub = async () => {
-    if (!roomCode.trim()) return;
+  const handleJoinWorkspace = async () => {
+    if (!joinCode.trim()) return;
     try {
-      await api.post('/workspace/join', {
-        room_code: roomCode.trim(),
-        password: joinPassword,
-      });
-      alert('Joined Hub successfully!');
-      setShowJoin(false);
-      setRoomCode('');
-      setJoinPassword('');
-      fetchHubs();
+      const res = await api.post('/workspace/join', { room_code: joinCode.trim().toUpperCase() });
+      await fetchWorkspaces();
+      setJoinCode('');
+      alert(res.data.message || 'Joined!');
     } catch (e) {
-      alert(e.response?.data?.detail || 'Failed to join Hub');
+      alert('Failed to join: ' + (e.response?.data?.detail || 'Invalid code'));
     }
   };
 
-  if (loading) return <div className="p-4 text-[var(--text-muted)]">Loading Hustle Hubs...</div>;
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedWorkspace) return;
+    try {
+      await api.post(`/workspace/${selectedWorkspace.id}/message`, {
+        content: newMessage.trim()
+      });
+      setNewMessage('');
+      await fetchMessages(selectedWorkspace.id);
+    } catch (e) {
+      console.error('Failed to send message', e);
+      alert('Failed to send message');
+    }
+  };
+
+  const copyRoomCode = () => {
+    if (selectedWorkspace?.room_code) {
+      navigator.clipboard.writeText(selectedWorkspace.room_code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  if (loading && workspaces.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-[var(--text-muted)]">
+        Loading workspaces...
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 tablet:p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-display font-bold text-[var(--text-primary)]">Hustle Hub</h1>
+    <div className="flex flex-col h-full bg-[#0a0a0a] text-white">
+      {/* Header */}
+      <div className="border-b border-white/10 p-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">Hustle Hub</h1>
+          <p className="text-sm text-[var(--text-muted)]">Collaborative workspaces</p>
+        </div>
         <div className="flex gap-2">
-          <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2"><Plus size={18} /> Create</button>
-          <button onClick={() => setShowJoin(true)} className="btn-secondary flex items-center gap-2"><LogIn size={18} /> Join</button>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="bg-[#d4af37] hover:bg-[#c4a030] text-black font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition"
+          >
+            <Plus size={18} /> New
+          </button>
+          <button
+            onClick={() => document.getElementById('join-input').focus()}
+            className="bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] px-4 py-2 rounded-xl flex items-center gap-2 transition"
+          >
+            <LogIn size={18} /> Join
+          </button>
         </div>
       </div>
-      <p className="text-sm text-[var(--text-muted)]">Collaborate with others worldwide. Each Hub costs 1,000 CLOSE.</p>
-      {hubs.length === 0 ? (
-        <p className="text-[var(--text-muted)]">No Hustle Hubs yet.</p>
-      ) : (
-        <div className="grid grid-cols-1 tablet:grid-cols-2 gap-3">
-          {hubs.map((hub) => (
-            <div key={hub.id} className="glass-card p-4">
-              <div className="flex justify-between">
-                <h3 className="text-lg text-[var(--text-primary)] font-bold">{hub.name}</h3>
-                <span className="text-sm text-[var(--text-muted)] font-mono">{hub.room_code}</span>
-              </div>
-              <p className="text-sm text-[var(--text-muted)]">{hub.description || 'No description'}</p>
-              <p className="text-xs text-[var(--text-muted)] font-mono mt-1">{hub.member_count} members · {hub.role}</p>
-            </div>
-          ))}
+
+      {/* Workspace Selector & Join */}
+      <div className="flex flex-wrap items-center gap-2 p-4 bg-[var(--bg-tertiary)] border-b border-white/5">
+        {workspaces.map((ws) => (
+          <button
+            key={ws.id}
+            onClick={() => setSelectedWorkspace(ws)}
+            className={`px-4 py-2 rounded-full text-sm transition ${
+              selectedWorkspace?.id === ws.id
+                ? 'bg-[#d4af37] text-black font-bold'
+                : 'bg-white/5 hover:bg-white/10 text-gray-300'
+            }`}
+          >
+            <Users size={16} className="inline mr-1" />
+            {ws.name}
+          </button>
+        ))}
+        <div className="flex-1 min-w-[150px] flex items-center gap-2">
+          <input
+            id="join-input"
+            type="text"
+            placeholder="Enter room code"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            className="flex-1 bg-[var(--bg-secondary)] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#d4af37]"
+          />
+          <button onClick={handleJoinWorkspace} className="bg-[#d4af37] text-black px-3 py-2 rounded-lg text-sm font-bold">
+            Join
+          </button>
         </div>
-      )}
-      {showCreate && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
-            <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Create Hustle Hub</h3>
-            <p className="text-sm text-[var(--text-muted)]">Costs <span className="text-[var(--accent-brass)] font-mono">1,000 CLOSE</span> to create</p>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-base" placeholder="Name" />
-            <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="input-base" placeholder="Description" />
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-base" placeholder="Password (optional)" />
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-4 h-4 accent-[var(--accent-indigo)]" />
-              <label className="text-sm text-[var(--text-muted)]">Public</label>
+      </div>
+
+      {/* Main Area: Chat + Info */}
+      {selectedWorkspace ? (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Workspace Info */}
+          <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[var(--bg-tertiary)]">
+            <div>
+              <span className="font-bold text-[var(--text-primary)]">{selectedWorkspace.name}</span>
+              <span className="text-sm text-[var(--text-muted)] ml-2">• {selectedWorkspace.member_count || 0} members</span>
             </div>
-            <div className="flex gap-2">
-              <button onClick={createHub} className="btn-primary flex-1 justify-center">Create</button>
-              <button onClick={() => setShowCreate(false)} className="btn-secondary flex-1 justify-center">Cancel</button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-[var(--text-muted)]">Code: {selectedWorkspace.room_code}</span>
+              <button onClick={copyRoomCode} className="text-[var(--text-muted)] hover:text-[#d4af37]">
+                {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
+              </button>
             </div>
           </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.length === 0 ? (
+              <div className="text-center text-[var(--text-muted)] py-10">No messages yet. Start the conversation!</div>
+            ) : (
+              messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.user_id === user?.id ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.user_id === user?.id ? 'bg-blue-600 text-white' : 'bg-white/10 text-gray-100'}`}>
+                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
+                      <span className="font-bold text-[#d4af37]">{msg.user_name || 'Unknown'}</span>
+                      <span>{msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : ''}</span>
+                    </div>
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <form onSubmit={handleSendMessage} className="border-t border-white/10 p-4 bg-[#0f0f0f] flex gap-3">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 transition"
+            />
+            <button
+              type="submit"
+              disabled={!newMessage.trim()}
+              className="bg-[#d4af37] hover:bg-[#c4a030] disabled:opacity-50 text-black font-bold px-6 py-2.5 rounded-2xl transition"
+            >
+              <Send size={18} />
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-[var(--text-muted)]">
+          {workspaces.length === 0 ? 'No workspaces yet. Create or join one!' : 'Select a workspace to start chatting.'}
         </div>
       )}
-      {showJoin && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+
+      {/* Create Workspace Modal */}
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
-            <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Join Hustle Hub</h3>
-            <p className="text-sm text-[var(--text-muted)]">Costs <span className="text-[var(--accent-brass)] font-mono">1,000 CLOSE</span> to join</p>
-            <input type="text" value={roomCode} onChange={(e) => setRoomCode(e.target.value.toUpperCase())} className="input-base" placeholder="Room Code" />
-            <input type="password" value={joinPassword} onChange={(e) => setJoinPassword(e.target.value)} className="input-base" placeholder="Password (if required)" />
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Workspace</h3>
+              <button onClick={() => setShowCreate(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+            </div>
+            <div>
+              <label className="text-sm text-[var(--text-muted)] block">Name</label>
+              <input
+                type="text"
+                value={newWorkspaceName}
+                onChange={(e) => setNewWorkspaceName(e.target.value)}
+                className="input-base w-full mt-1"
+                placeholder="My Workspace"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-[var(--text-muted)] block">Description (optional)</label>
+              <input
+                type="text"
+                value={newWorkspaceDesc}
+                onChange={(e) => setNewWorkspaceDesc(e.target.value)}
+                className="input-base w-full mt-1"
+                placeholder="What's this workspace about?"
+              />
+            </div>
             <div className="flex gap-2">
-              <button onClick={joinHub} className="btn-primary flex-1 justify-center">Join</button>
-              <button onClick={() => setShowJoin(false)} className="btn-secondary flex-1 justify-center">Cancel</button>
+              <button
+                onClick={handleCreateWorkspace}
+                disabled={creating || !newWorkspaceName.trim()}
+                className="btn-primary flex-1 justify-center"
+              >
+                {creating ? 'Creating...' : 'Create'}
+              </button>
+              <button onClick={() => setShowCreate(false)} className="btn-secondary flex-1 justify-center">Cancel</button>
             </div>
           </div>
         </div>
