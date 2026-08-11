@@ -25,6 +25,9 @@ import {
   ChevronDown,
   Star,
   Clock,
+  Bell,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { api } from '../../utils/api';
 
@@ -36,28 +39,7 @@ const navItems = [
   { to: '/developer', label: 'Foundry', icon: Code },
 ];
 
-const FOUNDER_TAP_WINDOW_MS = 1500;
-const FOUNDER_TAP_TARGET = 13;
-
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-function trapTabKey(container, e) {
-  if (e.key !== 'Tab' || !container) return;
-  const focusable = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-    (el) => el.offsetParent !== null
-  );
-  if (focusable.length === 0) return;
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (e.shiftKey && document.activeElement === first) {
-    e.preventDefault();
-    last.focus();
-  } else if (!e.shiftKey && document.activeElement === last) {
-    e.preventDefault();
-    first.focus();
-  }
-}
+const PINNED_KEY = 'os-ai-pinned';
 
 export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNewChat, onSelectChat }) {
   const { user, logout } = useAuth();
@@ -66,8 +48,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const sidebarRef = useRef(null);
   const recentRef = useRef(null);
   const closeButtonRef = useRef(null);
-  const modalRef = useRef(null);
-  const previousFocusRef = useRef(null);
 
   const pinnedKey = user?.id ? `os-ai-pinned-${user.id}` : null;
 
@@ -76,6 +56,10 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const [loadingChats, setLoadingChats] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [recentDropdownOpen, setRecentDropdownOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const notifRef = useRef(null);
 
   const [tapCount, setTapCount] = useState(0);
   const lastTapRef = useRef(0);
@@ -87,8 +71,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const isOpen = mobileOpen || expanded;
   const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 1024;
 
-  // Single source of truth for closing the sidebar — clears BOTH flags
-  // so it can never get stuck open because only one of the two was reset.
+  // Single source of truth for closing the sidebar
   const closeSidebar = useCallback(() => {
     setExpanded(false);
     setMobileOpen(false);
@@ -104,7 +87,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     }
   };
 
-  // Load / persist pinned chats per user.
+  // Load pinned chats per user
   useEffect(() => {
     if (!pinnedKey) {
       setPinnedChats([]);
@@ -140,18 +123,42 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     fetchChats();
   }, [fetchChats]);
 
-  // Close recent-chats dropdown on outside click.
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+    setNotifLoading(true);
+    try {
+      const res = await api.get('/notifications');
+      setNotifications(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch notifications:', e);
+      setNotifications([]);
+    } finally {
+      setNotifLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) fetchNotifications();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user, fetchNotifications]);
+
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (recentRef.current && !recentRef.current.contains(e.target)) {
         setRecentDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close sidebar on outside click (desktop only — mobile has the overlay).
+  // Close sidebar on outside click (desktop only)
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (!isOpen || isMobile()) return;
@@ -163,7 +170,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [isOpen, closeSidebar]);
 
-  // Escape closes whichever is open: founder modal first, else the sidebar.
+  // Escape closes dropdowns or sidebar
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key !== 'Escape') return;
@@ -171,55 +178,25 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
         setShowFounderModal(false);
         setFounderKey('');
         setFounderError('');
+      } else if (showNotifDropdown) {
+        setShowNotifDropdown(false);
+      } else if (recentDropdownOpen) {
+        setRecentDropdownOpen(false);
       } else if (isOpen) {
         closeSidebar();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, showFounderModal, closeSidebar]);
-
-  // Focus management: remember what was focused before opening, move focus
-  // into the sidebar/modal on open, restore focus on close. This is what
-  // makes the drawer usable for keyboard and screen-reader users, not just
-  // mouse users.
-  useEffect(() => {
-    if (isOpen) {
-      previousFocusRef.current = document.activeElement;
-      closeButtonRef.current?.focus();
-    } else if (previousFocusRef.current) {
-      previousFocusRef.current.focus();
-      previousFocusRef.current = null;
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (showFounderModal) {
-      previousFocusRef.current = document.activeElement;
-    }
-  }, [showFounderModal]);
-
-  // Trap Tab focus inside the sidebar while it's presented as a modal
-  // drawer on mobile, and inside the founder modal whenever it's open.
-  useEffect(() => {
-    const handleTab = (e) => {
-      if (showFounderModal) {
-        trapTabKey(modalRef.current, e);
-      } else if (isOpen && isMobile()) {
-        trapTabKey(sidebarRef.current, e);
-      }
-    };
-    document.addEventListener('keydown', handleTab);
-    return () => document.removeEventListener('keydown', handleTab);
-  }, [isOpen, showFounderModal]);
+  }, [isOpen, showFounderModal, showNotifDropdown, recentDropdownOpen, closeSidebar]);
 
   const handleLogoClick = () => {
     const now = Date.now();
-    const withinWindow = now - lastTapRef.current < FOUNDER_TAP_WINDOW_MS;
+    const withinWindow = now - lastTapRef.current < 1500;
     lastTapRef.current = now;
     setTapCount((prev) => {
       const next = withinWindow ? prev + 1 : 1;
-      if (next >= FOUNDER_TAP_TARGET) {
+      if (next >= 13) {
         setShowFounderModal(true);
         return 0;
       }
@@ -284,9 +261,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     );
   };
 
-  // Enter/Space activation for the div-based rows below (they can't be real
-  // <button> elements because each one nests a pin <button> inside it, and
-  // a button can't contain another button).
   const asButton = (onActivate) => ({
     role: 'button',
     tabIndex: 0,
@@ -415,9 +389,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               key={to}
               to={to}
               end={to === '/'}
-              onClick={() => {
-                if (isMobile()) closeSidebar();
-              }}
+              onClick={() => { if (isMobile()) closeSidebar(); }}
               className={({ isActive }) =>
                 `flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-medium transition-all touch justify-start ${
                   isActive
@@ -433,9 +405,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           {user?.is_founder && (
             <NavLink
               to="/sanctum"
-              onClick={() => {
-                if (isMobile()) closeSidebar();
-              }}
+              onClick={() => { if (isMobile()) closeSidebar(); }}
               className={({ isActive }) =>
                 `flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-medium transition-all touch justify-start ${
                   isActive
@@ -529,10 +499,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                             {chat.title || 'New Chat'}
                           </span>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              togglePin(chat.id);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); togglePin(chat.id); }}
                             className="text-[var(--text-muted)] hover:text-[var(--accent-brass)]"
                             aria-label={`Unpin "${chat.title || 'New Chat'}"`}
                           >
@@ -560,10 +527,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                             {chat.title || 'New Chat'}
                           </span>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              togglePin(chat.id);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); togglePin(chat.id); }}
                             className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] opacity-0 group-hover:opacity-100 group-focus:opacity-100 focus:opacity-100 transition-opacity"
                             aria-label={`Pin "${chat.title || 'New Chat'}"`}
                           >
@@ -579,7 +543,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           )}
         </div>
 
-        {/* User Profile */}
+        {/* User Profile with Notifications */}
         <div className="border-t border-[var(--border-color)] px-4 py-4 flex items-center gap-4">
           <div
             className="w-10 h-10 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-[var(--accent-indigo)] font-bold text-lg shrink-0"
@@ -597,13 +561,61 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
             </div>
           </div>
           <div className="flex gap-1">
-            <button
-              onClick={toggleTheme}
-              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] touch p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
-              aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            {/* Notification Bell */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] touch p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell size={20} />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--danger)] rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+                    {notifications.length > 9 ? '9+' : notifications.length}
+                  </span>
+                )}
+              </button>
+              {showNotifDropdown && (
+                <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-lg z-50 p-2">
+                  <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--border-color)]">
+                    <span className="text-sm font-bold text-[var(--text-primary)]">Notifications</span>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={() => setNotifications([])}
+                        className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
+                  {notifLoading ? (
+                    <div className="p-4 text-center text-[var(--text-muted)]">Loading...</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="p-4 text-center text-[var(--text-muted)]">No notifications</div>
+                  ) : (
+                    notifications.map((notif, idx) => (
+                      <div key={idx} className="p-2 border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--bg-tertiary)] rounded-lg transition">
+                        <div className="flex items-start gap-2">
+                          <div className="mt-0.5">
+                            {notif.type === 'wallet_created' && <CheckCircle size={16} className="text-green-400" />}
+                            {notif.type === 'transaction' && <Coins size={16} className="text-[#d4af37]" />}
+                            {notif.type === 'workspace_invite' && <Users size={16} className="text-blue-400" />}
+                            {!notif.type && <AlertCircle size={16} className="text-gray-400" />}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-[var(--text-primary)]">{notif.title}</p>
+                            <p className="text-xs text-[var(--text-muted)]">{notif.description}</p>
+                            <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                              {notif.created_at ? new Date(notif.created_at).toLocaleString() : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => {
                 navigate('/settings');

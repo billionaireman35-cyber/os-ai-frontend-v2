@@ -41,6 +41,22 @@ export default function Chat() {
 
   const getToken = () => localStorage.getItem('token');
 
+  const refreshMessages = async () => {
+    if (!chatId) return;
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/chat/chats/${chatId}/messages`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data);
+      }
+    } catch (e) {
+      console.error('Failed to refresh messages', e);
+    }
+  };
+
   const copyToClipboard = (text, id) => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(() => {
@@ -77,6 +93,7 @@ export default function Chat() {
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+      // Use streaming endpoint
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
         headers,
@@ -99,12 +116,20 @@ export default function Chat() {
         throw new Error(errorData.detail || errorData.content || 'Chat request failed');
       }
 
+      // Handle streaming (Server-Sent Events)
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let assistantMessage = { role: 'assistant', content: '', id: Date.now().toString(), createdAt: new Date().toISOString() };
+      let assistantMessage = { 
+        role: 'assistant', 
+        content: '', 
+        id: Date.now().toString(), 
+        createdAt: new Date().toISOString() 
+      };
       let done = false;
+      let receivedFirstChunk = false;
 
-      setMessages(prev => [...prev, { ...assistantMessage, content: '' }]);
+      // Add a placeholder assistant message
+      setMessages(prev => [...prev, { ...assistantMessage }]);
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -118,7 +143,9 @@ export default function Chat() {
             try {
               const parsed = JSON.parse(data);
               if (parsed.content) {
+                receivedFirstChunk = true;
                 assistantMessage.content += parsed.content;
+                // Update the last message in state (assistant message)
                 setMessages(prev => {
                   const last = prev[prev.length - 1];
                   if (last && last.role === 'assistant' && last.id === assistantMessage.id) {
@@ -126,14 +153,34 @@ export default function Chat() {
                     updated[updated.length - 1] = { ...assistantMessage };
                     return updated;
                   } else {
+                    // Fallback: append new message
                     return [...prev, { ...assistantMessage }];
                   }
                 });
               }
-            } catch (e) {}
+            } catch (e) {
+              // Ignore parse errors for incomplete chunks
+            }
           }
         }
       }
+
+      // If we never received any content, show a fallback message
+      if (!receivedFirstChunk && assistantMessage.content === '') {
+        setMessages(prev => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last && last.role === 'assistant' && last.id === assistantMessage.id) {
+            updated[updated.length - 1] = { ...last, content: 'No response received.' };
+          }
+          return updated;
+        });
+      }
+
+      // Store chat_id if returned from stream (we can get it from the response headers or from the first event)
+      // The backend may send it as a separate event, but we don't have it currently.
+      // We'll rely on the non-streaming fallback for chat_id, or we can keep the existing chatId.
+
     } catch (error) {
       console.error('Chat error:', error);
       setMessages(prev => [
@@ -153,16 +200,7 @@ export default function Chat() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ emoji })
       });
-      if (res.ok) {
-        // Refetch the chat messages to get updated reactions
-        if (chatId) {
-          const msgsRes = await fetch(`${API_BASE}/chat/chats/${chatId}/messages`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const data = await msgsRes.json();
-          setMessages(data);
-        }
-      }
+      if (res.ok) refreshMessages();
     } catch (e) {
       console.error('Reaction error:', e);
     }
