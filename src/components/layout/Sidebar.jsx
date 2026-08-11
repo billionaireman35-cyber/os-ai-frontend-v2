@@ -44,14 +44,14 @@ const navItems = [
 const PINNED_KEY = 'os-ai-pinned';
 
 export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNewChat, onSelectChat }) {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth(); // <-- added setUser
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
   const recentRef = useRef(null);
   const closeButtonRef = useRef(null);
   const notifRef = useRef(null);
-  const modalRef = useRef(null); // <-- added for founder modal
+  const modalRef = useRef(null);
 
   const pinnedKey = user?.id ? `os-ai-pinned-${user.id}` : null;
 
@@ -215,6 +215,11 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
       const res = await api.post('/founder/', { code: founderKey });
       if (res.data?.token) {
         localStorage.setItem('token', res.data.token);
+        // 🔥 Refresh user data
+        const userRes = await api.get('/auth/me');
+        if (setUser && userRes.data) {
+          setUser(userRes.data);
+        }
       }
       closeFounderModal();
       await fetchChats();
