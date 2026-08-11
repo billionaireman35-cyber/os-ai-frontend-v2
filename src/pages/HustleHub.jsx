@@ -55,7 +55,6 @@ export default function HustleHub() {
   useEffect(() => {
     if (selectedWorkspace) {
       fetchMessages(selectedWorkspace.id);
-      // Poll for new messages every 5 seconds
       const interval = setInterval(() => fetchMessages(selectedWorkspace.id), 5000);
       return () => clearInterval(interval);
     }
@@ -132,9 +131,9 @@ export default function HustleHub() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a] text-white">
+    <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
       {/* Header */}
-      <div className="border-b border-white/10 p-4 flex items-center justify-between">
+      <div className="border-b border-[var(--border-color)] p-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">Hustle Hub</h1>
           <p className="text-sm text-[var(--text-muted)]">Collaborative workspaces</p>
@@ -148,7 +147,7 @@ export default function HustleHub() {
           </button>
           <button
             onClick={() => document.getElementById('join-input').focus()}
-            className="bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] px-4 py-2 rounded-xl flex items-center gap-2 transition"
+            className="bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] text-[var(--text-primary)] px-4 py-2 rounded-xl flex items-center gap-2 transition"
           >
             <LogIn size={18} /> Join
           </button>
@@ -156,7 +155,7 @@ export default function HustleHub() {
       </div>
 
       {/* Workspace Selector & Join */}
-      <div className="flex flex-wrap items-center gap-2 p-4 bg-[var(--bg-tertiary)] border-b border-white/5">
+      <div className="flex flex-wrap items-center gap-2 p-4 bg-[var(--bg-tertiary)] border-b border-[var(--border-color)]">
         {workspaces.map((ws) => (
           <button
             key={ws.id}
@@ -164,7 +163,7 @@ export default function HustleHub() {
             className={`px-4 py-2 rounded-full text-sm transition ${
               selectedWorkspace?.id === ws.id
                 ? 'bg-[#d4af37] text-black font-bold'
-                : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                : 'bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] text-[var(--text-primary)]'
             }`}
           >
             <Users size={16} className="inline mr-1" />
@@ -178,7 +177,7 @@ export default function HustleHub() {
             placeholder="Enter room code"
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            className="flex-1 bg-[var(--bg-secondary)] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#d4af37]"
+            className="flex-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[#d4af37]"
           />
           <button onClick={handleJoinWorkspace} className="bg-[#d4af37] text-black px-3 py-2 rounded-lg text-sm font-bold">
             Join
@@ -190,7 +189,7 @@ export default function HustleHub() {
       {selectedWorkspace ? (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Workspace Info */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[var(--bg-tertiary)]">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)] bg-[var(--bg-tertiary)]">
             <div>
               <span className="font-bold text-[var(--text-primary)]">{selectedWorkspace.name}</span>
               <span className="text-sm text-[var(--text-muted)] ml-2">• {selectedWorkspace.member_count || 0} members</span>
@@ -204,14 +203,18 @@ export default function HustleHub() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--bg-primary)]">
             {messages.length === 0 ? (
               <div className="text-center text-[var(--text-muted)] py-10">No messages yet. Start the conversation!</div>
             ) : (
               messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.user_id === user?.id ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.user_id === user?.id ? 'bg-blue-600 text-white' : 'bg-white/10 text-gray-100'}`}>
-                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
+                  <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                    msg.user_id === user?.id
+                      ? 'bg-gradient-to-br from-[#d4af37] to-[#b8962e] text-black'
+                      : 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]'
+                  }`}>
+                    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mb-1">
                       <span className="font-bold text-[#d4af37]">{msg.user_name || 'Unknown'}</span>
                       <span>{msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : ''}</span>
                     </div>
@@ -224,13 +227,13 @@ export default function HustleHub() {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSendMessage} className="border-t border-white/10 p-4 bg-[#0f0f0f] flex gap-3">
+          <form onSubmit={handleSendMessage} className="border-t border-[var(--border-color)] p-4 bg-[var(--bg-secondary)] flex gap-3">
             <input
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 transition"
+              className="flex-1 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-2xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 transition"
             />
             <button
               type="submit"

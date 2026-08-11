@@ -157,15 +157,18 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a] text-white">
+    <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      {/* Messages Container */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
+          <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="mb-6">
               <span className="text-5xl font-light text-[#d4af37]">✦</span>
             </div>
-            <p className="text-2xl font-light text-white/80">{getGreeting()}</p>
-            <p className="text-sm max-w-sm mt-2 text-gray-400">I'm OS AI. How can I help you today?</p>
+            <p className="text-2xl font-light text-[var(--text-primary)]/80">{getGreeting()}</p>
+            <p className="text-sm max-w-sm mt-2 text-[var(--text-muted)]">
+              I'm OS AI. How can I help you today?
+            </p>
           </div>
         )}
 
@@ -183,19 +186,19 @@ export default function Chat() {
             >
               <div className={`max-w-[80%] relative ${isUser ? 'order-2' : 'order-1'}`}>
                 {!isUser && !isSystem && (
-                  <div className="flex items-center gap-2 mb-1 text-xs text-gray-500">
+                  <div className="flex items-center gap-2 mb-1 text-xs text-[var(--text-muted)]">
                     <span className="font-medium text-[#d4af37]">OS AI</span>
                     <span>{formatTime(timestamp)}</span>
-                    {msg.model && <span className="text-gray-600">• {msg.model}</span>}
+                    {msg.model && <span className="text-[var(--text-muted)] opacity-60">• {msg.model}</span>}
                   </div>
                 )}
                 <div
                   className={`rounded-2xl px-5 py-3 shadow-lg ${
                     isUser
-                      ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
+                      ? 'bg-gradient-to-br from-[#d4af37] to-[#b8962e] text-black'
                       : isSystem
                         ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-300'
-                        : 'bg-white/10 backdrop-blur-sm border border-white/10 text-gray-100'
+                        : 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]'
                   }`}
                 >
                   {isUser ? (
@@ -211,13 +214,13 @@ export default function Chat() {
                 <div className={`flex items-center gap-1 mt-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
                   <button
                     onClick={() => copyToClipboard(msg.content, msgId)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-white p-1 rounded"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded"
                     aria-label="Copy message"
                   >
                     {isCopied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
                   </button>
                   {!isUser && !isSystem && (
-                    <span className="text-[10px] text-gray-600">• {msg.model || 'AI'}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] opacity-60">• {msg.model || 'AI'}</span>
                   )}
                 </div>
               </div>
@@ -227,11 +230,11 @@ export default function Chat() {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-3">
+            <div className="max-w-[80%] bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-2xl px-5 py-3">
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                <span className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
               </div>
             </div>
           </div>
@@ -239,7 +242,8 @@ export default function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={sendMessage} className="border-t border-white/10 p-4 bg-[#0f0f0f] flex gap-3 items-end">
+      {/* Input Area */}
+      <form onSubmit={sendMessage} className="border-t border-[var(--border-color)] p-4 bg-[var(--bg-secondary)] flex gap-3 items-end">
         <div className="flex-1 relative">
           <textarea
             ref={inputRef}
@@ -247,7 +251,7 @@ export default function Chat() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
             rows={1}
-            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 resize-none transition"
+            className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-2xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 resize-none transition"
             style={{ minHeight: '3rem', maxHeight: '10rem' }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
