@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Chat from './pages/Chat';
 import Vault from './pages/Vault';
+import Leaderboard from './pages/Leaderboard';
 import Pulse from './pages/Pulse';
 import Sanctum from './pages/Sanctum';
 import About from './pages/About';
@@ -41,6 +42,7 @@ function Shell() {
             <Route path="/" element={<Chat />} />
             <Route path="/vault" element={<Vault />} />
             <Route path="/pulse" element={<Pulse />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/sanctum" element={<Sanctum />} />
             <Route path="/about" element={<About />} />
             <Route path="/privacy-terms" element={<PrivacyTerms />} />

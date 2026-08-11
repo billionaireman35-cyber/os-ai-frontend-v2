@@ -28,6 +28,7 @@ import {
   Bell,
   CheckCircle,
   AlertCircle,
+  Trophy,
 } from 'lucide-react';
 import { api } from '../../utils/api';
 
@@ -35,6 +36,7 @@ const navItems = [
   { to: '/', label: 'Intelligence', icon: MessageSquare },
   { to: '/vault', label: 'Vault', icon: Wallet },
   { to: '/pulse', label: 'Pulse', icon: Radio },
+  { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { to: '/hustle-hub', label: 'Hustle Hub', icon: Users },
   { to: '/developer', label: 'Foundry', icon: Code },
 ];
@@ -48,6 +50,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const sidebarRef = useRef(null);
   const recentRef = useRef(null);
   const closeButtonRef = useRef(null);
+  const notifRef = useRef(null);
 
   const pinnedKey = user?.id ? `os-ai-pinned-${user.id}` : null;
 
@@ -59,7 +62,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const [notifications, setNotifications] = useState([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
-  const notifRef = useRef(null);
 
   const [tapCount, setTapCount] = useState(0);
   const lastTapRef = useRef(0);
@@ -71,7 +73,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const isOpen = mobileOpen || expanded;
   const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 1024;
 
-  // Single source of truth for closing the sidebar
   const closeSidebar = useCallback(() => {
     setExpanded(false);
     setMobileOpen(false);
@@ -87,7 +88,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     }
   };
 
-  // Load pinned chats per user
   useEffect(() => {
     if (!pinnedKey) {
       setPinnedChats([]);
@@ -139,12 +139,10 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
 
   useEffect(() => {
     if (user) fetchNotifications();
-    // Refresh every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [user, fetchNotifications]);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (recentRef.current && !recentRef.current.contains(e.target)) {
@@ -158,7 +156,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close sidebar on outside click (desktop only)
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (!isOpen || isMobile()) return;
@@ -170,7 +167,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [isOpen, closeSidebar]);
 
-  // Escape closes dropdowns or sidebar
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key !== 'Escape') return;
@@ -561,7 +557,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
             </div>
           </div>
           <div className="flex gap-1">
-            {/* Notification Bell */}
             <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setShowNotifDropdown(!showNotifDropdown)}

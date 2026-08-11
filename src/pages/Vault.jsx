@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign, 
-  BarChart, Wallet, RefreshCw, Loader2, Copy, CheckCircle 
+import {
+  ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign,
+  BarChart, Wallet, RefreshCw, Loader2, Copy, CheckCircle,
+  ArrowUpRight, ArrowDownRight, Flame, Coins
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { useAuth } from '../context/AuthContext';
@@ -22,10 +23,13 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+
   if (!isOpen || !asset) return null;
+
   const handleSend = async (password) => {
     if (!password) { setError('Password required'); return; }
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       const res = await api.post('/wallet/send', {
         chain: asset.chain,
@@ -43,6 +47,7 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
       setShowPasswordModal(false);
     }
   };
+
   return (
     <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -53,11 +58,11 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
           </div>
           <div>
             <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Recipient</label>
-            <input type="text" value={to} onChange={(e) => setTo(e.target.value)} className="input-base" placeholder="0x..." />
+            <input type="text" value={to} onChange={(e) => setTo(e.target.value)} className="input-base w-full" placeholder="0x..." />
           </div>
           <div>
             <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount ({asset.symbol})</label>
-            <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-base" placeholder="0.0" />
+            <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-base w-full" placeholder="0.0" />
           </div>
           <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
             <span>Chain: <span className="text-[var(--text-primary)] font-medium">{asset.chain}</span></span>
@@ -71,6 +76,7 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
           </div>
         </div>
       </div>
+
       <Modal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
@@ -96,11 +102,15 @@ function StandardWallet() {
   const [showSwapModal, setShowSwapModal] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSellModal, setShowSellModal] = useState(false);
+  const [showBurnModal, setShowBurnModal] = useState(false);
+  const [burnAmount, setBurnAmount] = useState('');
+  const [burning, setBurning] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const filtered = Array.isArray(assets) ? (chain === 'all' ? assets : assets.filter((a) => a.chain === chain)) : [];
+  const closeAsset = assets.find(a => a.symbol === 'CLOSE');
 
   const createWallet = async (password) => {
     if (!password || creating) return;
@@ -127,7 +137,6 @@ function StandardWallet() {
   useEffect(() => { if (user) fetchBalances(); }, [user]);
 
   const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error) || 'Unknown error');
-
   const copyAddress = () => {
     if (user?.wallet_address) {
       navigator.clipboard.writeText(user.wallet_address);
@@ -137,14 +146,37 @@ function StandardWallet() {
     }
   };
 
-  const hasWallet = !!user?.wallet_address;
+  const handleBurn = async (password) => {
+    if (!burnAmount || parseFloat(burnAmount) <= 0) {
+      addToast('Enter a valid amount', 'error');
+      return;
+    }
+    if (!password) {
+      addToast('Password required', 'error');
+      return;
+    }
+    setBurning(true);
+    try {
+      const res = await api.post('/burn/burn', null, {
+        params: { amount: Math.floor(parseFloat(burnAmount)) }
+      });
+      addToast(`🔥 Burned ${burnAmount} CLOSE! Tx: ${res.data.tx_hash.slice(0, 12)}...`, 'success');
+      fetchBalances();
+      setShowBurnModal(false);
+      setBurnAmount('');
+    } catch (e) {
+      addToast(e.response?.data?.detail || 'Burn failed', 'error');
+    } finally {
+      setBurning(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       {/* Wallet Card */}
-      {hasWallet ? (
+      {user?.wallet_address ? (
         <div className="glass-card p-6 border border-[#d4af37]/20 bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] rounded-2xl shadow-xl">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -173,23 +205,28 @@ function StandardWallet() {
 
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3">
-        {!hasWallet && (
+        {!user?.wallet_address && (
           <button onClick={() => setShowPasswordModal(true)} disabled={creating} className="bg-[#d4af37] hover:bg-[#c4a030] text-black font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition disabled:opacity-50">
             <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
           </button>
         )}
-        <button onClick={() => { if (!hasWallet) { addToast('Create a wallet first.', 'warning'); return; } if (filtered.length === 0) { addToast('No assets to send.', 'warning'); return; } setSendAsset(filtered[0]); setShowSendModal(true); }} className="btn-primary flex items-center gap-2" disabled={!hasWallet}>
+        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } if (filtered.length === 0) { addToast('No assets to send.', 'warning'); return; } setSendAsset(filtered[0]); setShowSendModal(true); }} className="btn-primary flex items-center gap-2" disabled={!user?.wallet_address}>
           <Send size={18} /> Send
         </button>
-        <button onClick={() => { if (!hasWallet) { addToast('Create a wallet first.', 'warning'); return; } setShowSwapModal(true); }} className="btn-secondary flex items-center gap-2" disabled={!hasWallet}>
+        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSwapModal(true); }} className="btn-secondary flex items-center gap-2" disabled={!user?.wallet_address}>
           <ArrowUpDown size={18} /> Swap
         </button>
-        <button onClick={() => { if (!hasWallet) { addToast('Create a wallet first.', 'warning'); return; } setShowBuyModal(true); }} className="btn-primary flex items-center gap-2" style={{ background: 'var(--success)', color: 'white' }} disabled={!hasWallet}>
+        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowBuyModal(true); }} className="btn-primary flex items-center gap-2" style={{ background: 'var(--success)', color: 'white' }} disabled={!user?.wallet_address}>
           <CreditCard size={18} /> Buy
         </button>
-        <button onClick={() => { if (!hasWallet) { addToast('Create a wallet first.', 'warning'); return; } setShowSellModal(true); }} className="btn-secondary flex items-center gap-2" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} disabled={!hasWallet}>
+        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSellModal(true); }} className="btn-secondary flex items-center gap-2" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} disabled={!user?.wallet_address}>
           <DollarSign size={18} /> Sell
         </button>
+        {closeAsset && closeAsset.balance > 0 && (
+          <button onClick={() => setShowBurnModal(true)} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-5 py-2.5 rounded-xl flex items-center gap-2 transition">
+            <Flame size={18} /> Burn
+          </button>
+        )}
         <button onClick={fetchBalances} className="btn-secondary flex items-center gap-2">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
         </button>
@@ -246,6 +283,33 @@ function StandardWallet() {
       <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <BuyModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onBuy={() => { addToast('Buy initiated.', 'info'); fetchBalances(); }} />
       <SellModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} onSell={() => { addToast('Sell initiated.', 'info'); fetchBalances(); }} />
+
+      <Modal
+        isOpen={showBurnModal}
+        onClose={() => { setShowBurnModal(false); setBurnAmount(''); }}
+        title="🔥 Burn CLOSE"
+        message="Burn your CLOSE tokens to reduce supply and earn rewards."
+        inputType="number"
+        inputPlaceholder="Enter amount to burn"
+        inputValue={burnAmount}
+        onInputChange={setBurnAmount}
+        onConfirm={() => setShowPasswordModal(true)}
+        confirmText="Burn"
+        cancelText="Cancel"
+      />
+
+      <Modal
+        isOpen={showPasswordModal}
+        onClose={() => { setShowPasswordModal(false); setBurning(false); }}
+        title="Confirm Burn"
+        message={`Enter your wallet password to burn ${burnAmount || 0} CLOSE.`}
+        inputType="password"
+        inputPlaceholder="Enter password"
+        onConfirm={handleBurn}
+        confirmText={burning ? 'Burning...' : 'Burn'}
+        cancelText="Cancel"
+        confirmDisabled={burning}
+      />
 
       <Modal
         isOpen={showPasswordModal}
