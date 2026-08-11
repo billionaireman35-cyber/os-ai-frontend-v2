@@ -214,6 +214,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     try {
       const res = await api.post('/founder/', { code: founderKey });
       if (res.data?.token) {
+            window.location.reload();
         localStorage.setItem('token', res.data.token);
         // 🔥 Refresh user data
         const userRes = await api.get('/auth/me');
