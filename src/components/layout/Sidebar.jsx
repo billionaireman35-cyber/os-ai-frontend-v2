@@ -51,6 +51,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const recentRef = useRef(null);
   const closeButtonRef = useRef(null);
   const notifRef = useRef(null);
+  const modalRef = useRef(null); // <-- added for founder modal
 
   const pinnedKey = user?.id ? `os-ai-pinned-${user.id}` : null;
 
@@ -314,7 +315,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-[var(--border-color)]">
           <div
             className="flex items-center gap-2 cursor-pointer select-none hover:bg-[var(--bg-tertiary)] transition-colors rounded-lg px-2 py-1"
@@ -335,7 +335,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           </button>
         </div>
 
-        {/* New Chat */}
         <button
           onClick={newChat}
           className="mx-4 mt-4 flex items-center justify-center gap-3 bg-[var(--accent-indigo)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-xl py-4 press-soft touch transition-all shadow-sm hover:shadow-md px-6 text-[17px]"
@@ -344,7 +343,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           <span className="text-[17px]">New Chat</span>
         </button>
 
-        {/* Search */}
         <div className="mx-4 mt-4 flex items-center gap-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl px-4 py-3 focus-within:border-[var(--accent-indigo)] transition-colors">
           <Search size={18} className="text-[var(--text-muted)] shrink-0" aria-hidden="true" />
           <input
@@ -378,7 +376,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           </div>
         )}
 
-        {/* Main Navigation */}
         <nav className="px-3 py-2 border-b border-[var(--border-color)]" aria-label="Primary">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
@@ -416,7 +413,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           )}
         </nav>
 
-        {/* Quick Actions */}
         <div className="px-4 py-4 border-t border-[var(--border-color)]">
           <p className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Quick Actions</p>
           <div className="flex flex-wrap gap-2 mt-3">
@@ -455,7 +451,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           </button>
         </div>
 
-        {/* Recent Chats */}
         <div className="px-3 py-2 border-t border-[var(--border-color)] flex-1 overflow-y-auto" ref={recentRef}>
           <div
             {...asButton(() => setRecentDropdownOpen((prev) => !prev))}
@@ -539,7 +534,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           )}
         </div>
 
-        {/* User Profile with Notifications */}
         <div className="border-t border-[var(--border-color)] px-4 py-4 flex items-center gap-4">
           <div
             className="w-10 h-10 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-[var(--accent-indigo)] font-bold text-lg shrink-0"
@@ -631,7 +625,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           </div>
         </div>
 
-        {/* Founder Modal */}
         {showFounderModal && (
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in"

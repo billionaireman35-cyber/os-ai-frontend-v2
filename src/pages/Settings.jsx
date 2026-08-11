@@ -6,7 +6,7 @@ import { api } from '../utils/api';
 import {
   X, Moon, Sun, LogOut, User, Wallet, Copy, CheckCircle,
   Bell, Lock, Eye, Globe, Server, MessageSquare, Languages, Terminal,
-  ChevronRight, ArrowLeft, Save, RefreshCw, AlertTriangle, Camera
+  ChevronRight, ArrowLeft, Save, RefreshCw, AlertTriangle, Camera, Plus
 } from 'lucide-react';
 
 const defaultSettings = {
@@ -40,6 +40,7 @@ export default function Settings() {
   const [editingName, setEditingName] = useState(false);
   const [profilePic, setProfilePic] = useState(user?.profile_picture || null);
   const fileInputRef = useRef(null);
+  const [topUpLoading, setTopUpLoading] = useState(false);
 
   // ── Sub‑page state ──
   const [currentPassword, setCurrentPassword] = useState('');
@@ -134,8 +135,6 @@ export default function Settings() {
       return;
     }
     try {
-      // In real implementation, call a backend endpoint that decrypts and returns seed
-      // For now we'll simulate
       setExportSeed('mock seed phrase: abandon abandon ...');
     } catch (e) {
       setExportError(e.message || 'Failed to export seed.');
@@ -148,11 +147,25 @@ export default function Settings() {
       return;
     }
     try {
-      // Call backend to clear wallet for user
       alert('Wallet reset functionality will be implemented.');
       setResetConfirm('');
     } catch (e) {
       alert(e.message);
+    }
+  };
+
+  const handleTopUp = async () => {
+    if (topUpLoading) return;
+    setTopUpLoading(true);
+    try {
+      await api.post('/founder/add-close', { amount: 10000 });
+      const userRes = await api.get('/auth/me');
+      if (setUser) setUser(userRes.data);
+      alert('Added 10,000 CLOSE!');
+    } catch (e) {
+      alert('Failed: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setTopUpLoading(false);
     }
   };
 
@@ -195,6 +208,18 @@ export default function Settings() {
           <div className={`w-5 h-5 rounded-full bg-[#d4af37] transition-transform ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
         </button>
       </div>
+
+      {/* Founder-only top‑up button */}
+      {user?.is_founder && (
+        <button
+          onClick={handleTopUp}
+          disabled={topUpLoading}
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-[#d4af37] text-black font-bold hover:bg-[#c4a030] transition-colors disabled:opacity-50"
+        >
+          <Plus size={18} /> {topUpLoading ? 'Adding...' : 'Add 10,000 CLOSE (Founder)'}
+        </button>
+      )}
+
       <button
         onClick={() => { logout(); navigate('/login'); }}
         className="w-full flex items-center gap-3 p-3 rounded-xl text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors"
@@ -206,7 +231,7 @@ export default function Settings() {
     </div>
   );
 
-  // ── Profile Sub‑page (with picture upload) ──
+  // ── Profile Sub‑page ──
   const renderProfile = () => (
     <div className="p-4 space-y-4">
       <div className="flex items-center gap-4">
