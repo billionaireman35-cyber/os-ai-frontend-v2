@@ -1,22 +1,17 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './index.css'
-import { ErrorBoundary } from './components/ErrorBoundary'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
 
-console.log('main.jsx loaded');
-
-const rootElement = document.getElementById('root');
-console.log('Root element:', rootElement);
-
-if (rootElement) {
-  ReactDOM.createRoot(rootElement).render(
-    <React.StrictMode>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </React.StrictMode>,
-  );
-} else {
-  document.body.innerHTML = '<div style="padding:2rem;background:#0A1114;color:#E9E4D8;text-align:center;font-family:sans-serif;"><h1>OS AI</h1><p>Root element not found. Please refresh.</p></div>';
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(() => console.log('Service Worker registered'))
+    .catch((err) => console.error('Service Worker registration failed:', err));
 }
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

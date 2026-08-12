@@ -2,8 +2,6 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
 
-const CLOSE_CONTRACT = import.meta.env.VITE_CLOSE_CONTRACT || '0x3c6833cFDdED80fE76474a3Cb2Cc050Daec91fe8';
-
 const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
@@ -28,8 +26,10 @@ export function WalletProvider({ children }) {
       const items = [];
       let total = 0;
 
-      // Chain balances
+      // 1. On‑chain balances
       for (const [chain, chainData] of Object.entries(data)) {
+        // Skip the 'close' internal field – we handle separately
+        if (chain === 'close') continue;
         const native = chainData.native;
         if (native && native.balance > 0) {
           items.push({
@@ -48,30 +48,33 @@ export function WalletProvider({ children }) {
               symbol,
               balance: token.balance,
               usdValue: token.usd || 0,
-              address: token.address,
+              address: token.address || null,
             });
             total += token.usd || 0;
           }
         }
       }
 
-      // ✅ Include internal CLOSE with contract address
-      if (res.data.close && res.data.close.balance > 0) {
+      // 2. Internal CLOSE balance
+      if (data.close && data.close.balance > 0) {
         items.push({
-          chain: 'polygon',
-          symbol: 'CLOSE',
-          balance: res.data.close.balance,
-          usdValue: res.data.close.usd || 0,
-          address: CLOSE_CONTRACT,  // <-- contract address for sending
+          chain: 'internal',
+          symbol: 'CLOSE (internal)',
+          balance: data.close.balance,
+          usdValue: data.close.usd || 0,
+          address: null,
         });
-        total += res.data.close.usd || 0;
+        total += data.close.usd || 0;
       }
 
       setAssets(items);
       setTotalUsd(total);
     } catch (e) {
       console.error('Failed to fetch balances', e);
-      setError(e.message || 'Failed to fetch balances');
+      let msg = 'Failed to fetch balances';
+      if (e.response?.status === 403) msg = 'API key error – please check your Alchemy key.';
+      else if (e.message) msg = e.message;
+      setError(msg);
       setAssets([]);
       setTotalUsd(0);
     } finally {
