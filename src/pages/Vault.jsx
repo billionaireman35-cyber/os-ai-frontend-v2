@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import { useState, useEffect } from 'react';
 import {
   ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign,
@@ -94,7 +95,7 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
 
 function StandardWallet() {
   const { assets, totalUsd, loading, error, fetchBalances } = useWallet();
-  const { user, setUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toasts, addToast, removeToast } = useToast();
   const [chain, setChain] = useState('all');
   const [showSendModal, setShowSendModal] = useState(false);
@@ -120,8 +121,7 @@ function StandardWallet() {
       if (res.data?.wallet) {
         const { address } = res.data.wallet;
         addToast(`Wallet created! Address: ${address.slice(0, 10)}...`, 'success', 6000);
-        const userRes = await api.get('/auth/me');
-        if (setUser && userRes.data) setUser(userRes.data);
+        await refreshUser();
         fetchBalances();
         setShowPasswordModal(false);
       } else {

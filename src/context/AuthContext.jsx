@@ -61,8 +61,21 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Re-fetch the current user (e.g. after creating a wallet) without
+  // requiring a full page reload to pick up the change.
+  const refreshUser = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setUser(res.data);
+      return res.data;
+    } catch (e) {
+      console.error('Failed to refresh user', e);
+      throw e;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateName }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateName, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

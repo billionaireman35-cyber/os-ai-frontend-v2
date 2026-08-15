@@ -3,12 +3,14 @@ import { useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
-const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 
 export default function Chat() {
+  const { theme } = useTheme();
   const location = useLocation();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -21,6 +23,51 @@ export default function Chat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Restore whichever chat the Sidebar last selected (survives remounts
+  // caused by navigating to another route and back).
+  useEffect(() => {
+    const stored = localStorage.getItem('os-ai-selected-chat');
+    if (stored) setChatId(stored);
+  }, []);
+
+  // Load that chat's messages whenever chatId changes.
+  useEffect(() => {
+    if (chatId) {
+      refreshMessages();
+    } else {
+      setMessages([]);
+    }
+  }, [chatId]);
+
+  // "New Chat" in the sidebar clears the selection even when we're
+  // already on this route (no navigation occurs in that case).
+  useEffect(() => {
+    const handleNewChat = () => {
+      localStorage.removeItem('os-ai-selected-chat');
+      setChatId(null);
+      setMessages([]);
+    };
+    window.addEventListener('new-chat', handleNewChat);
+    return () => window.removeEventListener('new-chat', handleNewChat);
+  }, []);
+
+  // Quick Action buttons in the sidebar (Research/Coding/Crypto/Everyday)
+  // dispatch this to prefill the composer with a mode prefix.
+  useEffect(() => {
+    const handleQuickAction = (e) => {
+      const promptMap = {
+        research: 'Research: ',
+        coding: 'Code: ',
+        crypto: 'Crypto: ',
+        everyday: 'Everyday: '
+      };
+      setInput(promptMap[e.detail?.mode] || '');
+      setTimeout(() => inputRef.current?.focus(), 100);
+    };
+    window.addEventListener('quick-action', handleQuickAction);
+    return () => window.removeEventListener('quick-action', handleQuickAction);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -93,12 +140,14 @@ export default function Chat() {
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      // Use streaming endpoint
+      // ✅ Build messages array including the new user message
+      const messagesToSend = [...messages, userMessage];
+
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          messages: messagesToSend.map(m => ({ role: m.role, content: m.content })),
           chat_id: chatId,
         }),
       });
@@ -116,19 +165,17 @@ export default function Chat() {
         throw new Error(errorData.detail || errorData.content || 'Chat request failed');
       }
 
-      // Handle streaming (Server-Sent Events)
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let assistantMessage = { 
-        role: 'assistant', 
-        content: '', 
-        id: Date.now().toString(), 
-        createdAt: new Date().toISOString() 
+      let assistantMessage = {
+        role: 'assistant',
+        content: '',
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString()
       };
       let done = false;
       let receivedFirstChunk = false;
 
-      // Add a placeholder assistant message
       setMessages(prev => [...prev, { ...assistantMessage }]);
 
       while (!done) {
@@ -145,7 +192,6 @@ export default function Chat() {
               if (parsed.content) {
                 receivedFirstChunk = true;
                 assistantMessage.content += parsed.content;
-                // Update the last message in state (assistant message)
                 setMessages(prev => {
                   const last = prev[prev.length - 1];
                   if (last && last.role === 'assistant' && last.id === assistantMessage.id) {
@@ -153,19 +199,15 @@ export default function Chat() {
                     updated[updated.length - 1] = { ...assistantMessage };
                     return updated;
                   } else {
-                    // Fallback: append new message
                     return [...prev, { ...assistantMessage }];
                   }
                 });
               }
-            } catch (e) {
-              // Ignore parse errors for incomplete chunks
-            }
+            } catch (e) {}
           }
         }
       }
 
-      // If we never received any content, show a fallback message
       if (!receivedFirstChunk && assistantMessage.content === '') {
         setMessages(prev => {
           const updated = [...prev];
@@ -176,10 +218,6 @@ export default function Chat() {
           return updated;
         });
       }
-
-      // Store chat_id if returned from stream (we can get it from the response headers or from the first event)
-      // The backend may send it as a separate event, but we don't have it currently.
-      // We'll rely on the non-streaming fallback for chat_id, or we can keep the existing chatId.
 
     } catch (error) {
       console.error('Chat error:', error);
@@ -267,14 +305,13 @@ export default function Chat() {
                   {isUser ? (
                     <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                   ) : (
-                    <div className="prose prose-invert prose-sm max-w-none break-words">
+                    <div className={`prose prose-sm max-w-none break-words ${theme === 'dark' ? 'prose-invert' : ''}`}>
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.content || ' '}
                       </ReactMarkdown>
                     </div>
                   )}
                 </div>
-                {/* Reactions */}
                 <div className="flex flex-wrap gap-1 mt-1">
                   {Object.entries(reactions).map(([emoji, users]) => (
                     <button

@@ -130,3 +130,13 @@
 .animate-pulse-slow {
   animation: pulse 1.5s ease-in-out infinite;
 }
+
+/* ── Pulsing Logo Animation ── */
+@keyframes pulseLogo {
+  0% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 0.6; transform: scale(1); }
+}
+.pulse-logo {
+  animation: pulseLogo 2s ease-in-out infinite;
+}

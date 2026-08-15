@@ -1,17 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Bell, Circle, User, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationCenter } from '../NotificationCenter';
 
 export function Omnibar({ toggleSidebar }) {
   const { user } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  useEffect(() => {
-    const notifications = JSON.parse(localStorage.getItem('os-ai-notifications') || '[]');
-    const unread = notifications.filter(n => !n.read).length;
-    setUnreadCount(unread);
-  }, []);
 
   return (
     <header className="h-14 border-b border-[var(--border-color)] flex items-center justify-between px-3 md:px-6 bg-[var(--bg-primary)] shrink-0">

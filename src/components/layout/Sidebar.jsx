@@ -128,7 +128,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     if (!user) return;
     setNotifLoading(true);
     try {
-      const res = await api.get('/notifications');
+      const res = await api.get('/notifications/');
       setNotifications(res.data || []);
     } catch (e) {
       console.error('Failed to fetch notifications:', e);
@@ -243,6 +243,8 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     if (onNewChat) {
       onNewChat();
     } else {
+      localStorage.removeItem('os-ai-selected-chat');
+      window.dispatchEvent(new CustomEvent('new-chat'));
       navigate('/');
     }
     if (isMobile()) closeSidebar();
@@ -317,7 +319,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
         aria-modal={mobileOpen ? 'true' : undefined}
         aria-label="Sidebar navigation"
         aria-hidden={!isOpen}
-        className={`fixed top-0 left-0 h-full w-[340px] bg-[var(--bg-secondary)] border-r border-[var(--border-color)] flex flex-col transition-transform duration-300 ease-in-out z-50 ${
+        className={`fixed top-0 left-0 h-full w-[340px] bg-[var(--bg-secondary)] border-r border-[var(--border-color)] flex flex-col overflow-y-auto transition-transform duration-300 ease-in-out z-50 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -326,7 +328,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
             className="flex items-center gap-2 cursor-pointer select-none hover:bg-[var(--bg-tertiary)] transition-colors rounded-lg px-2 py-1"
             onClick={handleLogoClick}
           >
-            <span className="font-display font-bold text-[26px] text-[var(--text-primary)] flex items-center gap-2">
+            <span className="font-display font-bold text-[26px] text-[var(--text-primary)] flex items-center gap-2 pulse-logo">
               <Zap size={28} className="text-[var(--accent-brass)]" />
               OS AI
             </span>
@@ -557,60 +559,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
             </div>
           </div>
           <div className="flex gap-1">
-            <div className="relative" ref={notifRef}>
-              <button
-                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] touch p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
-                aria-label="Notifications"
-              >
-                <Bell size={20} />
-                {notifications.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--danger)] rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                    {notifications.length > 9 ? '9+' : notifications.length}
-                  </span>
-                )}
-              </button>
-              {showNotifDropdown && (
-                <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-lg z-50 p-2">
-                  <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--border-color)]">
-                    <span className="text-sm font-bold text-[var(--text-primary)]">Notifications</span>
-                    {notifications.length > 0 && (
-                      <button
-                        onClick={() => setNotifications([])}
-                        className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                      >
-                        Clear all
-                      </button>
-                    )}
-                  </div>
-                  {notifLoading ? (
-                    <div className="p-4 text-center text-[var(--text-muted)]">Loading...</div>
-                  ) : notifications.length === 0 ? (
-                    <div className="p-4 text-center text-[var(--text-muted)]">No notifications</div>
-                  ) : (
-                    notifications.map((notif, idx) => (
-                      <div key={idx} className="p-2 border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--bg-tertiary)] rounded-lg transition">
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5">
-                            {notif.type === 'wallet_created' && <CheckCircle size={16} className="text-green-400" />}
-                            {notif.type === 'transaction' && <Coins size={16} className="text-[#d4af37]" />}
-                            {notif.type === 'workspace_invite' && <Users size={16} className="text-blue-400" />}
-                            {!notif.type && <AlertCircle size={16} className="text-gray-400" />}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-[var(--text-primary)]">{notif.title}</p>
-                            <p className="text-xs text-[var(--text-muted)]">{notif.description}</p>
-                            <p className="text-[10px] text-[var(--text-muted)] mt-1">
-                              {notif.created_at ? new Date(notif.created_at).toLocaleString() : ''}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
             <button
               onClick={() => {
                 navigate('/settings');
