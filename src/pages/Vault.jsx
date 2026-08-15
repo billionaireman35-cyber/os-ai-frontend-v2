@@ -106,7 +106,8 @@ function StandardWallet() {
   const [showBurnModal, setShowBurnModal] = useState(false);
   const [burnAmount, setBurnAmount] = useState('');
   const [burning, setBurning] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showBurnPasswordModal, setShowBurnPasswordModal] = useState(false);
+  const [showCreatePasswordModal, setShowCreatePasswordModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -123,7 +124,7 @@ function StandardWallet() {
         addToast(`Wallet created! Address: ${address.slice(0, 10)}...`, 'success', 6000);
         await refreshUser();
         fetchBalances();
-        setShowPasswordModal(false);
+        setShowCreatePasswordModal(false);
       } else {
         throw new Error('Unexpected response');
       }
@@ -157,15 +158,17 @@ function StandardWallet() {
     }
     setBurning(true);
     try {
-      const res = await api.post('/burn/burn', null, {
+      const res = await api.post('/api/v1/burn', null, {
         params: { amount: Math.floor(parseFloat(burnAmount)) }
       });
       addToast(`🔥 Burned ${burnAmount} CLOSE! Tx: ${res.data.tx_hash.slice(0, 12)}...`, 'success');
       fetchBalances();
       setShowBurnModal(false);
       setBurnAmount('');
+      setShowBurnPasswordModal(false);
     } catch (e) {
       addToast(e.response?.data?.detail || 'Burn failed', 'error');
+      setShowBurnPasswordModal(false);
     } finally {
       setBurning(false);
     }
@@ -206,7 +209,7 @@ function StandardWallet() {
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3">
         {!user?.wallet_address && (
-          <button onClick={() => setShowPasswordModal(true)} disabled={creating} className="bg-[#d4af37] hover:bg-[#c4a030] text-black font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition disabled:opacity-50">
+          <button onClick={() => setShowCreatePasswordModal(true)} disabled={creating} className="bg-[#d4af37] hover:bg-[#c4a030] text-black font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition disabled:opacity-50">
             <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
           </button>
         )}
@@ -293,14 +296,21 @@ function StandardWallet() {
         inputPlaceholder="Enter amount to burn"
         inputValue={burnAmount}
         onInputChange={setBurnAmount}
-        onConfirm={() => setShowPasswordModal(true)}
+        onConfirm={() => {
+          console.log('Burn amount:', burnAmount, typeof burnAmount);
+          if (!burnAmount || parseFloat(burnAmount) <= 0) {
+            addToast('Please enter a valid amount greater than 0', 'error');
+            return;
+          }
+          setShowBurnPasswordModal(true);
+        }}
         confirmText="Burn"
         cancelText="Cancel"
       />
 
       <Modal
-        isOpen={showPasswordModal}
-        onClose={() => { setShowPasswordModal(false); setBurning(false); }}
+        isOpen={showBurnPasswordModal}
+        onClose={() => { setShowBurnPasswordModal(false); setBurning(false); }}
         title="Confirm Burn"
         message={`Enter your wallet password to burn ${burnAmount || 0} CLOSE.`}
         inputType="password"
@@ -312,8 +322,8 @@ function StandardWallet() {
       />
 
       <Modal
-        isOpen={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
+        isOpen={showCreatePasswordModal}
+        onClose={() => setShowCreatePasswordModal(false)}
         title="Create Wallet"
         message="Enter a password to encrypt your wallet. This password will be used to sign all transactions. Keep it safe — it cannot be recovered!"
         inputType="password"
