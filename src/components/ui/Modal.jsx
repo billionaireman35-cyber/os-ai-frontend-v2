@@ -1,20 +1,44 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 
-export function Modal({ isOpen, onClose, title, message, inputType = 'text', inputPlaceholder = '', onConfirm, confirmText = 'OK', cancelText = 'Cancel', showInput = true }) {
-  const [value, setValue] = useState('');
+export function Modal({ 
+  isOpen, 
+  onClose, 
+  title, 
+  message, 
+  inputType = 'text', 
+  inputPlaceholder = '', 
+  onConfirm, 
+  confirmText = 'OK', 
+  cancelText = 'Cancel', 
+  showInput = true,
+  inputValue = '',
+  onInputChange = null
+}) {
+  const [internalValue, setInternalValue] = useState('');
+
+  const value = onInputChange ? inputValue : internalValue;
+
+  const handleChange = (e) => {
+    const newVal = e.target.value;
+    if (onInputChange) {
+      onInputChange(newVal);
+    } else {
+      setInternalValue(newVal);
+    }
+  };
 
   if (!isOpen) return null;
 
   const handleConfirm = () => {
     if (showInput && !value.trim()) return;
     onConfirm(value);
-    setValue('');
+    if (!onInputChange) setInternalValue('');
     onClose();
   };
 
   const handleCancel = () => {
-    setValue('');
+    if (!onInputChange) setInternalValue('');
     onClose();
   };
 
@@ -30,7 +54,7 @@ export function Modal({ isOpen, onClose, title, message, inputType = 'text', inp
           <input
             type={inputType}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={handleChange}
             className="input-base"
             placeholder={inputPlaceholder}
             autoFocus
