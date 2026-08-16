@@ -2,14 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Flag } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useToast } from '../components/ui/Toast';
 
 const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 
 export default function Chat() {
+  const { addToast } = useToast();
   const { theme } = useTheme();
   const location = useLocation();
   const [messages, setMessages] = useState([]);
@@ -230,6 +232,39 @@ export default function Chat() {
     }
   };
 
+  const [reportingMessageId, setReportingMessageId] = useState(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+
+  const submitReport = async () => {
+    if (!reportReason) {
+      addToast('Please select a reason', 'error');
+      return;
+    }
+    setReportSubmitting(true);
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/chat/messages/${reportingMessageId}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ reason: reportReason, details: reportDetails })
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || `Request failed (${res.status})`);
+      }
+      addToast('Report submitted. Thank you.', 'success');
+      setReportingMessageId(null);
+      setReportReason('');
+      setReportDetails('');
+    } catch (e) {
+      addToast('Failed to submit report', 'error');
+    } finally {
+      setReportSubmitting(false);
+    }
+  };
+
   const handleReaction = async (messageId, emoji) => {
     try {
       const token = getToken();
@@ -343,7 +378,17 @@ export default function Chat() {
                     {isCopied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
                   </button>
                   {!isUser && !isSystem && (
-                    <span className="text-[10px] text-[var(--text-muted)] opacity-60">• {msg.model || 'AI'}</span>
+                    <>
+                      <button
+                        onClick={() => setReportingMessageId(msgId)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-muted)] hover:text-red-400 p-1 rounded"
+                        aria-label="Report this response"
+                        title="Report this response"
+                      >
+                        <Flag size={14} />
+                      </button>
+                      <span className="text-[10px] text-[var(--text-muted)] opacity-60">• {msg.model || 'AI'}</span>
+                    </>
                   )}
                 </div>
               </div>
@@ -364,6 +409,50 @@ export default function Chat() {
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      {reportingMessageId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setReportingMessageId(null)}>
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Report this response</h3>
+            <p className="text-[var(--text-secondary)] text-sm">Help us review potentially problematic AI-generated content.</p>
+            <select
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="input-base w-full"
+            >
+              <option value="">Select a reason...</option>
+              <option value="inappropriate">Inappropriate content</option>
+              <option value="harmful">Harmful or dangerous</option>
+              <option value="misinformation">Misinformation</option>
+              <option value="other">Other</option>
+            </select>
+            <textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              placeholder="Additional details (optional)"
+              rows={3}
+              className="input-base w-full resize-none"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={submitReport}
+                disabled={reportSubmitting}
+                className="btn-primary flex-1 justify-center disabled:opacity-50"
+              >
+                {reportSubmitting ? 'Submitting...' : 'Submit Report'}
+              </button>
+              <button
+                onClick={() => setReportingMessageId(null)}
+                className="btn-secondary flex-1 justify-center"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={sendMessage} className="border-t border-[var(--border-color)] p-4 bg-[var(--bg-secondary)] flex gap-3 items-end">
         <div className="flex-1 relative">

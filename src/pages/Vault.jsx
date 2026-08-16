@@ -158,8 +158,9 @@ function StandardWallet() {
     }
     setBurning(true);
     try {
-      const res = await api.post('/api/v1/burn', null, {
-        params: { amount: Math.floor(parseFloat(burnAmount)) }
+      const res = await api.post('/wallet/burn', {
+        amount: Math.floor(parseFloat(burnAmount)),
+        password: password
       });
       addToast(`🔥 Burned ${burnAmount} CLOSE! Tx: ${res.data.tx_hash.slice(0, 12)}...`, 'success');
       fetchBalances();
@@ -289,7 +290,7 @@ function StandardWallet() {
 
       <Modal
         isOpen={showBurnModal}
-        onClose={() => { setShowBurnModal(false); setBurnAmount(''); }}
+        onClose={() => setShowBurnModal(false)}
         title="🔥 Burn CLOSE"
         message="Burn your CLOSE tokens to reduce supply and earn rewards."
         inputType="number"
