@@ -4,14 +4,14 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check, Flag } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { useToast } from '../components/ui/Toast';
+import { ToastContainer, useToast } from '../components/ui/Toast';
 
 const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 
 export default function Chat() {
-  const { addToast } = useToast();
+  const { toasts, addToast, removeToast } = useToast();
   const { theme } = useTheme();
   const location = useLocation();
   const [messages, setMessages] = useState([]);
