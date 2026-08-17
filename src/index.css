@@ -2,19 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Base theme variables ── */
+/* ── Base theme variables (brass/void palette) ── */
 :root {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #111111;
-  --bg-tertiary: #1a1a1a;
-  --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  --text-muted: #6b6b6b;
-  --border-color: #2a2a2a;
+  --bg-primary: #0B0A08;
+  --bg-secondary: #15130E;
+  --bg-tertiary: #1E1B14;
+  --bg-raised-2: #26221A;
+  --text-primary: #F0EDE4;
+  --text-secondary: #948B77;
+  --text-muted: #5C5646;
+  --border-color: rgba(201,169,97,0.14);
+  --border-bright: rgba(201,169,97,0.32);
   --accent-indigo: #4f46e5;
-  --accent-brass: #d4af37;
-  --danger: #ef4444;
-  --success: #22c55e;
+  --accent-brass: #C9A961;
+  --accent-brass-bright: #E8C877;
+  --accent-brass-dim: #8A7A4E;
+  --danger: #C1554A;
+  --success: #6E9B79;
+  --font-display: 'Fraunces', serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 [data-theme="light"] {
