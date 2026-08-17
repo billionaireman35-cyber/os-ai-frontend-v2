@@ -9,7 +9,6 @@ import { useWallet } from '../context/WalletContext';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import { SwapModal } from '../components/SwapModal';
-import { BuyModal } from '../components/BuyModal';
 import { SellModal } from '../components/SellModal';
 import { Modal } from '../components/ui/Modal';
 import { WalletAnalytics } from '../components/wallet/WalletAnalytics';
@@ -90,6 +89,106 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
         cancelText="Cancel"
       />
     </>
+  );
+}
+
+function DepositModal({ isOpen, onClose, onDeposited }) {
+  const [chain, setChain] = useState('polygon');
+  const [txHash, setTxHash] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const DEPOSIT_ADDRESS = '0x52b6e0aeD9511A4bCD0c5D454ccBe0EcF4308B7F';
+  const MINIMUMS = { polygon: 4, bsc: 4, ethereum: 15 };
+
+  if (!isOpen) return null;
+
+  const copyAddress = () => {
+    navigator.clipboard.writeText(DEPOSIT_ADDRESS);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleVerify = async () => {
+    if (!txHash.trim()) { setError('Enter your transaction hash'); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.post('/wallet/deposit/verify', { chain, tx_hash: txHash.trim() });
+      onDeposited?.(res.data);
+      onClose();
+    } catch (e) {
+      setError(e.response?.data?.detail || e.message || 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
+        <div className="flex justify-between items-center">
+          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Deposit Crypto</h3>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+        </div>
+
+        <p className="text-sm text-[var(--text-secondary)]">
+          Send crypto to the address below, then paste your transaction hash to receive CLOSE.
+        </p>
+
+        <div>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Chain</label>
+          <div className="flex gap-2 mt-1">
+            {Object.keys(MINIMUMS).map((c) => (
+              <button
+                key={c}
+                onClick={() => setChain(c)}
+                className="px-3 py-1.5 rounded-full text-xs font-mono transition-all"
+                style={chain === c
+                  ? { background: 'var(--accent-brass)', color: '#20190B', fontWeight: 700 }
+                  : { background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+              >
+                {c.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl p-3" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+          <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Deposit Address</label>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xs font-mono break-all pr-2" style={{ color: 'var(--text-primary)' }}>{DEPOSIT_ADDRESS}</span>
+            <button onClick={copyAddress} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+              {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
+            </button>
+          </div>
+          <p className="text-xs mt-2" style={{ color: 'var(--accent-brass)' }}>
+            Minimum: ${MINIMUMS[chain]} on {chain}
+          </p>
+        </div>
+
+        <div>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Transaction Hash</label>
+          <input
+            type="text"
+            value={txHash}
+            onChange={(e) => setTxHash(e.target.value)}
+            className="input-base w-full"
+            placeholder="0x..."
+          />
+        </div>
+
+        {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
+
+        <div className="flex gap-2">
+          <button onClick={handleVerify} disabled={loading} className="btn-primary flex-1 justify-center">
+            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Verify & Credit'}
+          </button>
+          <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -224,7 +323,7 @@ function StandardWallet() {
           <ArrowUpDown size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Swap</span>
         </button>
         <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowBuyModal(true); }} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-          <CreditCard size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Buy</span>
+          <CreditCard size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Deposit</span>
         </button>
         <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSellModal(true); }} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
           <DollarSign size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Sell</span>
@@ -232,11 +331,6 @@ function StandardWallet() {
         <button onClick={fetchBalances} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
           <RefreshCw size={17} className={loading ? 'animate-spin' : ''} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Refresh</span>
         </button>
-        {closeAsset && closeAsset.balance > 0 && (
-          <button onClick={() => setShowBurnModal(true)} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition" style={{ background: 'rgba(193,85,74,0.1)', border: '1px solid rgba(193,85,74,0.25)' }}>
-            <Flame size={17} style={{ color: 'var(--danger)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--danger)' }}>Burn</span>
-          </button>
-        )}
       </div>
 
       {/* Chain Selector */}
@@ -291,7 +385,7 @@ function StandardWallet() {
 
       <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
-      <BuyModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onBuy={() => { addToast('Buy initiated.', 'info'); fetchBalances(); }} />
+      <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Credited ${result.close_credited} CLOSE (${result.amount} ${result.token_symbol})`, 'success'); fetchBalances(); }} />
       <SellModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} onSell={() => { addToast('Sell initiated.', 'info'); fetchBalances(); }} />
 
       <Modal
