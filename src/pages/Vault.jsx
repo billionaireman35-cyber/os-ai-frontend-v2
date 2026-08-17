@@ -3,13 +3,12 @@ import { useState, useEffect } from 'react';
 import {
   ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign,
   BarChart, Wallet, RefreshCw, Loader2, Copy, CheckCircle,
-  ArrowUpRight, ArrowDownRight, Flame, Coins
+  ArrowUpRight, ArrowDownRight, Flame, Coins, History, ExternalLink
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import { SwapModal } from '../components/SwapModal';
-import { SellModal } from '../components/SellModal';
 import { Modal } from '../components/ui/Modal';
 import { WalletAnalytics } from '../components/wallet/WalletAnalytics';
 import { ToastContainer, useToast } from '../components/ui/Toast';
@@ -192,6 +191,150 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
   );
 }
 
+function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
+  const [chain, setChain] = useState('polygon');
+  const [tokenSymbol, setTokenSymbol] = useState('CLOSE');
+  const [amount, setAmount] = useState('');
+  const [destination, setDestination] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async () => {
+    if (!amount || parseFloat(amount) <= 0) { setError('Enter a valid amount'); return; }
+    if (!destination.trim()) { setError('Enter a destination address'); return; }
+    if (!password) { setError('Password required'); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.post('/wallet/withdraw/request', {
+        chain, token_symbol: tokenSymbol, amount: parseFloat(amount),
+        destination_address: destination.trim(), password
+      });
+      onRequested?.(res.data);
+      onClose();
+    } catch (e) {
+      setError(e.response?.data?.detail || e.message || 'Withdrawal request failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
+        <div className="flex justify-between items-center">
+          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Withdraw</h3>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+        </div>
+        <p className="text-sm text-[var(--text-secondary)]">
+          Withdrawals are reviewed before funds are sent - this may take some time.
+        </p>
+        <div>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Chain</label>
+          <div className="flex gap-2 mt-1">
+            {['polygon', 'bsc', 'ethereum'].map((c) => (
+              <button key={c} onClick={() => setChain(c)} className="px-3 py-1.5 rounded-full text-xs font-mono transition-all"
+                style={chain === c ? { background: 'var(--accent-brass)', color: '#20190B', fontWeight: 700 } : { background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
+                {c.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Token</label>
+          <select value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} className="input-base w-full">
+            <option value="CLOSE">CLOSE</option>
+            {assets && assets.filter(a => a.symbol !== 'CLOSE').map(a => (
+              <option key={a.symbol} value={a.symbol}>{a.symbol}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount</label>
+          <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-base w-full" placeholder="0.0" />
+        </div>
+        <div>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Destination Address</label>
+          <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} className="input-base w-full" placeholder="0x..." />
+        </div>
+        <div>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Wallet Password</label>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-base w-full" placeholder="••••••••" />
+        </div>
+        {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
+        <div className="flex gap-2">
+          <button onClick={handleSubmit} disabled={loading} className="btn-primary flex-1 justify-center">
+            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Request Withdrawal'}
+          </button>
+          <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TransactionHistory({ isOpen, onClose }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const EXPLORERS = {
+    polygon: 'https://polygonscan.com/tx/',
+    ethereum: 'https://etherscan.io/tx/',
+    bsc: 'https://bscscan.com/tx/'
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setLoading(true);
+    api.get('/wallet/transactions/history')
+      .then(res => setItems(res.data.history || []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col p-6 shadow-xl">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Transaction History</h3>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+        </div>
+        <div className="overflow-y-auto flex-1 -mx-2 px-2">
+          {loading ? (
+            <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>Loading...</p>
+          ) : items.length === 0 ? (
+            <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>No transactions yet.</p>
+          ) : (
+            items.map((tx, i) => (
+              <div key={i} className="flex items-center justify-between py-3" style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
+                <div>
+                  <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>{tx.kind}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {tx.amount} {tx.token_symbol || 'CLOSE'} {tx.status ? `· ${tx.status}` : ''}
+                  </p>
+                </div>
+                {tx.tx_hash && tx.chain && EXPLORERS[tx.chain] ? (
+                  <a href={`${EXPLORERS[tx.chain]}${tx.tx_hash}`} target="_blank" rel="noopener noreferrer"
+                     className="flex items-center gap-1 text-xs" style={{ color: 'var(--accent-brass)' }}>
+                    View <ExternalLink size={12} />
+                  </a>
+                ) : (
+                  <span className="text-xs" style={{ color: 'var(--text-faint)' }}>{tx.status || 'internal'}</span>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StandardWallet() {
   const { assets, totalUsd, loading, error, fetchBalances } = useWallet();
   const { user, refreshUser } = useAuth();
@@ -202,6 +345,8 @@ function StandardWallet() {
   const [showSwapModal, setShowSwapModal] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSellModal, setShowSellModal] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [showBurnModal, setShowBurnModal] = useState(false);
   const [burnAmount, setBurnAmount] = useState('');
   const [burning, setBurning] = useState(false);
@@ -316,7 +461,7 @@ function StandardWallet() {
             <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
           </button>
         )}
-        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } if (filtered.length === 0) { addToast('No assets to send.', 'warning'); return; } setSendAsset(filtered[0]); setShowSendModal(true); }} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'linear-gradient(155deg, var(--accent-brass-bright), var(--accent-brass))' }}>
+        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } if (filtered.length === 0) { addToast('No assets to send.', 'warning'); return; } if (filtered.length === 1) { setSendAsset(filtered[0]); setShowSendModal(true); } else { setShowAssetPicker(true); } }} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'linear-gradient(155deg, var(--accent-brass-bright), var(--accent-brass))' }}>
           <Send size={17} color="#20190B" /> <span className="text-xs font-medium" style={{ color: '#20190B' }}>Send</span>
         </button>
         <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSwapModal(true); }} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
@@ -330,6 +475,9 @@ function StandardWallet() {
         </button>
         <button onClick={fetchBalances} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
           <RefreshCw size={17} className={loading ? 'animate-spin' : ''} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Refresh</span>
+        </button>
+        <button onClick={() => setShowHistory(true)} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+          <History size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>History</span>
         </button>
       </div>
 
@@ -386,7 +534,23 @@ function StandardWallet() {
       <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Credited ${result.close_credited} CLOSE (${result.amount} ${result.token_symbol})`, 'success'); fetchBalances(); }} />
-      <SellModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} onSell={() => { addToast('Sell initiated.', 'info'); fetchBalances(); }} />
+      <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
+      <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />
+      {showAssetPicker && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-display font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Send which asset?</h3>
+            {filtered.map((a, i) => (
+              <button key={i} onClick={() => { setSendAsset(a); setShowAssetPicker(false); setShowSendModal(true); }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
+                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+                <span style={{ color: 'var(--text-primary)' }}>{a.symbol}</span>
+                <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{a.balance.toFixed(4)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Modal
         isOpen={showBurnModal}
