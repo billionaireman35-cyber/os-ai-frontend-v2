@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
-import { Plus, Users, MessageSquare, X, Send, Copy, CheckCircle, LogIn, UserPlus } from 'lucide-react';
+import { Plus, Users, MessageSquare, X, Send, Copy, CheckCircle, LogIn, UserPlus, Lock, Globe, Check, XCircle } from 'lucide-react';
 
 export default function HustleHub() {
   const { user } = useAuth();
@@ -13,13 +13,22 @@ export default function HustleHub() {
   const [creating, setCreating] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [newWorkspaceDesc, setNewWorkspaceDesc] = useState('');
+  const [newWorkspaceVisibility, setNewWorkspaceVisibility] = useState('private'); // 'private' | 'public'
   const [showCreate, setShowCreate] = useState(false);
-  const [roomCode, setRoomCode] = useState('');
+  const [createError, setCreateError] = useState('');
   const [joinCode, setJoinCode] = useState('');
+  const [joinStatus, setJoinStatus] = useState(''); // transient message under the join input
+  const [joinError, setJoinError] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Pending join requests for the selected workspace (only populated if
+  // the current user is authorized to see them - backend decides that).
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [canManageRequests, setCanManageRequests] = useState(false);
+  const [requestActionError, setRequestActionError] = useState('');
+
   const messagesEndRef = useRef(null);
 
-  // Fetch workspaces
   const fetchWorkspaces = async () => {
     setLoading(true);
     try {
@@ -36,7 +45,6 @@ export default function HustleHub() {
     }
   };
 
-  // Fetch messages for selected workspace
   const fetchMessages = async (workspaceId) => {
     if (!workspaceId) return;
     try {
@@ -48,6 +56,21 @@ export default function HustleHub() {
     }
   };
 
+  // Try to fetch pending requests. Backend gates this to owner/admin only -
+  // if the current user isn't authorized, this call fails (403) and we just
+  // hide the panel rather than treating it as an error.
+  const fetchPendingRequests = async (workspaceId) => {
+    if (!workspaceId) return;
+    try {
+      const res = await api.get(`/workspace/${workspaceId}/requests`);
+      setPendingRequests(res.data || []);
+      setCanManageRequests(true);
+    } catch (e) {
+      setPendingRequests([]);
+      setCanManageRequests(false);
+    }
+  };
+
   useEffect(() => {
     fetchWorkspaces();
   }, []);
@@ -55,8 +78,17 @@ export default function HustleHub() {
   useEffect(() => {
     if (selectedWorkspace) {
       fetchMessages(selectedWorkspace.id);
-      const interval = setInterval(() => fetchMessages(selectedWorkspace.id), 5000);
-      return () => clearInterval(interval);
+      fetchPendingRequests(selectedWorkspace.id);
+      setRequestActionError('');
+      const msgInterval = setInterval(() => fetchMessages(selectedWorkspace.id), 5000);
+      const reqInterval = setInterval(() => fetchPendingRequests(selectedWorkspace.id), 10000);
+      return () => {
+        clearInterval(msgInterval);
+        clearInterval(reqInterval);
+      };
+    } else {
+      setPendingRequests([]);
+      setCanManageRequests(false);
     }
   }, [selectedWorkspace]);
 
@@ -67,21 +99,26 @@ export default function HustleHub() {
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim()) return;
     setCreating(true);
+    setCreateError('');
     try {
       const res = await api.post('/workspace/create', {
         name: newWorkspaceName.trim(),
         description: newWorkspaceDesc.trim(),
-        is_public: true,
+        is_public: newWorkspaceVisibility === 'public',
       });
       const newWs = res.data;
       setWorkspaces([newWs, ...workspaces]);
       setSelectedWorkspace(newWs);
       setNewWorkspaceName('');
       setNewWorkspaceDesc('');
+      setNewWorkspaceVisibility('private');
       setShowCreate(false);
     } catch (e) {
-      console.error('Failed to create workspace', e);
-      alert('Failed to create workspace');
+      if (e.response?.status === 402) {
+        setCreateError('Insufficient CLOSE balance. Creating a hub costs 5000 CLOSE.');
+      } else {
+        setCreateError(e.response?.data?.detail || 'Failed to create workspace');
+      }
     } finally {
       setCreating(false);
     }
@@ -89,13 +126,43 @@ export default function HustleHub() {
 
   const handleJoinWorkspace = async () => {
     if (!joinCode.trim()) return;
+    setJoinStatus('');
+    setJoinError('');
     try {
       const res = await api.post('/workspace/join', { room_code: joinCode.trim().toUpperCase() });
-      await fetchWorkspaces();
       setJoinCode('');
-      alert(res.data.message || 'Joined!');
+      setJoinStatus(res.data.message || 'Request sent');
+      // Not added to `workspaces` here - the user isn't an approved member
+      // yet, so there's nothing to select. They'll see it appear once approved.
     } catch (e) {
-      alert('Failed to join: ' + (e.response?.data?.detail || 'Invalid code'));
+      setJoinError(e.response?.data?.detail || 'Failed to join: invalid code');
+    }
+  };
+
+  const handleApproveRequest = async (requesterId) => {
+    if (!selectedWorkspace) return;
+    setRequestActionError('');
+    try {
+      await api.post(`/workspace/${selectedWorkspace.id}/requests/${requesterId}/approve`);
+      await fetchPendingRequests(selectedWorkspace.id);
+      await fetchWorkspaces();
+    } catch (e) {
+      if (e.response?.status === 402) {
+        setRequestActionError('That user has insufficient CLOSE balance (6000 required) - approval blocked.');
+      } else {
+        setRequestActionError(e.response?.data?.detail || 'Failed to approve request');
+      }
+    }
+  };
+
+  const handleRejectRequest = async (requesterId) => {
+    if (!selectedWorkspace) return;
+    setRequestActionError('');
+    try {
+      await api.post(`/workspace/${selectedWorkspace.id}/requests/${requesterId}/reject`);
+      await fetchPendingRequests(selectedWorkspace.id);
+    } catch (e) {
+      setRequestActionError(e.response?.data?.detail || 'Failed to reject request');
     }
   };
 
@@ -136,11 +203,11 @@ export default function HustleHub() {
       <div className="border-b border-[var(--border-color)] p-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">Hustle Hub</h1>
-          <p className="text-sm text-[var(--text-muted)]">Collaborative workspaces</p>
+          <p className="text-sm text-[var(--text-muted)]">Private, invite-only workspaces - 5000 CLOSE to create, 6000 CLOSE to join</p>
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setShowCreate(true)}
+            onClick={() => { setShowCreate(true); setCreateError(''); }}
             className="bg-[#d4af37] hover:bg-[#c4a030] text-black font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition"
           >
             <Plus size={18} /> New
@@ -160,28 +227,32 @@ export default function HustleHub() {
           <button
             key={ws.id}
             onClick={() => setSelectedWorkspace(ws)}
-            className={`px-4 py-2 rounded-full text-sm transition ${
+            className={`px-4 py-2 rounded-full text-sm transition flex items-center gap-1 ${
               selectedWorkspace?.id === ws.id
                 ? 'bg-[#d4af37] text-black font-bold'
                 : 'bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] text-[var(--text-primary)]'
             }`}
           >
-            <Users size={16} className="inline mr-1" />
+            {ws.is_public ? <Globe size={14} /> : <Lock size={14} />}
             {ws.name}
           </button>
         ))}
-        <div className="flex-1 min-w-[150px] flex items-center gap-2">
-          <input
-            id="join-input"
-            type="text"
-            placeholder="Enter room code"
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            className="flex-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[#d4af37]"
-          />
-          <button onClick={handleJoinWorkspace} className="bg-[#d4af37] text-black px-3 py-2 rounded-lg text-sm font-bold">
-            Join
-          </button>
+        <div className="flex-1 min-w-[150px] flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <input
+              id="join-input"
+              type="text"
+              placeholder="Enter room code"
+              value={joinCode}
+              onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinStatus(''); setJoinError(''); }}
+              className="flex-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[#d4af37]"
+            />
+            <button onClick={handleJoinWorkspace} className="bg-[#d4af37] text-black px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap">
+              Request to Join
+            </button>
+          </div>
+          {joinStatus && <p className="text-xs text-green-400">{joinStatus}</p>}
+          {joinError && <p className="text-xs text-red-400">{joinError}</p>}
         </div>
       </div>
 
@@ -190,9 +261,14 @@ export default function HustleHub() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Workspace Info */}
           <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)] bg-[var(--bg-tertiary)]">
-            <div>
+            <div className="flex items-center gap-2">
               <span className="font-bold text-[var(--text-primary)]">{selectedWorkspace.name}</span>
-              <span className="text-sm text-[var(--text-muted)] ml-2">• {selectedWorkspace.member_count || 0} members</span>
+              {selectedWorkspace.is_public ? (
+                <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]"><Globe size={12} /> Public</span>
+              ) : (
+                <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]"><Lock size={12} /> Private</span>
+              )}
+              <span className="text-sm text-[var(--text-muted)]">• {selectedWorkspace.member_count || 0} members</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono text-[var(--text-muted)]">Code: {selectedWorkspace.room_code}</span>
@@ -201,6 +277,48 @@ export default function HustleHub() {
               </button>
             </div>
           </div>
+
+          {/* Pending Requests panel - only rendered if the backend confirmed
+              this user is authorized (owner/admin) to see and act on requests. */}
+          {canManageRequests && (
+            <div className="border-b border-[var(--border-color)] bg-[var(--bg-tertiary)] px-4 py-3">
+              <div className="flex items-center gap-2 mb-2">
+                <UserPlus size={16} className="text-[#d4af37]" />
+                <span className="text-sm font-bold text-[var(--text-primary)]">
+                  Pending Join Requests {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                </span>
+              </div>
+              {requestActionError && (
+                <p className="text-xs text-red-400 mb-2">{requestActionError}</p>
+              )}
+              {pendingRequests.length === 0 ? (
+                <p className="text-xs text-[var(--text-muted)]">No pending requests.</p>
+              ) : (
+                <div className="space-y-2">
+                  {pendingRequests.map((req) => (
+                    <div key={req.user_id} className="flex items-center justify-between bg-[var(--bg-secondary)] rounded-lg px-3 py-2">
+                      <span className="text-sm text-[var(--text-primary)]">{req.user_name}</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApproveRequest(req.user_id)}
+                          className="flex items-center gap-1 bg-green-500/20 text-green-400 hover:bg-green-500/30 px-3 py-1 rounded-lg text-xs font-bold transition"
+                          title="Approve - charges requester 6000 CLOSE"
+                        >
+                          <Check size={14} /> Approve (6000 CLOSE)
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(req.user_id)}
+                          className="flex items-center gap-1 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-3 py-1 rounded-lg text-xs font-bold transition"
+                        >
+                          <XCircle size={14} /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--bg-primary)]">
@@ -246,7 +364,7 @@ export default function HustleHub() {
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-[var(--text-muted)]">
-          {workspaces.length === 0 ? 'No workspaces yet. Create or join one!' : 'Select a workspace to start chatting.'}
+          {workspaces.length === 0 ? 'No workspaces yet. Create or request to join one!' : 'Select a workspace to start chatting.'}
         </div>
       )}
 
@@ -255,7 +373,7 @@ export default function HustleHub() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
             <div className="flex justify-between items-center">
-              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Workspace</h3>
+              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Hustle Hub</h3>
               <button onClick={() => setShowCreate(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
             </div>
             <div>
@@ -278,13 +396,47 @@ export default function HustleHub() {
                 placeholder="What's this workspace about?"
               />
             </div>
+            <div>
+              <label className="text-sm text-[var(--text-muted)] block mb-1">Visibility</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewWorkspaceVisibility('private')}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border transition ${
+                    newWorkspaceVisibility === 'private'
+                      ? 'bg-[#d4af37]/15 border-[#d4af37] text-[#d4af37]'
+                      : 'bg-[var(--bg-tertiary)] border-[var(--border-color)] text-[var(--text-secondary)]'
+                  }`}
+                >
+                  <Lock size={16} /> Private
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewWorkspaceVisibility('public')}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border transition ${
+                    newWorkspaceVisibility === 'public'
+                      ? 'bg-[#d4af37]/15 border-[#d4af37] text-[#d4af37]'
+                      : 'bg-[var(--bg-tertiary)] border-[var(--border-color)] text-[var(--text-secondary)]'
+                  }`}
+                >
+                  <Globe size={16} /> Public
+                </button>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                {newWorkspaceVisibility === 'private'
+                  ? 'Only reachable by room code. Joins require your approval.'
+                  : 'Discoverable by other users. Joins still require your approval.'}
+              </p>
+            </div>
+            <p className="text-xs text-[var(--text-muted)]">Creating a hub costs 5000 CLOSE.</p>
+            {createError && <p className="text-sm text-red-400">{createError}</p>}
             <div className="flex gap-2">
               <button
                 onClick={handleCreateWorkspace}
                 disabled={creating || !newWorkspaceName.trim()}
                 className="btn-primary flex-1 justify-center"
               >
-                {creating ? 'Creating...' : 'Create'}
+                {creating ? 'Creating...' : 'Create (5000 CLOSE)'}
               </button>
               <button onClick={() => setShowCreate(false)} className="btn-secondary flex-1 justify-center">Cancel</button>
             </div>
