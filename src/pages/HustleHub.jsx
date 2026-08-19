@@ -176,13 +176,15 @@ export default function HustleHub() {
       setNewMessage('');
       await fetchMessages(selectedWorkspace.id);
     } catch (e) {
-      console.error('Failed to send message', e);
+      console.error('Failed to send message - full error object:', e);
+      console.error('Response data:', JSON.stringify(e.response?.data, null, 2));
       const status = e.response?.status;
-      const detail = e.response?.data?.detail;
+      const rawDetail = e.response?.data?.detail;
+      const detail = typeof rawDetail === 'string' ? rawDetail : JSON.stringify(rawDetail);
       if (status === 403) {
         alert(detail || 'You are not an approved member of this workspace.');
       } else if (detail) {
-        alert(`Failed to send message: ${detail}`);
+        alert(`Failed to send message (${status}): ${detail}`);
       } else {
         alert('Failed to send message: no response from server (check connection).');
       }
