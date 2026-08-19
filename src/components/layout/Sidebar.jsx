@@ -13,9 +13,6 @@ import {
   X,
   Plus,
   Search,
-  Sparkles,
-  BarChart,
-  Globe,
   Settings,
   Coins,
   Moon,
@@ -74,6 +71,22 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const isOpen = mobileOpen || expanded;
   const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 1024;
 
+  // Plain close for navigation-triggered dismissal (New Chat, selecting a
+  // chat, nav links). If we pushed a history entry for the open sidebar,
+  // collapse it in place with replaceState so it can never be popped later
+  // by a stray back-press — this must NOT call history.back(), since that
+  // would race with the router's own navigate() call in the same handler.
+  const resetSidebarState = useCallback(() => {
+    setExpanded(false);
+    if (mobileOpen && window.history.state?.osAiSidebar) {
+      window.history.replaceState(null, '');
+    }
+    setMobileOpen(false);
+  }, [setExpanded, setMobileOpen, mobileOpen]);
+
+  // Explicit dismiss — use this ONLY for direct "close" actions (X button,
+  // backdrop click, Escape key). Pops the history entry pushed on open so
+  // hardware/back gesture and this button stay in sync.
   const closeSidebar = useCallback(() => {
     setExpanded(false);
     if (mobileOpen && window.history.state?.osAiSidebar) {
@@ -268,7 +281,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
       window.dispatchEvent(new CustomEvent('new-chat'));
       navigate('/');
     }
-    if (isMobile()) closeSidebar();
+    if (isMobile()) resetSidebarState();
   };
 
   const selectChat = (chatId) => {
@@ -278,7 +291,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
       localStorage.setItem('os-ai-selected-chat', chatId);
       navigate('/');
     }
-    if (isMobile()) closeSidebar();
+    if (isMobile()) resetSidebarState();
   };
 
   const togglePin = (chatId) => {
@@ -411,7 +424,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               key={to}
               to={to}
               end={to === '/'}
-              onClick={() => { if (isMobile()) closeSidebar(); }}
+              onClick={() => { if (isMobile()) resetSidebarState(); }}
               className={({ isActive }) =>
                 `flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-medium transition-all touch justify-start ${
                   isActive
@@ -427,7 +440,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           {user?.is_founder && (
             <NavLink
               to="/sanctum"
-              onClick={() => { if (isMobile()) closeSidebar(); }}
+              onClick={() => { if (isMobile()) resetSidebarState(); }}
               className={({ isActive }) =>
                 `flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-medium transition-all touch justify-start ${
                   isActive
@@ -442,37 +455,12 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           )}
         </nav>
 
-        <div className="px-4 py-4 border-t border-[var(--border-color)]">
-          <p className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Quick Actions</p>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {[
-              { icon: Sparkles, label: 'Research', mode: 'research' },
-              { icon: Code, label: 'Coding', mode: 'coding' },
-              { icon: BarChart, label: 'Crypto', mode: 'crypto' },
-              { icon: Globe, label: 'Everyday', mode: 'everyday' },
-            ].map((item) => (
-              <button
-                key={item.mode}
-                onClick={() => {
-                  navigate(`/?mode=${item.mode}`);
-                  window.dispatchEvent(new CustomEvent('quick-action', { detail: { mode: item.mode } }));
-                  if (isMobile()) closeSidebar();
-                }}
-                className="flex items-center gap-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-full px-4 py-2 text-[14px] text-[var(--text-primary)] hover:bg-[var(--border-color)] transition-all touch"
-              >
-                <item.icon size={16} className="text-[var(--accent-brass)]" aria-hidden="true" />
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="px-4 py-3 border-t border-[var(--border-color)]">
           <p className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Hustle Hub</p>
           <button
             onClick={() => {
               navigate('/hustle-hub');
-              if (isMobile()) closeSidebar();
+              if (isMobile()) resetSidebarState();
             }}
             className="flex items-center gap-3 mt-1 text-[14px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer touch w-full"
           >
@@ -583,7 +571,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
             <button
               onClick={() => {
                 navigate('/settings');
-                if (isMobile()) closeSidebar();
+                if (isMobile()) resetSidebarState();
               }}
               className="text-[var(--text-muted)] hover:text-[var(--text-primary)] touch p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
               aria-label="Settings"
