@@ -76,8 +76,12 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
 
   const closeSidebar = useCallback(() => {
     setExpanded(false);
-    setMobileOpen(false);
-  }, [setExpanded, setMobileOpen]);
+    if (mobileOpen && window.history.state?.osAiSidebar) {
+      window.history.back();
+    } else {
+      setMobileOpen(false);
+    }
+  }, [setExpanded, setMobileOpen, mobileOpen]);
 
   const toggleSidebar = () => {
     if (isOpen) {
@@ -88,6 +92,23 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
       setExpanded(true);
     }
   };
+
+  // Push a history entry when the mobile sidebar opens, so the
+  // hardware/back gesture closes it instead of finding no history to pop to.
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    window.history.pushState({ osAiSidebar: true }, '');
+
+    const handlePopState = () => {
+      setMobileOpen(false);
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [mobileOpen, setMobileOpen]);
 
   useEffect(() => {
     if (!pinnedKey) {
