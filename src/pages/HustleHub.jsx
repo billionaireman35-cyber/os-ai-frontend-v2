@@ -177,7 +177,15 @@ export default function HustleHub() {
       await fetchMessages(selectedWorkspace.id);
     } catch (e) {
       console.error('Failed to send message', e);
-      alert('Failed to send message');
+      const status = e.response?.status;
+      const detail = e.response?.data?.detail;
+      if (status === 403) {
+        alert(detail || 'You are not an approved member of this workspace.');
+      } else if (detail) {
+        alert(`Failed to send message: ${detail}`);
+      } else {
+        alert('Failed to send message: no response from server (check connection).');
+      }
     }
   };
 
