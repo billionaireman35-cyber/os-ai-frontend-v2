@@ -10,7 +10,7 @@ export function Omnibar({ toggleSidebar }) {
       <div className="flex items-center gap-2">
         <button
           onClick={toggleSidebar}
-          className="lg:hidden touch p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+          className="touch p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
           aria-label="Toggle sidebar"
         >
           <Menu size={20} className="text-[var(--text-primary)]" />
