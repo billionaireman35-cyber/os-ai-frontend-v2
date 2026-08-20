@@ -246,19 +246,14 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     setFounderSubmitting(true);
     setFounderError('');
     try {
+      // This elevates the ALREADY-LOGGED-IN user to founder status - no new
+      // token is issued, since it's a privilege upgrade, not a new login.
       const res = await api.post('/founder/', { code: founderKey });
-      if (res.data?.token) {
-        localStorage.setItem('token', res.data.token);
-        const userRes = await api.get('/auth/me');
-        if (setUser && userRes.data) {
-          setUser(userRes.data);
-        }
-        closeFounderModal();
-        await fetchChats();
-        window.location.href = '/sanctum';
-      } else {
-        throw new Error('No token received');
+      if (setUser && res.data?.user) {
+        setUser(res.data.user);
       }
+      closeFounderModal();
+      window.location.href = '/sanctum';
     } catch (e) {
       setFounderError(e.response?.data?.detail || 'Invalid founder key');
     } finally {
