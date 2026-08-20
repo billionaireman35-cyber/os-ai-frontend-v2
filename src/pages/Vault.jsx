@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import {
   ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign,
   BarChart, Wallet, RefreshCw, Loader2, Copy, CheckCircle,
-  ArrowUpRight, ArrowDownRight, Flame, Coins, History, ExternalLink
+  ArrowUpRight, ArrowDownRight, Flame, Coins, History, ExternalLink, MessageSquare
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { useAuth } from '../context/AuthContext';
@@ -191,6 +191,86 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
   );
 }
 
+function ChatTopupModal({ isOpen, onClose, onToppedUp }) {
+  const [txHash, setTxHash] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const CHAT_TREASURY_ADDRESS = '0x109464E84bDD6552d76bcBbaEf03bDe8069C0698';
+  const CLOSE_TOKEN_ADDRESS = '0x3c6833cFDdED80fE76474a3Cb2Cc050Daec91fe8';
+
+  if (!isOpen) return null;
+
+  const copyAddress = () => {
+    navigator.clipboard.writeText(CHAT_TREASURY_ADDRESS);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleVerify = async () => {
+    if (!txHash.trim()) { setError('Enter your transaction hash'); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.post('/chat/topup', { tx_hash: txHash.trim() });
+      onToppedUp?.(res.data);
+      onClose();
+    } catch (e) {
+      setError(e.response?.data?.detail || e.message || 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
+        <div className="flex justify-between items-center">
+          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Top Up Chat Balance</h3>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+        </div>
+
+        <p className="text-sm text-[var(--text-secondary)]">
+          Send CLOSE (Polygon) to the address below from your own wallet, then paste the transaction hash to credit your chat balance 1:1.
+        </p>
+
+        <div className="rounded-xl p-3" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+          <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Chat Treasury Address (Polygon)</label>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xs font-mono break-all pr-2" style={{ color: 'var(--text-primary)' }}>{CHAT_TREASURY_ADDRESS}</span>
+            <button onClick={copyAddress} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+              {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
+            </button>
+          </div>
+          <p className="text-xs mt-2" style={{ color: 'var(--accent-brass)' }}>
+            CLOSE token: {CLOSE_TOKEN_ADDRESS.slice(0, 10)}...{CLOSE_TOKEN_ADDRESS.slice(-6)}
+          </p>
+        </div>
+
+        <div>
+          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Transaction Hash</label>
+          <input
+            type="text"
+            value={txHash}
+            onChange={(e) => setTxHash(e.target.value)}
+            className="input-base w-full"
+            placeholder="0x..."
+          />
+        </div>
+
+        {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
+
+        <div className="flex gap-2">
+          <button onClick={handleVerify} disabled={loading} className="btn-primary flex-1 justify-center">
+            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Verify & Credit'}
+          </button>
+          <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
   const [chain, setChain] = useState('polygon');
   const [tokenSymbol, setTokenSymbol] = useState('CLOSE');
@@ -346,6 +426,7 @@ function StandardWallet() {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSellModal, setShowSellModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showChatTopupModal, setShowChatTopupModal] = useState(false);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [showBurnModal, setShowBurnModal] = useState(false);
   const [burnAmount, setBurnAmount] = useState('');
@@ -479,6 +560,9 @@ function StandardWallet() {
         <button onClick={() => setShowHistory(true)} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
           <History size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>History</span>
         </button>
+        <button onClick={() => setShowChatTopupModal(true)} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+          <MessageSquare size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Top Up Chat</span>
+        </button>
       </div>
 
       {/* Chain Selector */}
@@ -536,6 +620,7 @@ function StandardWallet() {
       <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Credited ${result.close_credited} CLOSE (${result.amount} ${result.token_symbol})`, 'success'); fetchBalances(); }} />
       <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
       <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />
+      <ChatTopupModal isOpen={showChatTopupModal} onClose={() => setShowChatTopupModal(false)} onToppedUp={(result) => { addToast(`Credited ${result.amount} CLOSE to your chat balance`, 'success'); }} />
       {showAssetPicker && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
