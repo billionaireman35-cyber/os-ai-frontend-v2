@@ -114,20 +114,54 @@ export default function HustleHub() {
     return res.data.tx_hash;
   };
 
+  const CREATE_RETRY_ATTEMPTS = 3;
+  const CREATE_RETRY_DELAY_MS = 2000;
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // Calls /workspace/create with the given (already-paid) tx_hash, retrying
+  // a few times with a short delay if it fails. Never re-sends payment -
+  // the backend safely resumes with the same tx_hash on retry (see
+  // get_unresolved_payment in workspace_payment_service.py), so retrying
+  // this call alone is safe even though the payment itself is one-shot.
+  const createWorkspaceWithRetry = async (txHash) => {
+    let lastError;
+    for (let attempt = 1; attempt <= CREATE_RETRY_ATTEMPTS; attempt++) {
+      try {
+        const res = await api.post('/workspace/create', {
+          name: newWorkspaceName.trim(),
+          description: newWorkspaceDesc.trim(),
+          is_public: newWorkspaceVisibility === 'public',
+          tx_hash: txHash,
+        });
+        return res.data;
+      } catch (e) {
+        lastError = e;
+        // Don't retry on a definitive rejection (e.g. payment verification
+        // itself failed) - only retry on what looks like a transient issue.
+        // A 402 here would mean the payment itself was rejected, which a
+        // retry can't fix - stop immediately in that case.
+        if (e.response?.status === 402) throw e;
+        if (attempt < CREATE_RETRY_ATTEMPTS) {
+          setCreateStep(`confirming-retry-${attempt}`);
+          await sleep(CREATE_RETRY_DELAY_MS);
+        }
+      }
+    }
+    throw lastError;
+  };
+
+  const txHashRef = useRef(null);
+
   const handleCreateWorkspace = async (password) => {
     if (!newWorkspaceName.trim()) return;
     setCreateError('');
     setCreateStep('paying');
     try {
       const txHash = await payTreasury(WORKSPACE_CREATE_COST, password);
+      txHashRef.current = txHash;
       setCreateStep('confirming');
-      const res = await api.post('/workspace/create', {
-        name: newWorkspaceName.trim(),
-        description: newWorkspaceDesc.trim(),
-        is_public: newWorkspaceVisibility === 'public',
-        tx_hash: txHash,
-      });
-      const newWs = res.data;
+      const newWs = await createWorkspaceWithRetry(txHash);
       setWorkspaces([newWs, ...workspaces]);
       setSelectedWorkspace(newWs);
       setNewWorkspaceName('');
@@ -136,13 +170,11 @@ export default function HustleHub() {
       setShowCreate(false);
     } catch (e) {
       const detail = e.response?.data?.detail;
-      if (createStep === 'confirming') {
-        // Payment succeeded on-chain but workspace creation failed after -
-        // this is a real edge case worth a clearer message, since the
-        // user's CLOSE has already moved.
+      if (createStep && createStep.startsWith('confirming')) {
         setCreateError(
-          `Payment sent, but hub creation failed: ${detail || e.message}. ` +
-          `Your CLOSE was sent on-chain - contact support with this if it doesn't resolve.`
+          `Payment sent, but hub creation failed after ${CREATE_RETRY_ATTEMPTS} attempts: ${detail || e.message}. ` +
+          `Your 5000 CLOSE was sent on-chain and was not lost. Please contact support with this transaction ` +
+          `hash so your hub can be created without charging you again: ${txHashRef.current || '(see wallet history)'}`
         );
       } else {
         setCreateError(detail || e.message || 'Payment failed');
