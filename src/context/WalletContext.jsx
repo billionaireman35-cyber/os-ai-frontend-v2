@@ -26,9 +26,14 @@ export function WalletProvider({ children }) {
       const items = [];
       let total = 0;
 
-      // 1. On‑chain balances
+      // On-chain balances. CLOSE is tracked as a normal ERC-20 token here
+      // (see blockchain.py's get_all_balances token list), so it's already
+      // included via the token loop below - the 'close' field is a separate,
+      // legacy internal-DB-ledger number that no longer reflects anything
+      // real (see workspace_payment_service.py / 2026-08-19 architecture
+      // decision) and is intentionally skipped, not surfaced as a fake
+      // sendable asset.
       for (const [chain, chainData] of Object.entries(data)) {
-        // Skip the 'close' internal field – we handle separately
         if (chain === 'close') continue;
         const native = chainData.native;
         if (native && native.balance > 0) {
@@ -53,18 +58,6 @@ export function WalletProvider({ children }) {
             total += token.usd || 0;
           }
         }
-      }
-
-      // 2. Internal CLOSE balance
-      if (data.close && data.close.balance > 0) {
-        items.push({
-          chain: 'internal',
-          symbol: 'CLOSE (internal)',
-          balance: data.close.balance,
-          usdValue: data.close.usd || 0,
-          address: null,
-        });
-        total += data.close.usd || 0;
       }
 
       setAssets(items);
