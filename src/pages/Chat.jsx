@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, Check, Flag } from 'lucide-react';
+import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ToastContainer, useToast } from '../components/ui/Toast';
 
@@ -21,6 +21,38 @@ export default function Chat() {
   const [copiedId, setCopiedId] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [attachedFile, setAttachedFile] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+
+  // Auto-grow the composer textarea with content, capped so it never
+  // takes over the screen - matches the max-h-40 constraint below.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  }, [input]);
+
+  // File upload isn't wired to a backend endpoint yet - captures the
+  // file for later and gives feedback so the button isn't a dead click.
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachedFile(file);
+    addToast(`"${file.name}" attached - upload isn't connected yet`, 'info');
+    e.target.value = '';
+  };
+
+  const handleRemoveFile = () => setAttachedFile(null);
+
+  // Voice input isn't wired to speech-to-text yet - toggles the visual
+  // state so the mic button is ready to plug into the Web Speech API
+  // or a backend transcription endpoint later.
+  const handleMicClick = () => {
+    setIsListening((prev) => !prev);
+    addToast(isListening ? 'Voice input stopped' : 'Voice input isn\'t connected yet', 'info');
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -460,16 +492,33 @@ export default function Chat() {
         </div>
       )}
 
-      <form onSubmit={sendMessage} className="border-t border-[var(--border-color)] p-4 bg-[var(--bg-secondary)] flex gap-3 items-end">
-        <div className="flex-1 relative">
+      <div className="p-4">
+        <form onSubmit={sendMessage} className="glass-bar rounded-3xl max-w-3xl mx-auto shadow-lg">
+          {attachedFile && (
+            <div className="flex items-center gap-2 px-4 pt-3">
+              <div className="flex items-center gap-2 bg-white/5 border border-[var(--glass-border)] rounded-full pl-3 pr-2 py-1 text-xs text-[var(--text-secondary)]">
+                <Paperclip size={12} className="shrink-0" />
+                <span className="truncate max-w-[180px]">{attachedFile.name}</span>
+                <button
+                  type="button"
+                  onClick={handleRemoveFile}
+                  className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-0.5 rounded-full"
+                  aria-label="Remove attached file"
+                >
+                  <XIcon size={12} />
+                </button>
+              </div>
+            </div>
+          )}
+
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
+            placeholder="Message OS AI..."
             rows={1}
-            className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-2xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 resize-none transition"
-            style={{ minHeight: '3rem', maxHeight: '10rem' }}
+            className="w-full bg-transparent border-none outline-none px-4 pt-3 pb-2 text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)] resize-none"
+            style={{ minHeight: '2.5rem', maxHeight: '10rem' }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -478,15 +527,51 @@ export default function Chat() {
             }}
             disabled={loading}
           />
-        </div>
-        <button
-          type="submit"
-          disabled={loading || !input.trim()}
-          className="bg-[#d4af37] hover:bg-[#c4a030] disabled:opacity-50 text-black font-medium px-6 py-2.5 rounded-2xl transition flex-shrink-0"
-        >
-          Send
-        </button>
-      </form>
+
+          <div className="flex items-center justify-between px-3 pb-3 pt-1">
+            <div className="flex items-center gap-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                className="hidden"
+                aria-hidden="true"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                aria-label="Attach file"
+                title="Attach file"
+              >
+                <Paperclip size={17} />
+              </button>
+              <button
+                type="button"
+                onClick={handleMicClick}
+                className={`btn-glass-icon w-9 h-9 ${
+                  isListening
+                    ? 'text-[var(--danger)] border-[var(--danger)]/40 animate-pulse-slow'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+                aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+                title="Voice input"
+              >
+                <Mic size={17} />
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || !input.trim()}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[#c4a030] text-black shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
+              aria-label="Send message"
+            >
+              <ArrowUp size={18} strokeWidth={2.5} />
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
