@@ -255,7 +255,17 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
       closeFounderModal();
       window.location.href = '/sanctum';
     } catch (e) {
-      setFounderError(e.response?.data?.detail || 'Invalid founder key');
+      console.error('Founder login failed - full error:', e);
+      if (e.response) {
+        // Got a real response from the server - show its actual message.
+        setFounderError(`(${e.response.status}) ${e.response.data?.detail || 'Request rejected'}`);
+      } else if (e.request) {
+        // Request was sent but no response ever came back.
+        setFounderError('No response from server - check your connection.');
+      } else {
+        // Failed before the request was even sent.
+        setFounderError(`Request failed to send: ${e.message}`);
+      }
     } finally {
       setFounderSubmitting(false);
     }
