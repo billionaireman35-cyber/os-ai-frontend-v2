@@ -158,6 +158,16 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     fetchChats();
   }, [fetchChats]);
 
+  // Refresh the recent-chats list whenever a message is sent anywhere in
+  // the app (Chat.jsx dispatches this after a successful send) - without
+  // this, "Recent" only ever reflects whatever existed at the moment the
+  // sidebar first mounted.
+  useEffect(() => {
+    const handleChatUpdated = () => fetchChats();
+    window.addEventListener('chat-updated', handleChatUpdated);
+    return () => window.removeEventListener('chat-updated', handleChatUpdated);
+  }, [fetchChats]);
+
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     setNotifLoading(true);

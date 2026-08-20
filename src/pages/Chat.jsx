@@ -221,6 +221,12 @@ export default function Chat() {
         });
       }
 
+      // Backend commits the chats/chat_messages rows before it starts
+      // streaming a response, so by the time we get here the sidebar's
+      // recent-chats list is stale (it only fetches once on mount, never
+      // on new activity). Tell it to refresh.
+      window.dispatchEvent(new CustomEvent('chat-updated'));
+
     } catch (error) {
       console.error('Chat error:', error);
       setMessages(prev => [
