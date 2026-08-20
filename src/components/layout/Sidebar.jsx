@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useWallet } from '../../context/WalletContext';
 import {
   MessageSquare,
   Wallet,
@@ -43,6 +44,12 @@ const PINNED_KEY = 'os-ai-pinned';
 export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNewChat, onSelectChat }) {
   const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { assets: walletAssets } = useWallet();
+  // Real on-chain CLOSE balance (same source Vault displays), not the
+  // legacy internal close_balance DB ledger - see 2026-08-19/20 architecture
+  // decision to make on-chain balance authoritative everywhere.
+  const closeAsset = walletAssets?.find((a) => a.symbol === 'CLOSE' && a.chain === 'polygon');
+  const displayCloseBalance = closeAsset ? closeAsset.balance : 0;
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
   const recentRef = useRef(null);
@@ -576,7 +583,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           <div className="flex-1 min-w-0">
             <p className="text-[16px] text-[var(--text-primary)] font-medium truncate">{user?.name || 'Guest'}</p>
             <div className="flex items-center gap-2 text-[14px] text-[var(--text-muted)]">
-              <Coins size={16} aria-hidden="true" /> {user?.close_balance || 0} CLOSE
+              <Coins size={16} aria-hidden="true" /> {displayCloseBalance} CLOSE
               <span className="px-2 py-0.5 rounded-full bg-[var(--accent-indigo)]/10 text-[12px] text-[var(--accent-indigo)] font-medium">
                 {tierBadge}
               </span>
