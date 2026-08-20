@@ -375,13 +375,13 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
         aria-modal={mobileOpen ? 'true' : undefined}
         aria-label="Sidebar navigation"
         aria-hidden={!isOpen}
-        className={`fixed top-0 left-0 h-full w-[340px] bg-[var(--bg-secondary)] border-r border-[var(--border-color)] flex flex-col overflow-y-auto transition-transform duration-300 ease-in-out z-50 ${
+        className={`glass-panel fixed top-0 left-0 h-full w-[340px] flex flex-col overflow-y-auto transition-transform duration-300 ease-in-out z-50 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-5 border-b border-[var(--border-color)]">
+        <div className="h-16 flex items-center justify-between px-5 border-b border-[var(--glass-border)]">
           <div
-            className="flex items-center gap-2 cursor-pointer select-none hover:bg-[var(--bg-tertiary)] transition-colors rounded-lg px-2 py-1"
+            className="flex items-center gap-2 cursor-pointer select-none hover:bg-white/5 transition-colors rounded-lg px-2 py-1"
             onClick={handleLogoClick}
           >
             <span className="font-display font-bold text-[26px] text-[var(--text-primary)] flex items-center gap-2 pulse-logo">
@@ -392,22 +392,22 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           <button
             ref={closeButtonRef}
             onClick={closeSidebar}
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] touch p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+            className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             aria-label="Close sidebar"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
         <button
           onClick={newChat}
-          className="mx-4 mt-4 flex items-center justify-center gap-3 bg-[var(--accent-indigo)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-xl py-4 press-soft touch transition-all shadow-sm hover:shadow-md px-6 text-[17px]"
+          className="mx-4 mt-4 flex items-center justify-center gap-3 bg-[var(--accent-indigo)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-xl py-4 press-soft touch transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 px-6 text-[17px]"
         >
           <Plus size={24} className="shrink-0" />
           <span className="text-[17px]">New Chat</span>
         </button>
 
-        <div className="mx-4 mt-4 flex items-center gap-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl px-4 py-3 focus-within:border-[var(--accent-indigo)] transition-colors">
+        <div className="input-glass mx-4 mt-4 flex items-center gap-3 focus-within:border-[var(--accent-brass)] focus-within:shadow-[0_0_0_3px_rgba(212,175,55,0.15)]">
           <Search size={18} className="text-[var(--text-muted)] shrink-0" aria-hidden="true" />
           <input
             type="text"
@@ -427,7 +427,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                 {...asButton(() => selectChat(chat.id))}
                 role="option"
                 aria-selected="false"
-                className="p-2 cursor-pointer hover:bg-[var(--bg-tertiary)] focus:bg-[var(--bg-tertiary)] focus:outline-none rounded-lg text-[14px] text-[var(--text-primary)]"
+                className="p-2 cursor-pointer hover:bg-white/5 focus:bg-white/5 focus:outline-none rounded-lg text-[14px] text-[var(--text-primary)] transition-colors"
               >
                 {chat.title || 'New Chat'}
               </div>
@@ -440,7 +440,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           </div>
         )}
 
-        <nav className="px-3 py-2 border-b border-[var(--border-color)]" aria-label="Primary">
+        <nav className="px-3 py-2 border-b border-[var(--glass-border)]" aria-label="Primary">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -450,8 +450,8 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               className={({ isActive }) =>
                 `flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-medium transition-all touch justify-start ${
                   isActive
-                    ? 'bg-[var(--accent-indigo)]/15 text-[var(--accent-indigo)] border border-[var(--accent-indigo)]/20'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
+                    ? 'bg-[var(--accent-indigo)]/15 text-[var(--accent-indigo)] border border-[var(--accent-indigo)]/25 shadow-[0_0_20px_rgba(79,70,229,0.1)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border border-transparent'
                 }`
               }
             >
@@ -466,8 +466,8 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               className={({ isActive }) =>
                 `flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-medium transition-all touch justify-start ${
                   isActive
-                    ? 'bg-[var(--accent-gold)]/15 text-[var(--accent-gold)] border border-[var(--accent-gold)]/20'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
+                    ? 'bg-[var(--accent-brass)]/15 text-[var(--accent-brass)] border border-[var(--accent-brass)]/25 shadow-[0_0_20px_rgba(201,169,97,0.12)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border border-transparent'
                 }`
               }
             >
@@ -477,7 +477,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           )}
         </nav>
 
-        <div className="px-4 py-3 border-t border-[var(--border-color)]">
+        <div className="px-4 py-3 border-t border-[var(--glass-border)]">
           <p className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Hustle Hub</p>
           <button
             onClick={() => {
@@ -490,10 +490,10 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           </button>
         </div>
 
-        <div className="px-3 py-2 border-t border-[var(--border-color)] flex-1 overflow-y-auto" ref={recentRef}>
+        <div className="px-3 py-2 border-t border-[var(--glass-border)] flex-1 overflow-y-auto" ref={recentRef}>
           <div
             {...asButton(() => setRecentDropdownOpen((prev) => !prev))}
-            className="flex items-center justify-between hover:bg-[var(--bg-tertiary)] focus:bg-[var(--bg-tertiary)] focus:outline-none rounded-lg p-2 transition-colors"
+            className="flex items-center justify-between hover:bg-white/5 focus:bg-white/5 focus:outline-none rounded-lg p-2 transition-colors"
             aria-expanded={recentDropdownOpen}
           >
             <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Recent</span>
@@ -523,7 +523,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                         <div
                           key={chat.id}
                           {...asButton(() => selectChat(chat.id))}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--bg-tertiary)] focus:bg-[var(--bg-tertiary)] focus:outline-none"
+                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 focus:bg-white/5 focus:outline-none transition-colors"
                         >
                           <span className="text-[14px] text-[var(--text-primary)] flex-1 truncate">
                             {chat.title || 'New Chat'}
@@ -551,7 +551,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                         <div
                           key={chat.id}
                           {...asButton(() => selectChat(chat.id))}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--bg-tertiary)] focus:bg-[var(--bg-tertiary)] focus:outline-none group"
+                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 focus:bg-white/5 focus:outline-none transition-colors group"
                         >
                           <span className="text-[14px] text-[var(--text-primary)] flex-1 truncate">
                             {chat.title || 'New Chat'}
@@ -573,7 +573,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           )}
         </div>
 
-        <div className="border-t border-[var(--border-color)] px-4 py-4 flex items-center gap-4">
+        <div className="border-t border-[var(--glass-border)] px-4 py-4 flex items-center gap-4">
           <div
             className="w-10 h-10 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-[var(--accent-indigo)] font-bold text-lg shrink-0"
             aria-hidden="true"
@@ -595,17 +595,17 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                 navigate('/settings');
                 if (isMobile()) resetSidebarState();
               }}
-              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] touch p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+              className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               aria-label="Settings"
             >
-              <Settings size={20} />
+              <Settings size={18} />
             </button>
             <button
               onClick={handleLogout}
-              className="text-[var(--text-muted)] hover:text-[var(--danger)] touch p-2 rounded-lg hover:bg-[var(--danger)]/10 transition-colors"
+              className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--danger)]"
               aria-label="Log out"
             >
-              <LogOut size={20} />
+              <LogOut size={18} />
             </button>
           </div>
         </div>
@@ -621,7 +621,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               aria-modal="true"
               aria-labelledby="founder-modal-title"
               onClick={(e) => e.stopPropagation()}
-              className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-8 space-y-5 shadow-xl"
+              className="glass-panel rounded-2xl w-full max-w-md p-8 space-y-5"
             >
               <h3 id="founder-modal-title" className="text-2xl font-display font-bold text-[var(--text-primary)]">
                 Founder Login
@@ -631,7 +631,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                 type="password"
                 value={founderKey}
                 onChange={(e) => setFounderKey(e.target.value)}
-                className="input-base"
+                className="input-glass w-full"
                 placeholder="Founder key"
                 aria-label="Founder key"
                 autoFocus

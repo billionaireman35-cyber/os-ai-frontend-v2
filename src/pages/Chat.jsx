@@ -335,12 +335,12 @@ export default function Chat() {
                   </div>
                 )}
                 <div
-                  className={`animate-slide-up rounded-2xl px-5 py-3 shadow-lg ${
+                  className={`animate-slide-up rounded-2xl px-5 py-3 ${
                     isUser
-                      ? 'bg-gradient-to-br from-[#d4af37] to-[#b8962e] text-black'
+                      ? 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]'
                       : isSystem
                         ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-300'
-                        : 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]'
+                        : 'text-[var(--text-primary)]'
                   }`}
                 >
                   {isUser ? (
