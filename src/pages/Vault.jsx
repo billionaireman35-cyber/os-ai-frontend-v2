@@ -16,7 +16,18 @@ import { ToastContainer, useToast } from '../components/ui/Toast';
 const chains = ['all', 'polygon', 'ethereum', 'bsc', 'arbitrum', 'base'];
 const chainLogos = { polygon: '🟣', ethereum: '💎', bsc: '🟡', arbitrum: '🔵', base: '🔷' };
 
-function SendModal({ isOpen, onClose, asset, onSent }) {
+
+function extractErrorMessage(e, fallback) {
+  const detail = e.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map((d) => d.msg || JSON.stringify(d)).join('; ');
+  }
+  if (detail && typeof detail === 'object') return JSON.stringify(detail);
+  return e.message || fallback;
+}
+
+function SendModal({ isOpen, onClose, asset, assets, onSent }) {
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,6 +35,11 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   if (!isOpen || !asset) return null;
+
+  const MIN_GAS_POL = 0.01;
+  const polAsset = (assets || []).find((a) => a.chain === 'polygon' && a.symbol === 'POL');
+  const polBalance = polAsset ? polAsset.balance : 0;
+  const insufficientGas = asset.chain === 'polygon' && polBalance < MIN_GAS_POL;
 
   const handleSend = async (password) => {
     if (!password) { setError('Password required'); return; }
@@ -40,7 +56,7 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
       onSent?.(res.data.tx_hash);
       onClose();
     } catch (e) {
-      setError(e.response?.data?.detail || e.message || 'Transaction failed');
+      setError(extractErrorMessage(e, 'Transaction failed'));
     } finally {
       setLoading(false);
       setShowPasswordModal(false);
@@ -66,9 +82,14 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
           <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
             <span>Chain: <span className="text-[var(--text-primary)] font-medium">{asset.chain}</span></span>
           </div>
+          {insufficientGas && (
+            <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
+              ⚠️ Low POL balance ({polBalance.toFixed(4)} POL) - you need at least {MIN_GAS_POL} POL to cover gas for this transaction.
+            </p>
+          )}
           {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
           <div className="flex gap-2">
-            <button onClick={() => setShowPasswordModal(true)} disabled={loading} className="btn-primary flex-1 justify-center">
+            <button onClick={() => setShowPasswordModal(true)} disabled={loading || insufficientGas} className="btn-primary flex-1 justify-center">
               {loading ? <Loader2 size={20} className="animate-spin" /> : 'Send'}
             </button>
             <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
@@ -118,7 +139,7 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
       onDeposited?.(res.data);
       onClose();
     } catch (e) {
-      setError(e.response?.data?.detail || e.message || 'Verification failed');
+      setError(extractErrorMessage(e, 'Verification failed'));
     } finally {
       setLoading(false);
     }
@@ -217,7 +238,7 @@ function ChatTopupModal({ isOpen, onClose, onToppedUp }) {
       onToppedUp?.(res.data);
       onClose();
     } catch (e) {
-      setError(e.response?.data?.detail || e.message || 'Verification failed');
+      setError(extractErrorMessage(e, 'Verification failed'));
     } finally {
       setLoading(false);
     }
@@ -297,7 +318,7 @@ function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
       onRequested?.(res.data);
       onClose();
     } catch (e) {
-      setError(e.response?.data?.detail || e.message || 'Withdrawal request failed');
+      setError(extractErrorMessage(e, 'Withdrawal request failed'));
     } finally {
       setLoading(false);
     }
@@ -658,8 +679,8 @@ function StandardWallet() {
         </div>
       )}
 
-      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
-      <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} assets={assets} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Credited ${result.close_credited} CLOSE (${result.amount} ${result.token_symbol})`, 'success'); fetchBalances(); }} />
       <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
       <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />

@@ -12,7 +12,7 @@ const TOKEN_MAP = {
   DAI: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
 };
 
-export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress }) {
+export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }) {
   const [fromToken, setFromToken] = useState('MATIC');
   const [toToken, setToToken] = useState('CLOSE');
   const [amount, setAmount] = useState('');
@@ -87,6 +87,11 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress }) {
 
   if (!isOpen) return null;
 
+  const MIN_GAS_POL = 0.01;
+  const polAsset = (assets || []).find((a) => a.chain === 'polygon' && a.symbol === 'POL');
+  const polBalance = polAsset ? polAsset.balance : 0;
+  const insufficientGas = polBalance < MIN_GAS_POL;
+
   const outputAmount = routeSummary?.amountOut ? (parseInt(routeSummary.amountOut) / 1e18).toFixed(4) : '—';
   const outputUsd = routeSummary?.amountOutUsd ? parseFloat(routeSummary.amountOutUsd).toFixed(2) : null;
   const gasUsd = routeSummary?.gasUsd ? parseFloat(routeSummary.gasUsd).toFixed(4) : null;
@@ -146,11 +151,16 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress }) {
             </div>
           )}
 
+          {insufficientGas && (
+            <p className="text-sm font-mono" style={{ color: '#d4af37' }}>
+              ⚠️ Low POL balance ({polBalance.toFixed(4)} POL) - you need at least {MIN_GAS_POL} POL to cover gas for this swap.
+            </p>
+          )}
           {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
 
           <button
             onClick={handleConfirmSwap}
-            disabled={!routeSummary || executing || loading}
+            disabled={!routeSummary || executing || loading || insufficientGas}
             className="btn-primary w-full justify-center gap-2"
             style={{ background: '#d4af37', color: 'black' }}
           >
