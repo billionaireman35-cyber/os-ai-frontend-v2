@@ -268,43 +268,56 @@ export default function HustleHub() {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <div className="border-b border-[var(--border-color)] p-4 flex items-center justify-between">
+      <div className="border-b border-[var(--glass-border)] p-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">Hustle Hub</h1>
           <p className="text-sm text-[var(--text-muted)]">Private, invite-only workspaces - 5000 CLOSE to create, 6000 CLOSE to join</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => { setShowCreate(true); setCreateError(''); }} className="bg-[#d4af37] hover:bg-[#c4a030] text-black font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition">
+          <button onClick={() => { setShowCreate(true); setCreateError(''); }} className="bg-[var(--accent-brass)] hover:bg-[#c4a030] text-black font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition">
             <Plus size={18} /> New
           </button>
-          <button onClick={() => document.getElementById('join-input').focus()} className="bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] text-[var(--text-primary)] px-4 py-2 rounded-xl flex items-center gap-2 transition">
+          <button onClick={() => document.getElementById('join-input').focus()} className="bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] backdrop-blur-md text-[var(--text-primary)] px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
             <LogIn size={18} /> Join
           </button>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 p-4 bg-[var(--bg-tertiary)] border-b border-[var(--border-color)]">
+      <div className="flex flex-wrap items-center gap-2 p-4 border-b border-[var(--glass-border)]">
         {workspaces.map((ws) => (
-          <button key={ws.id} onClick={() => setSelectedWorkspace(ws)} className={`px-4 py-2 rounded-full text-sm transition flex items-center gap-1 ${selectedWorkspace?.id === ws.id ? 'bg-[#d4af37] text-black font-bold' : 'bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] text-[var(--text-primary)]'}`}>
+          <button
+            key={ws.id}
+            onClick={() => setSelectedWorkspace(ws)}
+            className={`px-4 py-2 rounded-full text-sm transition flex items-center gap-1 ${
+              selectedWorkspace?.id === ws.id
+                ? 'bg-[var(--accent-brass)] text-black font-bold'
+                : 'bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] text-[var(--text-primary)]'
+            }`}
+          >
             {ws.is_public ? <Globe size={14} /> : <Lock size={14} />}
             {ws.name}
           </button>
         ))}
         <div className="flex-1 min-w-[150px] flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <input id="join-input" type="text" placeholder="Enter room code" value={joinCode}
+            <input
+              id="join-input"
+              type="text"
+              placeholder="Enter room code"
+              value={joinCode}
               onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinStatus(''); setJoinError(''); }}
-              className="flex-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[#d4af37]" />
-            <button onClick={handleJoinWorkspace} className="bg-[#d4af37] text-black px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap">Request to Join</button>
+              className="input-glass flex-1 text-sm"
+            />
+            <button onClick={handleJoinWorkspace} className="bg-[var(--accent-brass)] text-black px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap">Request to Join</button>
           </div>
-          {joinStatus && <p className="text-xs text-green-400">{joinStatus}</p>}
-          {joinError && <p className="text-xs text-red-400">{joinError}</p>}
+          {joinStatus && <p className="text-xs text-[var(--success)]">{joinStatus}</p>}
+          {joinError && <p className="text-xs text-[var(--danger)]">{joinError}</p>}
         </div>
       </div>
 
       {selectedWorkspace ? (
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)] bg-[var(--bg-tertiary)]">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--glass-border)]">
             <div className="flex items-center gap-2">
               <span className="font-bold text-[var(--text-primary)]">{selectedWorkspace.name}</span>
               {selectedWorkspace.is_public ? (
@@ -316,16 +329,16 @@ export default function HustleHub() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono text-[var(--text-muted)]">Code: {selectedWorkspace.room_code}</span>
-              <button onClick={copyRoomCode} className="text-[var(--text-muted)] hover:text-[#d4af37]">
+              <button onClick={copyRoomCode} className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] transition-colors">
                 {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
               </button>
             </div>
           </div>
 
           {canManageRequests && (
-            <div className="border-b border-[var(--border-color)] bg-[var(--bg-tertiary)] px-4 py-3">
+            <div className="glass-card mx-4 mt-3 px-4 py-3">
               <div className="flex items-center gap-2 mb-2">
-                <UserPlus size={16} className="text-[#d4af37]" />
+                <UserPlus size={16} className="text-[var(--accent-brass)]" />
                 <span className="text-sm font-bold text-[var(--text-primary)]">
                   Pending Join Requests {pendingRequests.length > 0 && `(${pendingRequests.length})`}
                 </span>
@@ -336,25 +349,25 @@ export default function HustleHub() {
               <p className="text-xs text-[var(--text-muted)] mb-2 font-mono break-all">
                 Treasury address: {TREASURY_ADDRESS}
               </p>
-              {requestActionError && <p className="text-xs text-red-400 mb-2">{requestActionError}</p>}
+              {requestActionError && <p className="text-xs text-[var(--danger)] mb-2">{requestActionError}</p>}
               {pendingRequests.length === 0 ? (
                 <p className="text-xs text-[var(--text-muted)]">No pending requests.</p>
               ) : (
                 <div className="space-y-2">
                   {pendingRequests.map((req) => (
-                    <div key={req.user_id} className="bg-[var(--bg-secondary)] rounded-lg px-3 py-2">
+                    <div key={req.user_id} className="bg-white/5 rounded-lg px-3 py-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-[var(--text-primary)]">{req.user_name}</span>
                         <div className="flex gap-2">
                           <button
                             onClick={() => { setApprovingUserId(req.user_id); setApproveTxHash(''); }}
-                            className="flex items-center gap-1 bg-green-500/20 text-green-400 hover:bg-green-500/30 px-3 py-1 rounded-lg text-xs font-bold transition"
+                            className="flex items-center gap-1 bg-[var(--success)]/15 text-[var(--success)] hover:bg-[var(--success)]/25 px-3 py-1 rounded-lg text-xs font-bold transition"
                           >
                             <Check size={14} /> Approve
                           </button>
                           <button
                             onClick={() => handleRejectRequest(req.user_id)}
-                            className="flex items-center gap-1 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-3 py-1 rounded-lg text-xs font-bold transition"
+                            className="flex items-center gap-1 bg-[var(--danger)]/15 text-[var(--danger)] hover:bg-[var(--danger)]/25 px-3 py-1 rounded-lg text-xs font-bold transition"
                           >
                             <XCircle size={14} /> Reject
                           </button>
@@ -367,18 +380,18 @@ export default function HustleHub() {
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--bg-primary)]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 ? (
               <div className="text-center text-[var(--text-muted)] py-10">No messages yet. Start the conversation!</div>
             ) : (
               messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.user_id === user?.id ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.user_id === user?.id ? 'bg-gradient-to-br from-[#d4af37] to-[#b8962e] text-black' : 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]'}`}>
-                    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mb-1">
-                      <span className="font-bold text-[#d4af37]">{msg.user_name || 'Unknown'}</span>
-                      <span>{msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : ''}</span>
+                  <div className="max-w-[75%] glass-card rounded-2xl px-4 py-2">
+                    <div className="flex items-center gap-2 text-xs mb-1">
+                      <span className="font-bold text-[var(--accent-brass)]">{msg.user_name || 'Unknown'}</span>
+                      <span className="text-[var(--text-muted)]">{msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : ''}</span>
                     </div>
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    <p className="whitespace-pre-wrap break-words text-[var(--text-primary)]">{msg.content}</p>
                   </div>
                 </div>
               ))
@@ -386,13 +399,24 @@ export default function HustleHub() {
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSendMessage} className="border-t border-[var(--border-color)] p-4 bg-[var(--bg-secondary)] flex gap-3">
-            <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..."
-              className="flex-1 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-2xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 transition" />
-            <button type="submit" disabled={!newMessage.trim()} className="bg-[#d4af37] hover:bg-[#c4a030] disabled:opacity-50 text-black font-bold px-6 py-2.5 rounded-2xl transition">
-              <Send size={18} />
-            </button>
-          </form>
+          <div className="p-4">
+            <form onSubmit={handleSendMessage} className="glass-bar rounded-3xl max-w-2xl mx-auto shadow-lg flex items-center gap-2 p-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1 bg-transparent border-none outline-none px-3 py-2 text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
+              />
+              <button
+                type="submit"
+                disabled={!newMessage.trim()}
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[#c4a030] text-black shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
+              >
+                <Send size={17} />
+              </button>
+            </form>
+          </div>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-[var(--text-muted)]">
@@ -402,33 +426,49 @@ export default function HustleHub() {
 
       {/* Create modal - form first, then password confirm triggers payment + creation */}
       {showCreate && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Hustle Hub</h3>
-              <button onClick={() => setShowCreate(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+              <button onClick={() => setShowCreate(false)} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
             </div>
             <div>
               <label className="text-sm text-[var(--text-muted)] block">Name</label>
-              <input type="text" value={newWorkspaceName} onChange={(e) => setNewWorkspaceName(e.target.value)} className="input-base w-full mt-1" placeholder="My Workspace" />
+              <input type="text" value={newWorkspaceName} onChange={(e) => setNewWorkspaceName(e.target.value)} className="input-glass w-full mt-1" placeholder="My Workspace" />
             </div>
             <div>
               <label className="text-sm text-[var(--text-muted)] block">Description (optional)</label>
-              <input type="text" value={newWorkspaceDesc} onChange={(e) => setNewWorkspaceDesc(e.target.value)} className="input-base w-full mt-1" placeholder="What's this workspace about?" />
+              <input type="text" value={newWorkspaceDesc} onChange={(e) => setNewWorkspaceDesc(e.target.value)} className="input-glass w-full mt-1" placeholder="What's this workspace about?" />
             </div>
             <div>
               <label className="text-sm text-[var(--text-muted)] block mb-1">Visibility</label>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setNewWorkspaceVisibility('private')} className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border transition ${newWorkspaceVisibility === 'private' ? 'bg-[#d4af37]/15 border-[#d4af37] text-[#d4af37]' : 'bg-[var(--bg-tertiary)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}>
+                <button
+                  type="button"
+                  onClick={() => setNewWorkspaceVisibility('private')}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border transition ${
+                    newWorkspaceVisibility === 'private'
+                      ? 'bg-[var(--accent-brass)]/15 border-[var(--accent-brass)] text-[var(--accent-brass)]'
+                      : 'bg-white/5 border-[var(--glass-border)] text-[var(--text-secondary)]'
+                  }`}
+                >
                   <Lock size={16} /> Private
                 </button>
-                <button type="button" onClick={() => setNewWorkspaceVisibility('public')} className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border transition ${newWorkspaceVisibility === 'public' ? 'bg-[#d4af37]/15 border-[#d4af37] text-[#d4af37]' : 'bg-[var(--bg-tertiary)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}>
+                <button
+                  type="button"
+                  onClick={() => setNewWorkspaceVisibility('public')}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border transition ${
+                    newWorkspaceVisibility === 'public'
+                      ? 'bg-[var(--accent-brass)]/15 border-[var(--accent-brass)] text-[var(--accent-brass)]'
+                      : 'bg-white/5 border-[var(--glass-border)] text-[var(--text-secondary)]'
+                  }`}
+                >
                   <Globe size={16} /> Public
                 </button>
               </div>
             </div>
             <p className="text-xs text-[var(--text-muted)]">Creating a hub costs 5000 CLOSE, sent on-chain to the OS AI treasury.</p>
-            {createError && <p className="text-sm text-red-400">{createError}</p>}
+            {createError && <p className="text-sm text-[var(--danger)]">{createError}</p>}
             <div className="flex gap-2">
               <button
                 onClick={() => setShowCreatePassword(true)}

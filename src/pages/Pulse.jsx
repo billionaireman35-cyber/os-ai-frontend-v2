@@ -83,14 +83,18 @@ export default function Pulse() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-display font-bold text-[var(--text-primary)]">Market Pulse</h1>
-        <button onClick={handleRefresh} className="p-2 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition">
-          <RefreshCw size={18} className={loadingTokens || loadingNews ? 'animate-spin' : ''} />
+        <button
+          onClick={handleRefresh}
+          className="btn-glass-icon w-9 h-9 text-[var(--accent-brass)]"
+          aria-label="Refresh"
+        >
+          <RefreshCw size={17} className={loadingTokens || loadingNews ? 'animate-spin' : ''} />
         </button>
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl px-4 py-3">
-        <Search size={18} className="text-[var(--text-muted)]" />
+      <div className="input-glass flex items-center gap-3 focus-within:border-[var(--accent-brass)] focus-within:shadow-[0_0_0_3px_rgba(212,175,55,0.15)]">
+        <Search size={18} className="text-[var(--text-muted)] shrink-0" />
         <input
           type="text"
           placeholder="Search token, address, news..."
@@ -111,12 +115,16 @@ export default function Pulse() {
       <div>
         <h2 className="text-sm font-mono uppercase tracking-wider text-[var(--text-muted)] mb-3 flex items-center gap-2">
           Live Token Feed
-          <span className={`w-2 h-2 rounded-full ${loadingTokens ? 'animate-pulse bg-yellow-400' : 'bg-green-400'}`} />
+          <span
+            className={`w-2 h-2 rounded-full ${
+              loadingTokens ? 'animate-pulse bg-yellow-400' : 'bg-[var(--success)] shadow-[0_0_8px_var(--success)]'
+            }`}
+          />
         </h2>
         {loadingTokens && tokens.length === 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16 bg-[var(--bg-tertiary)] rounded-xl" />
+              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16" />
             ))}
           </div>
         ) : filteredTokens.length === 0 ? (
@@ -124,19 +132,28 @@ export default function Pulse() {
             {searchQuery ? 'No tokens match your search.' : 'No token data available.'}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-2">
             {filteredTokens.map((token, idx) => (
-              <div key={idx} className="glass-card px-4 py-3 flex items-center justify-between border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
+              <div
+                key={idx}
+                className="glass-card px-4 py-3 flex items-center justify-between"
+              >
                 <div className="flex items-center gap-3">
-                  {token.image && <img src={token.image} alt={token.symbol} className="w-8 h-8 rounded-full" />}
+                  {token.image ? (
+                    <img src={token.image} alt={token.symbol} className="w-9 h-9 rounded-full" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--accent-brass)]/15 text-[var(--accent-brass)] font-bold text-sm">
+                      {token.symbol?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                  )}
                   <div>
-                    <p className="font-bold text-[var(--text-primary)]">{token.symbol?.toUpperCase()}</p>
-                    <p className="text-sm text-[var(--text-muted)] truncate max-w-[120px]">{token.name}</p>
+                    <p className="font-bold text-[var(--text-primary)] text-sm">{token.symbol?.toUpperCase()}</p>
+                    <p className="text-xs text-[var(--text-muted)] truncate max-w-[140px]">{token.name}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-mono text-[#d4af37]">${formatPrice(token.current_price)}</p>
-                  <p className={`text-xs flex items-center justify-end gap-1 ${token.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                <div className="text-right font-mono">
+                  <p className="text-sm text-[var(--accent-brass)]">${formatPrice(token.current_price)}</p>
+                  <p className={`text-xs flex items-center justify-end gap-1 mt-0.5 ${token.price_change_percentage_24h >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
                     {token.price_change_percentage_24h >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                     {formatChange(token.price_change_percentage_24h)}
                   </p>
@@ -153,7 +170,7 @@ export default function Pulse() {
         {loadingNews && news.length === 0 ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16 bg-[var(--bg-tertiary)] rounded-xl" />
+              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16" />
             ))}
           </div>
         ) : news.length === 0 ? (
@@ -161,15 +178,26 @@ export default function Pulse() {
         ) : (
           <div className="space-y-3">
             {news.map((item, idx) => (
-              <div key={idx} className="glass-card px-4 py-3 flex items-start gap-3 border border-[var(--border-color)] hover:border-[#d4af37]/20 transition-all rounded-xl">
-                {item.image && <img src={item.image} alt="" className="w-16 h-16 rounded-lg object-cover" />}
+              <div
+                key={idx}
+                className="glass-card px-4 py-3 flex items-start gap-3"
+              >
+                {item.image ? (
+                  <img src={item.image} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                ) : (
+                  <div className="w-16 h-16 rounded-xl shrink-0 bg-gradient-to-br from-[var(--accent-brass)]/25 to-[var(--accent-indigo)]/15" />
+                )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[var(--text-primary)] font-medium line-clamp-2">{item.title}</p>
-                  <p className="text-sm text-[var(--text-muted)] line-clamp-2">{item.description}</p>
-                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#d4af37] hover:underline flex items-center gap-1 mt-1">
-                    Read more <ExternalLink size={12} />
-                  </a>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">{item.source} · {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : ''}</p>
+                  <p className="text-[var(--text-primary)] font-medium text-sm line-clamp-2">{item.title}</p>
+                  <p className="text-xs text-[var(--text-muted)] line-clamp-2 mt-1">{item.description}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--accent-brass)] hover:underline flex items-center gap-1">
+                      Read more <ExternalLink size={11} />
+                    </a>
+                    <span className="text-xs text-[var(--text-muted)]">
+                      · {item.source} · {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : ''}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
