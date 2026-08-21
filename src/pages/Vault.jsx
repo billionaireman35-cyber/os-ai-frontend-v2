@@ -49,19 +49,19 @@ function SendModal({ isOpen, onClose, asset, onSent }) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-        <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Send {asset.symbol}</h3>
-            <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+            <button onClick={onClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
           </div>
           <div>
             <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Recipient</label>
-            <input type="text" value={to} onChange={(e) => setTo(e.target.value)} className="input-base w-full" placeholder="0x..." />
+            <input type="text" value={to} onChange={(e) => setTo(e.target.value)} className="input-glass w-full mt-1" placeholder="0x..." />
           </div>
           <div>
             <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount ({asset.symbol})</label>
-            <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-base w-full" placeholder="0.0" />
+            <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-glass w-full mt-1" placeholder="0.0" />
           </div>
           <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
             <span>Chain: <span className="text-[var(--text-primary)] font-medium">{asset.chain}</span></span>
@@ -125,11 +125,11 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Deposit Crypto</h3>
-          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+          <button onClick={onClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
         </div>
 
         <p className="text-sm text-[var(--text-secondary)]">
@@ -143,10 +143,11 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
               <button
                 key={c}
                 onClick={() => setChain(c)}
-                className="px-3 py-1.5 rounded-full text-xs font-mono transition-all"
-                style={chain === c
-                  ? { background: 'var(--accent-brass)', color: '#20190B', fontWeight: 700 }
-                  : { background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+                className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold transition-all ${
+                  chain === c
+                    ? 'bg-[var(--accent-brass)] text-black'
+                    : 'bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]'
+                }`}
               >
                 {c.toUpperCase()}
               </button>
@@ -154,15 +155,15 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
           </div>
         </div>
 
-        <div className="rounded-xl p-3" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+        <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
           <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Deposit Address</label>
           <div className="flex items-center justify-between mt-1">
-            <span className="text-xs font-mono break-all pr-2" style={{ color: 'var(--text-primary)' }}>{DEPOSIT_ADDRESS}</span>
-            <button onClick={copyAddress} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-xs font-mono break-all pr-2 text-[var(--text-primary)]">{DEPOSIT_ADDRESS}</span>
+            <button onClick={copyAddress} className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
               {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
             </button>
           </div>
-          <p className="text-xs mt-2" style={{ color: 'var(--accent-brass)' }}>
+          <p className="text-xs mt-2 text-[var(--accent-brass)]">
             Minimum: ${MINIMUMS[chain]} on {chain}
           </p>
         </div>
@@ -173,7 +174,7 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
             type="text"
             value={txHash}
             onChange={(e) => setTxHash(e.target.value)}
-            className="input-base w-full"
+            className="input-glass w-full mt-1"
             placeholder="0x..."
           />
         </div>
@@ -223,26 +224,26 @@ function ChatTopupModal({ isOpen, onClose, onToppedUp }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Top Up Chat Balance</h3>
-          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+          <button onClick={onClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
         </div>
 
         <p className="text-sm text-[var(--text-secondary)]">
           Send CLOSE (Polygon) to the address below from your own wallet, then paste the transaction hash to credit your chat balance 1:1.
         </p>
 
-        <div className="rounded-xl p-3" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+        <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
           <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Chat Treasury Address (Polygon)</label>
           <div className="flex items-center justify-between mt-1">
-            <span className="text-xs font-mono break-all pr-2" style={{ color: 'var(--text-primary)' }}>{CHAT_TREASURY_ADDRESS}</span>
-            <button onClick={copyAddress} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-xs font-mono break-all pr-2 text-[var(--text-primary)]">{CHAT_TREASURY_ADDRESS}</span>
+            <button onClick={copyAddress} className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
               {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
             </button>
           </div>
-          <p className="text-xs mt-2" style={{ color: 'var(--accent-brass)' }}>
+          <p className="text-xs mt-2 text-[var(--accent-brass)]">
             CLOSE token: {CLOSE_TOKEN_ADDRESS.slice(0, 10)}...{CLOSE_TOKEN_ADDRESS.slice(-6)}
           </p>
         </div>
@@ -253,7 +254,7 @@ function ChatTopupModal({ isOpen, onClose, onToppedUp }) {
             type="text"
             value={txHash}
             onChange={(e) => setTxHash(e.target.value)}
-            className="input-base w-full"
+            className="input-glass w-full mt-1"
             placeholder="0x..."
           />
         </div>
@@ -303,11 +304,11 @@ function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Withdraw</h3>
-          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+          <button onClick={onClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
         </div>
         <p className="text-sm text-[var(--text-secondary)]">
           Withdrawals are reviewed before funds are sent - this may take some time.
@@ -316,8 +317,15 @@ function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
           <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Chain</label>
           <div className="flex gap-2 mt-1">
             {['polygon', 'bsc', 'ethereum'].map((c) => (
-              <button key={c} onClick={() => setChain(c)} className="px-3 py-1.5 rounded-full text-xs font-mono transition-all"
-                style={chain === c ? { background: 'var(--accent-brass)', color: '#20190B', fontWeight: 700 } : { background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
+              <button
+                key={c}
+                onClick={() => setChain(c)}
+                className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold transition-all ${
+                  chain === c
+                    ? 'bg-[var(--accent-brass)] text-black'
+                    : 'bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]'
+                }`}
+              >
                 {c.toUpperCase()}
               </button>
             ))}
@@ -325,7 +333,7 @@ function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
         </div>
         <div>
           <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Token</label>
-          <select value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} className="input-base w-full">
+          <select value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} className="input-glass w-full mt-1">
             <option value="CLOSE">CLOSE</option>
             {assets && assets.filter(a => a.symbol !== 'CLOSE').map(a => (
               <option key={a.symbol} value={a.symbol}>{a.symbol}</option>
@@ -334,15 +342,15 @@ function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
         </div>
         <div>
           <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount</label>
-          <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-base w-full" placeholder="0.0" />
+          <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-glass w-full mt-1" placeholder="0.0" />
         </div>
         <div>
           <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Destination Address</label>
-          <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} className="input-base w-full" placeholder="0x..." />
+          <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} className="input-glass w-full mt-1" placeholder="0x..." />
         </div>
         <div>
           <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Wallet Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-base w-full" placeholder="••••••••" />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-glass w-full mt-1" placeholder="••••••••" />
         </div>
         {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
         <div className="flex gap-2">
@@ -378,33 +386,33 @@ function TransactionHistory({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col p-6 shadow-xl">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="glass-panel rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Transaction History</h3>
-          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
+          <button onClick={onClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto flex-1 -mx-2 px-2">
           {loading ? (
-            <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>Loading...</p>
+            <p className="text-sm text-center py-8 text-[var(--text-muted)]">Loading...</p>
           ) : items.length === 0 ? (
-            <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>No transactions yet.</p>
+            <p className="text-sm text-center py-8 text-[var(--text-muted)]">No transactions yet.</p>
           ) : (
             items.map((tx, i) => (
-              <div key={i} className="flex items-center justify-between py-3" style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
+              <div key={i} className={`flex items-center justify-between py-3 ${i < items.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
                 <div>
-                  <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>{tx.kind}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-sm font-medium capitalize text-[var(--text-primary)]">{tx.kind}</p>
+                  <p className="text-xs text-[var(--text-muted)]">
                     {tx.amount} {tx.token_symbol || 'CLOSE'} {tx.status ? `· ${tx.status}` : ''}
                   </p>
                 </div>
                 {tx.tx_hash && tx.chain && EXPLORERS[tx.chain] ? (
                   <a href={`${EXPLORERS[tx.chain]}${tx.tx_hash}`} target="_blank" rel="noopener noreferrer"
-                     className="flex items-center gap-1 text-xs" style={{ color: 'var(--accent-brass)' }}>
+                     className="flex items-center gap-1 text-xs text-[var(--accent-brass)]">
                     View <ExternalLink size={12} />
                   </a>
                 ) : (
-                  <span className="text-xs" style={{ color: 'var(--text-faint)' }}>{tx.status || 'internal'}</span>
+                  <span className="text-xs text-[var(--text-muted)]">{tx.status || 'internal'}</span>
                 )}
               </div>
             ))
@@ -506,69 +514,104 @@ function StandardWallet() {
 
       {/* Wallet Card */}
       {user?.wallet_address ? (
-        <div className="relative overflow-hidden rounded-2xl p-6 pl-7 shadow-xl" style={{ background: 'linear-gradient(165deg, var(--bg-raised-2), var(--bg-secondary))', border: '1px solid var(--border-color)' }}>
-          <div className="absolute left-0 top-0 bottom-0 w-[3px] opacity-60" style={{ backgroundImage: 'linear-gradient(var(--accent-brass) 60%, transparent 0%)', backgroundSize: '3px 10px', backgroundRepeat: 'repeat-y' }} />
-          <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)', letterSpacing: '1.5px' }}>OS Vault</p>
-          <div className="flex items-baseline gap-1.5" style={{ fontFamily: 'var(--font-display)' }}>
-            <span className="text-xl" style={{ color: 'var(--accent-brass)' }}>◈</span>
-            <span className="text-4xl font-medium" style={{ color: 'var(--text-primary)' }}>${totalUsd.toFixed(2)}</span>
+        <div className="glass-panel relative overflow-hidden rounded-2xl p-6">
+          <div
+            className="absolute inset-0 pointer-events-none opacity-60"
+            style={{ background: 'radial-gradient(circle at 25% 0%, rgba(201,169,97,0.16), transparent 65%)' }}
+          />
+          <p className="relative text-xs uppercase tracking-widest mb-2 text-[var(--text-muted)]" style={{ letterSpacing: '2px' }}>OS Vault</p>
+          <div className="relative flex items-baseline gap-2 font-display">
+            <span className="text-xl text-[var(--accent-brass)]">◈</span>
+            <span className="text-4xl font-bold text-[var(--text-primary)]">${totalUsd.toFixed(2)}</span>
           </div>
-          <div className="flex items-center gap-2 mt-3 flex-wrap">
+          <div className="relative flex items-center gap-2 mt-3 flex-wrap">
             {closeAsset && (
-              <span className="text-xs px-2.5 py-1 rounded-md font-mono" style={{ background: 'rgba(201,169,97,0.08)', color: 'var(--accent-brass)' }}>
+              <span className="text-xs px-2.5 py-1 rounded-full font-mono bg-[var(--accent-brass)]/10 text-[var(--accent-brass)] border border-[var(--glass-border)]">
                 {closeAsset.balance.toFixed(0)} CLOSE
               </span>
             )}
           </div>
-          <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: '1px dashed var(--border-color)' }}>
-            <span className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>
+          <div className="relative flex items-center justify-between mt-4 pt-4 border-t border-dashed border-[var(--glass-border)]">
+            <span className="text-xs font-mono text-[var(--text-secondary)]">
               {user.wallet_address.slice(0, 8)}...{user.wallet_address.slice(-6)}
             </span>
-            <button onClick={copyAddress} className="transition" style={{ color: 'var(--text-muted)' }}>
+            <button onClick={copyAddress} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
               {copied ? <CheckCircle size={15} className="text-green-400" /> : <Copy size={15} />}
             </button>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl p-6 text-center" style={{ border: '1px dashed var(--border-bright)' }}>
-          <p style={{ color: 'var(--text-muted)' }}>No wallet found. Create one to start.</p>
+        <div className="glass-panel rounded-2xl p-6 text-center">
+          <p className="text-[var(--text-muted)]">No wallet found. Create one to start.</p>
         </div>
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-4 gap-2.5">
         {!user?.wallet_address && (
-          <button onClick={() => setShowCreatePasswordModal(true)} disabled={creating} className="col-span-3 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition disabled:opacity-50" style={{ background: 'linear-gradient(155deg, var(--accent-brass-bright), var(--accent-brass))', color: '#20190B' }}>
+          <button
+            onClick={() => setShowCreatePasswordModal(true)}
+            disabled={creating}
+            className="col-span-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition disabled:opacity-50 bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-black"
+          >
             <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
           </button>
         )}
-        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } if (filtered.length === 0) { addToast('No assets to send.', 'warning'); return; } if (filtered.length === 1) { setSendAsset(filtered[0]); setShowSendModal(true); } else { setShowAssetPicker(true); } }} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'linear-gradient(155deg, var(--accent-brass-bright), var(--accent-brass))' }}>
-          <Send size={17} color="#20190B" /> <span className="text-xs font-medium" style={{ color: '#20190B' }}>Send</span>
+        <button
+          onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } if (filtered.length === 0) { addToast('No assets to send.', 'warning'); return; } if (filtered.length === 1) { setSendAsset(filtered[0]); setShowSendModal(true); } else { setShowAssetPicker(true); } }}
+          disabled={!user?.wallet_address}
+          className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition disabled:opacity-40 bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)]"
+        >
+          <Send size={17} color="#20190B" /> <span className="text-xs font-medium text-[#20190B]">Send</span>
         </button>
-        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSwapModal(true); }} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-          <ArrowUpDown size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Swap</span>
+        <button
+          onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSwapModal(true); }}
+          disabled={!user?.wallet_address}
+          className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors disabled:opacity-40"
+        >
+          <ArrowUpDown size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Swap</span>
         </button>
-        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowBuyModal(true); }} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-          <CreditCard size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Deposit</span>
+        <button
+          onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowBuyModal(true); }}
+          disabled={!user?.wallet_address}
+          className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors disabled:opacity-40"
+        >
+          <CreditCard size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Deposit</span>
         </button>
-        <button onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSellModal(true); }} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-          <DollarSign size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Sell</span>
+        <button
+          onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSellModal(true); }}
+          disabled={!user?.wallet_address}
+          className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors disabled:opacity-40"
+        >
+          <DollarSign size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Sell</span>
         </button>
-        <button onClick={fetchBalances} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-          <RefreshCw size={17} className={loading ? 'animate-spin' : ''} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Refresh</span>
+      </div>
+
+      {/* Secondary Actions */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <button onClick={fetchBalances} className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors">
+          <RefreshCw size={17} className={`text-[var(--accent-brass)] ${loading ? 'animate-spin' : ''}`} /> <span className="text-xs font-medium text-[var(--text-secondary)]">Refresh</span>
         </button>
-        <button onClick={() => setShowHistory(true)} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-          <History size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>History</span>
+        <button onClick={() => setShowHistory(true)} className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors">
+          <History size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">History</span>
         </button>
-        <button onClick={() => setShowChatTopupModal(true)} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl transition disabled:opacity-40" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-          <MessageSquare size={17} style={{ color: 'var(--accent-brass)' }} /> <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Top Up Chat</span>
+        <button onClick={() => setShowChatTopupModal(true)} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors disabled:opacity-40">
+          <MessageSquare size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Top Up Chat</span>
         </button>
       </div>
 
       {/* Chain Selector */}
       <div className="flex gap-2 flex-wrap">
         {chains.map((c) => (
-          <button key={c} onClick={() => setChain(c)} className="px-4 py-2 rounded-full text-sm font-mono touch transition-all" style={chain === c ? { background: 'var(--accent-brass)', color: '#20190B', fontWeight: 700 } : { background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
+          <button
+            key={c}
+            onClick={() => setChain(c)}
+            className={`px-4 py-2 rounded-full text-sm font-mono font-bold touch transition-all ${
+              chain === c
+                ? 'bg-[var(--accent-brass)] text-black'
+                : 'bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]'
+            }`}
+          >
             {c.toUpperCase()}
           </button>
         ))}
@@ -577,37 +620,37 @@ function StandardWallet() {
       {/* Asset List (ledger style) */}
       {loading && (
         <div className="space-y-0.5">
-          {[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }} />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-lg bg-white/5" />)}
         </div>
       )}
 
       {error && (
-        <div className="rounded-xl p-4 text-sm flex items-center justify-between" style={{ border: '1px solid rgba(234,179,8,0.3)', color: '#eab308' }}>
+        <div className="rounded-xl p-4 text-sm flex items-center justify-between border border-yellow-500/30 text-yellow-400">
           <span>⚠️ {errorMessage}</span>
           <button onClick={fetchBalances} className="underline">Retry</button>
         </div>
       )}
 
       {!loading && !error && (
-        <div className="rounded-xl px-1" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+        <div className="glass-panel rounded-xl px-1">
           {filtered.length === 0 ? (
-            <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>No assets on this chain yet.</p>
+            <p className="text-sm py-6 text-center text-[var(--text-muted)]">No assets on this chain yet.</p>
           ) : (
             filtered.map((a, i) => (
-              <div key={i} className="flex items-center justify-between px-4 py-3.5" style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
+              <div key={i} className={`flex items-center justify-between px-4 py-3.5 ${i < filtered.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
                 <div className="flex items-center gap-3">
-                  <span className="text-xl w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(201,169,97,0.1)' }}>{chainLogos[a.chain] || '🪙'}</span>
+                  <span className="text-xl w-9 h-9 rounded-full flex items-center justify-center bg-[var(--accent-brass)]/10">{chainLogos[a.chain] || '🪙'}</span>
                   <div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{a.symbol}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{a.chain}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{a.symbol}</p>
+                    <p className="text-xs text-[var(--text-muted)]">{a.chain}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="text-right" style={{ fontFamily: 'var(--font-mono)' }}>
-                    <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{a.balance.toFixed(4)}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>${(a.usdValue || 0).toFixed(2)}</p>
+                  <div className="text-right font-mono">
+                    <p className="text-sm text-[var(--text-primary)]">{a.balance.toFixed(4)}</p>
+                    <p className="text-xs text-[var(--text-muted)]">${(a.usdValue || 0).toFixed(2)}</p>
                   </div>
-                  <button onClick={() => { setSendAsset(a); setShowSendModal(true); }} style={{ color: 'var(--text-muted)' }}><Send size={15} /></button>
+                  <button onClick={() => { setSendAsset(a); setShowSendModal(true); }} className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] transition-colors"><Send size={15} /></button>
                 </div>
               </div>
             ))
@@ -622,15 +665,14 @@ function StandardWallet() {
       <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />
       <ChatTopupModal isOpen={showChatTopupModal} onClose={() => setShowChatTopupModal(false)} onToppedUp={(result) => { addToast(`Credited ${result.amount} CLOSE to your chat balance`, 'success'); }} />
       {showAssetPicker && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
-          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-display font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Send which asset?</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
+          <div className="glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-display font-bold mb-2 text-[var(--text-primary)]">Send which asset?</h3>
             {filtered.map((a, i) => (
               <button key={i} onClick={() => { setSendAsset(a); setShowAssetPicker(false); setShowSendModal(true); }}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
-                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-                <span style={{ color: 'var(--text-primary)' }}>{a.symbol}</span>
-                <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{a.balance.toFixed(4)}</span>
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]">
+                <span className="text-[var(--text-primary)]">{a.symbol}</span>
+                <span className="text-xs font-mono text-[var(--text-muted)]">{a.balance.toFixed(4)}</span>
               </button>
             ))}
           </div>
@@ -690,8 +732,8 @@ function StandardWallet() {
 function SafeWallet() {
   return (
     <div className="space-y-6">
-      <div className="glass-card p-5 flex items-start gap-3 border border-[#d4af37]/20">
-        <ShieldCheck size={24} className="text-[#d4af37] shrink-0 mt-0.5" />
+      <div className="glass-card p-5 flex items-start gap-3">
+        <ShieldCheck size={24} className="text-[var(--accent-brass)] shrink-0 mt-0.5" />
         <div>
           <p className="text-lg text-[var(--text-primary)] font-bold">Gnosis Safe Multisig</p>
           <p className="text-sm text-[var(--text-muted)] mt-1">Extra security for larger balances — coming soon.</p>
@@ -709,13 +751,13 @@ export default function Vault() {
   return (
     <div className="p-4 tablet:p-6 space-y-6">
       <h1 className="text-3xl font-display font-bold text-[var(--text-primary)] flex items-center gap-2">
-        <Wallet size={28} className="text-[#d4af37]" /> OS Vaults
+        <Wallet size={28} className="text-[var(--accent-brass)]" /> OS Vaults
       </h1>
       <p className="text-sm text-[var(--text-muted)]">Multi-chain non-custodial asset hub</p>
-      <div className="flex gap-2 glass-card p-1 w-fit border border-white/5">
-        <button onClick={() => setTab('standard')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all ${tab === 'standard' ? 'bg-[#d4af37] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
-        <button onClick={() => setTab('analytics')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'analytics' ? 'bg-[#d4af37] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
-        <button onClick={() => setTab('safe')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'safe' ? 'bg-[#d4af37] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
+      <div className="glass-panel flex gap-1 p-1 w-fit rounded-2xl">
+        <button onClick={() => setTab('standard')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all ${tab === 'standard' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
+        <button onClick={() => setTab('analytics')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'analytics' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
+        <button onClick={() => setTab('safe')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'safe' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
       </div>
       {tab === 'standard' && <StandardWallet />}
       {tab === 'analytics' && <WalletAnalytics />}
