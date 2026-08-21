@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../utils/api';
 import {
-  X, Moon, Sun, LogOut, User, Wallet, Copy, CheckCircle,
-  Bell, Lock, Eye, Globe, Server, MessageSquare, Languages, Terminal,
+  Moon, Sun, LogOut, User, Wallet, Copy, CheckCircle,
+  Bell, Lock, Eye, Globe, Server, MessageSquare, Languages, Info, FileText,
   ChevronRight, ArrowLeft, Save, RefreshCw, AlertTriangle, Camera, Plus
 } from 'lucide-react';
 
@@ -28,13 +28,27 @@ function saveSettings(settings) {
   localStorage.setItem('os-ai-settings', JSON.stringify(settings));
 }
 
+function Toggle({ on, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${
+        on ? 'bg-[var(--accent-brass)]' : 'bg-white/10 border border-[var(--glass-border)]'
+      }`}
+    >
+      <div className={`w-5 h-5 rounded-full absolute top-0.5 transition-transform ${
+        on ? 'translate-x-5 bg-[#1a1509]' : 'translate-x-0.5 bg-white'
+      }`} />
+    </button>
+  );
+}
+
 export default function Settings() {
   const navigate = useNavigate();
   const { user, setUser, logout, updateName } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState(loadSettings);
   const [section, setSection] = useState(null);
-  const [isClosing, setIsClosing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [editingName, setEditingName] = useState(false);
@@ -52,9 +66,19 @@ export default function Settings() {
   const [exportSeed, setExportSeed] = useState(null);
   const [resetConfirm, setResetConfirm] = useState('');
 
+  // Settings is a full page (routed at /settings), not an overlay - if
+  // there's a section open, back goes up one level to the main list;
+  // otherwise it leaves the page entirely via browser history.
   const closeSettings = () => {
-    setIsClosing(true);
-    setTimeout(() => navigate(-1), 300);
+    if (section) {
+      setSection(null);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const goTo = (path) => {
+    navigate(path);
   };
 
   const updateSettings = (newSettings) => {
@@ -178,35 +202,51 @@ export default function Settings() {
     { key: 'wallet', label: 'Wallet', icon: Wallet },
     { key: 'chat', label: 'Chat Settings', icon: MessageSquare },
     { key: 'language', label: 'Language', icon: Languages },
-    { key: 'developer', label: 'Developer', icon: Terminal },
+  ];
+
+  const linkSections = [
+    { key: 'about', label: 'About', icon: Info, path: '/about' },
+    { key: 'terms', label: 'Terms & Conditions', icon: FileText, path: '/privacy-terms' },
   ];
 
   const renderMain = () => (
-    <div className="p-4 space-y-1">
+    <div className="p-4 space-y-2">
       {sections.map(({ key, label, icon: Icon }) => (
         <button
           key={key}
           onClick={() => setSection(key)}
-          className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors"
+          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
         >
           <div className="flex items-center gap-3">
-            <Icon size={20} className="text-[var(--text-muted)]" />
-            <span className="text-[var(--text-primary)]">{label}</span>
+            <Icon size={19} className="text-[var(--accent-brass)]" />
+            <span className="text-[var(--text-primary)] text-sm">{label}</span>
           </div>
           <ChevronRight size={18} className="text-[var(--text-muted)]" />
         </button>
       ))}
-      <div className="flex items-center justify-between p-3 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors">
-        <div className="flex items-center gap-3">
-          {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
-          <span className="text-[var(--text-primary)]">Theme</span>
-        </div>
+
+      {linkSections.map(({ key, label, icon: Icon, path }) => (
         <button
-          onClick={toggleTheme}
-          className="w-12 h-7 rounded-full transition-colors bg-[var(--bg-tertiary)] border border-[var(--border-color)]"
+          key={key}
+          onClick={() => goTo(path)}
+          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
         >
-          <div className={`w-5 h-5 rounded-full bg-[#d4af37] transition-transform ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
+          <div className="flex items-center gap-3">
+            <Icon size={19} className="text-[var(--accent-brass)]" />
+            <span className="text-[var(--text-primary)] text-sm">{label}</span>
+          </div>
+          <ChevronRight size={18} className="text-[var(--text-muted)]" />
         </button>
+      ))}
+
+      <div className="h-px bg-[var(--glass-border)] my-2 mx-1" />
+
+      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03]">
+        <div className="flex items-center gap-3">
+          {theme === 'dark' ? <Moon size={19} className="text-[var(--accent-brass)]" /> : <Sun size={19} className="text-[var(--accent-brass)]" />}
+          <span className="text-[var(--text-primary)] text-sm">Theme</span>
+        </div>
+        <Toggle on={theme === 'dark'} onClick={toggleTheme} />
       </div>
 
       {/* Founder-only top‑up button */}
@@ -214,7 +254,7 @@ export default function Settings() {
         <button
           onClick={handleTopUp}
           disabled={topUpLoading}
-          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-[#d4af37] text-black font-bold hover:bg-[#c4a030] transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl font-bold text-sm transition-colors disabled:opacity-50 bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-black mt-1"
         >
           <Plus size={18} /> {topUpLoading ? 'Adding...' : 'Add 10,000 CLOSE (Founder)'}
         </button>
@@ -222,12 +262,12 @@ export default function Settings() {
 
       <button
         onClick={() => { logout(); navigate('/login'); }}
-        className="w-full flex items-center gap-3 p-3 rounded-xl text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors"
+        className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-[var(--danger)] bg-[var(--danger)]/[0.06] hover:bg-[var(--danger)]/[0.12] transition-colors mt-1"
       >
-        <LogOut size={20} />
-        <span>Logout</span>
+        <LogOut size={19} />
+        <span className="text-sm">Logout</span>
       </button>
-      <div className="text-xs text-[var(--text-muted)] p-3">OS AI v2.0</div>
+      <div className="text-xs text-[var(--text-muted)] font-mono p-3 text-center">OS AI v2.0</div>
     </div>
   );
 
@@ -245,7 +285,7 @@ export default function Settings() {
           </div>
           <button
             onClick={() => fileInputRef.current.click()}
-            className="absolute bottom-0 right-0 bg-[#d4af37] p-1 rounded-full shadow-lg hover:bg-[#c4a030] transition"
+            className="absolute bottom-0 right-0 bg-[var(--accent-brass)] p-1 rounded-full shadow-lg hover:bg-[#c4a030] transition"
           >
             <Camera size={16} className="text-black" />
           </button>
@@ -264,7 +304,7 @@ export default function Settings() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-base"
+                className="input-glass"
                 autoFocus
                 onBlur={handleUpdateName}
                 onKeyDown={(e) => e.key === 'Enter' && handleUpdateName()}
@@ -284,24 +324,20 @@ export default function Settings() {
   );
 
   const renderNotifications = () => (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <span className="text-[var(--text-primary)]">Chat notifications</span>
-        <button
+    <div className="p-4 space-y-3">
+      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03]">
+        <span className="text-[var(--text-primary)] text-sm">Chat notifications</span>
+        <Toggle
+          on={settings.notifications.chat}
           onClick={() => updateSettings({ notifications: { ...settings.notifications, chat: !settings.notifications.chat } })}
-          className={`w-12 h-7 rounded-full transition-colors ${settings.notifications.chat ? 'bg-[#d4af37]' : 'bg-gray-500'}`}
-        >
-          <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.notifications.chat ? 'translate-x-5' : 'translate-x-0'}`} />
-        </button>
+        />
       </div>
-      <div className="flex items-center justify-between">
-        <span className="text-[var(--text-primary)]">Transaction notifications</span>
-        <button
+      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03]">
+        <span className="text-[var(--text-primary)] text-sm">Transaction notifications</span>
+        <Toggle
+          on={settings.notifications.transactions}
           onClick={() => updateSettings({ notifications: { ...settings.notifications, transactions: !settings.notifications.transactions } })}
-          className={`w-12 h-7 rounded-full transition-colors ${settings.notifications.transactions ? 'bg-[#d4af37]' : 'bg-gray-500'}`}
-        >
-          <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.notifications.transactions ? 'translate-x-5' : 'translate-x-0'}`} />
-        </button>
+        />
       </div>
     </div>
   );
@@ -314,7 +350,7 @@ export default function Settings() {
           type="password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className="input-base w-full mt-1"
+          className="input-glass w-full mt-1"
           placeholder="Enter current password"
         />
       </div>
@@ -324,26 +360,24 @@ export default function Settings() {
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="input-base w-full mt-1"
+          className="input-glass w-full mt-1"
           placeholder="Enter new password (min 8 chars)"
         />
       </div>
       {passwordError && <p className="text-sm text-[var(--danger)]">{passwordError}</p>}
-      {passwordSuccess && <p className="text-sm text-green-400">{passwordSuccess}</p>}
+      {passwordSuccess && <p className="text-sm text-[var(--success)]">{passwordSuccess}</p>}
       <button onClick={handleChangePassword} className="btn-primary w-full justify-center">Change Password</button>
     </div>
   );
 
   const renderPrivacy = () => (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <span className="text-[var(--text-primary)]">Online status</span>
-        <button
+    <div className="p-4 space-y-3">
+      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03]">
+        <span className="text-[var(--text-primary)] text-sm">Online status</span>
+        <Toggle
+          on={settings.privacy.onlineStatus}
           onClick={() => updateSettings({ privacy: { ...settings.privacy, onlineStatus: !settings.privacy.onlineStatus } })}
-          className={`w-12 h-7 rounded-full transition-colors ${settings.privacy.onlineStatus ? 'bg-[#d4af37]' : 'bg-gray-500'}`}
-        >
-          <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.privacy.onlineStatus ? 'translate-x-5' : 'translate-x-0'}`} />
-        </button>
+        />
       </div>
     </div>
   );
@@ -356,7 +390,7 @@ export default function Settings() {
           type="text"
           value={settings.network.customRpc}
           onChange={(e) => updateSettings({ network: { ...settings.network, customRpc: e.target.value } })}
-          className="input-base w-full mt-1"
+          className="input-glass w-full mt-1"
           placeholder="https://polygon-rpc.com"
         />
         <p className="text-xs text-[var(--text-muted)] mt-1">Leave empty to use default RPCs.</p>
@@ -368,9 +402,9 @@ export default function Settings() {
     <div className="p-4 space-y-4">
       {user?.wallet_address ? (
         <>
-          <div className="flex items-center justify-between p-3 bg-[var(--bg-tertiary)] rounded-xl">
+          <div className="flex items-center justify-between p-3 glass-card">
             <span className="text-sm font-mono text-[var(--text-primary)] truncate">{user.wallet_address}</span>
-            <button onClick={copyAddress} className="text-[var(--text-muted)] hover:text-[#d4af37]">
+            <button onClick={copyAddress} className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] transition-colors shrink-0 ml-2">
               {copied ? <CheckCircle size={18} className="text-green-400" /> : <Copy size={18} />}
             </button>
           </div>
@@ -380,17 +414,17 @@ export default function Settings() {
               type="password"
               value={exportPassword}
               onChange={(e) => setExportPassword(e.target.value)}
-              className="input-base w-full mt-1"
+              className="input-glass w-full mt-1"
               placeholder="Enter wallet password"
             />
             {exportError && <p className="text-sm text-[var(--danger)]">{exportError}</p>}
             <button onClick={handleExportSeed} className="btn-secondary w-full mt-2 justify-center">Export Seed</button>
             {exportSeed && (
-              <div className="mt-2 p-3 bg-[var(--bg-tertiary)] rounded-xl">
+              <div className="mt-2 p-3 glass-card">
                 <p className="text-sm font-mono break-all">{exportSeed}</p>
                 <button
                   onClick={() => navigator.clipboard.writeText(exportSeed)}
-                  className="text-xs text-[#d4af37] mt-1"
+                  className="text-xs text-[var(--accent-brass)] mt-1"
                 >
                   Copy
                 </button>
@@ -404,7 +438,7 @@ export default function Settings() {
               type="text"
               value={resetConfirm}
               onChange={(e) => setResetConfirm(e.target.value)}
-              className="input-base w-full mt-1"
+              className="input-glass w-full mt-1"
               placeholder="RESET"
             />
             <button onClick={handleResetWallet} className="btn-secondary w-full mt-2 justify-center text-[var(--danger)] border-[var(--danger)] hover:bg-[var(--danger)]/10">
@@ -425,7 +459,7 @@ export default function Settings() {
         <select
           value={settings.chat.defaultModel}
           onChange={(e) => updateSettings({ chat: { ...settings.chat, defaultModel: e.target.value } })}
-          className="input-base w-full mt-1"
+          className="input-glass w-full mt-1"
         >
           <option value="llama-3.3-70b">Llama 3.3 70B</option>
           <option value="gpt-4o">GPT-4o</option>
@@ -442,7 +476,7 @@ export default function Settings() {
           step="0.1"
           value={settings.chat.temperature}
           onChange={(e) => updateSettings({ chat: { ...settings.chat, temperature: parseFloat(e.target.value) } })}
-          className="w-full mt-1 accent-[#d4af37]"
+          className="w-full mt-1 accent-[var(--accent-brass)]"
         />
       </div>
     </div>
@@ -455,7 +489,7 @@ export default function Settings() {
         <select
           value={settings.language}
           onChange={(e) => updateSettings({ language: e.target.value })}
-          className="input-base w-full mt-1"
+          className="input-glass w-full mt-1"
         >
           <option value="en">English</option>
           <option value="es">Español</option>
@@ -464,19 +498,6 @@ export default function Settings() {
           <option value="ar">العربية</option>
           <option value="zh">中文</option>
         </select>
-      </div>
-    </div>
-  );
-
-  const renderDeveloper = () => (
-    <div className="p-4 space-y-4">
-      <div className="p-3 bg-[var(--bg-tertiary)] rounded-xl">
-        <p className="text-sm text-[var(--text-muted)]">API Keys (Coming soon)</p>
-        <p className="text-xs text-[var(--text-muted)]">Manage your API keys for programmatic access.</p>
-      </div>
-      <div className="p-3 bg-[var(--bg-tertiary)] rounded-xl">
-        <p className="text-sm text-[var(--text-muted)]">Webhooks (Coming soon)</p>
-        <p className="text-xs text-[var(--text-muted)]">Configure webhooks for events.</p>
       </div>
     </div>
   );
@@ -491,36 +512,29 @@ export default function Settings() {
       case 'wallet': return renderWallet();
       case 'chat': return renderChat();
       case 'language': return renderLanguage();
-      case 'developer': return renderDeveloper();
       default: return renderMain();
     }
   };
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
-
   return (
-    <>
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={closeSettings} />
-      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-[var(--bg-secondary)] border-l border-[var(--border-color)] z-50 shadow-2xl transition-transform duration-300 ease-out ${isClosing ? 'translate-x-full' : 'translate-x-0'}`}>
-        <div className="h-16 flex items-center gap-2 px-4 border-b border-[var(--border-color)]">
-          {section ? (
-            <button onClick={() => setSection(null)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition">
-              <ArrowLeft size={24} />
-            </button>
-          ) : (
-            <h2 className="text-xl font-display font-bold text-[var(--text-primary)] flex-1">Settings</h2>
-          )}
-          <button onClick={closeSettings} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition">
-            <X size={24} />
+    <div className="min-h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <div className="h-[60px] flex items-center gap-2 px-4 border-b border-[var(--glass-border)] sticky top-0 bg-[var(--bg-primary)]/85 backdrop-blur-xl z-10">
+        {section ? (
+          <button onClick={() => setSection(null)} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+            <ArrowLeft size={20} />
           </button>
-        </div>
-        <div className="overflow-y-auto h-[calc(100%-4rem)]">
-          {renderSection()}
-        </div>
+        ) : (
+          <button onClick={closeSettings} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+            <ArrowLeft size={20} />
+          </button>
+        )}
+        <h2 className="text-lg font-display font-bold text-[var(--text-primary)] flex-1">
+          {section ? sections.find(s => s.key === section)?.label || linkSections.find(s => s.key === section)?.label || 'Settings' : 'Settings'}
+        </h2>
       </div>
-    </>
+      <div>
+        {renderSection()}
+      </div>
+    </div>
   );
 }
