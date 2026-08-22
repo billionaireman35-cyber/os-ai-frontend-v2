@@ -42,6 +42,8 @@ export function WalletProvider({ children }) {
             symbol: native.symbol || chain.toUpperCase(),
             balance: native.balance,
             usdValue: native.usd || 0,
+            change24h: native.change_24h ?? null,
+            sparkline: native.sparkline_7d || null,
           });
           total += native.usd || 0;
         }
@@ -54,6 +56,8 @@ export function WalletProvider({ children }) {
               balance: token.balance,
               usdValue: token.usd || 0,
               address: token.address || null,
+              change24h: token.change_24h ?? null,
+              sparkline: token.sparkline_7d || null,
             });
             total += token.usd || 0;
           }
