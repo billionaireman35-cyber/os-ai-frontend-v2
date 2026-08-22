@@ -464,9 +464,18 @@ function StandardWallet() {
   const [showCreatePasswordModal, setShowCreatePasswordModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showOverflow, setShowOverflow] = useState(false);
 
-  const filtered = Array.isArray(assets) ? (chain === 'all' ? assets : assets.filter((a) => a.chain === chain)) : [];
+  // CLOSE is pinned separately (hero strip + pinned row), so it's excluded
+  // from the plain chain-filtered ledger list below to avoid showing twice.
+  const nonCloseAssets = Array.isArray(assets) ? assets.filter((a) => a.symbol !== 'CLOSE') : [];
+  const filtered = chain === 'all' ? nonCloseAssets : nonCloseAssets.filter((a) => a.chain === chain);
   const closeAsset = assets.find(a => a.symbol === 'CLOSE');
+
+  // Which chains actually hold a balance (for the live/dim dot on chain pills).
+  // Checked against the full asset list (including CLOSE) so CLOSE's chain
+  // still lights up even though CLOSE itself is filtered out of the ledger rows.
+  const chainsWithBalance = new Set((Array.isArray(assets) ? assets : []).map((a) => a.chain));
 
   const createWallet = async (password) => {
     if (!password || creating) return;
@@ -529,30 +538,79 @@ function StandardWallet() {
     }
   };
 
+  // Tiny inline sparkline, mirrors Pulse's visual language. No new deps -
+  // just an SVG polyline built from the 7d price array WalletContext
+  // already provides on each asset (a.sparkline).
+  const Sparkline = ({ points, up }) => {
+    const w = 48, h = 20;
+    if (!points || points.length < 2) {
+      return (
+        <svg width={w} height={h}>
+          <line x1="0" y1={h / 2} x2={w} y2={h / 2} stroke="var(--text-muted)" strokeWidth="1" strokeDasharray="2,3" />
+        </svg>
+      );
+    }
+    const min = Math.min(...points), max = Math.max(...points);
+    const range = (max - min) || 1;
+    const coords = points.map((p, i) => {
+      const x = (i / (points.length - 1)) * w;
+      const y = h - ((p - min) / range) * h;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const color = up ? 'var(--success)' : 'var(--danger)';
+    return (
+      <svg width={w} height={h}>
+        <polyline points={coords} fill="none" stroke={color} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      {/* Wallet Card */}
+      {/* Hero Card */}
       {user?.wallet_address ? (
         <div className="glass-panel relative overflow-hidden rounded-2xl p-6">
           <div
             className="absolute inset-0 pointer-events-none opacity-60"
             style={{ background: 'radial-gradient(circle at 25% 0%, rgba(201,169,97,0.16), transparent 65%)' }}
           />
-          <p className="relative text-xs uppercase tracking-widest mb-2 text-[var(--text-muted)]" style={{ letterSpacing: '2px' }}>OS Vault</p>
-          <div className="relative flex items-baseline gap-2 font-display">
+          <p className="relative text-xs uppercase tracking-widest mb-2 text-[var(--text-muted)]" style={{ letterSpacing: '2px' }}>Total Balance</p>
+          <div className="relative flex items-baseline gap-2 font-display mb-4">
             <span className="text-xl text-[var(--accent-brass)]">◈</span>
             <span className="text-4xl font-bold text-[var(--text-primary)]">${totalUsd.toFixed(2)}</span>
           </div>
-          <div className="relative flex items-center gap-2 mt-3 flex-wrap">
-            {closeAsset && (
-              <span className="text-xs px-2.5 py-1 rounded-full font-mono bg-[var(--accent-brass)]/10 text-[var(--accent-brass)] border border-[var(--glass-border)]">
-                {closeAsset.balance.toFixed(0)} CLOSE
-              </span>
-            )}
-          </div>
-          <div className="relative flex items-center justify-between mt-4 pt-4 border-t border-dashed border-[var(--glass-border)]">
+
+          {/* CLOSE strip - elevated, distinct from the total above it */}
+          {closeAsset && (
+            <div
+              className="relative flex items-center justify-between rounded-2xl px-3.5 py-3 mb-4"
+              style={{
+                background: 'linear-gradient(135deg, rgba(201,169,97,0.14), rgba(201,169,97,0.04))',
+                border: '1px solid rgba(201,169,97,0.32)',
+              }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-[13px]"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-brass-bright), var(--accent-brass-dim))', color: '#14120C' }}
+                >
+                  C
+                </div>
+                <div>
+                  <p className="font-display font-semibold text-sm leading-tight text-[var(--text-primary)]">CLOSE</p>
+                  <p className="text-[9px] font-mono uppercase tracking-wide text-[var(--accent-brass-bright)]">Native token</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-sm font-semibold text-[var(--accent-brass-bright)]">{closeAsset.balance.toFixed(0)}</p>
+                <p className="font-mono text-[10px] text-[var(--text-muted)]">${(closeAsset.usdValue || 0).toFixed(2)}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="relative flex items-center justify-between pt-4 border-t border-dashed border-[var(--glass-border)]">
             <span className="text-xs font-mono text-[var(--text-secondary)]">
               {user.wallet_address.slice(0, 8)}...{user.wallet_address.slice(-6)}
             </span>
@@ -567,78 +625,83 @@ function StandardWallet() {
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-4 gap-2.5">
-        {!user?.wallet_address && (
-          <button
-            onClick={() => setShowCreatePasswordModal(true)}
-            disabled={creating}
-            className="col-span-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition disabled:opacity-50 bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-black"
-          >
-            <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
-          </button>
-        )}
+      {/* Primary Actions */}
+      {!user?.wallet_address ? (
         <button
-          onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } if (filtered.length === 0) { addToast('No assets to send.', 'warning'); return; } if (filtered.length === 1) { setSendAsset(filtered[0]); setShowSendModal(true); } else { setShowAssetPicker(true); } }}
-          disabled={!user?.wallet_address}
-          className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition disabled:opacity-40 bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)]"
+          onClick={() => setShowCreatePasswordModal(true)}
+          disabled={creating}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition disabled:opacity-50 bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-black"
         >
-          <Send size={17} color="#20190B" /> <span className="text-xs font-medium text-[#20190B]">Send</span>
+          <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
         </button>
-        <button
-          onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSwapModal(true); }}
-          disabled={!user?.wallet_address}
-          className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors disabled:opacity-40"
-        >
-          <ArrowUpDown size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Swap</span>
-        </button>
-        <button
-          onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowBuyModal(true); }}
-          disabled={!user?.wallet_address}
-          className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors disabled:opacity-40"
-        >
-          <CreditCard size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Deposit</span>
-        </button>
-        <button
-          onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowSellModal(true); }}
-          disabled={!user?.wallet_address}
-          className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors disabled:opacity-40"
-        >
-          <DollarSign size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Sell</span>
-        </button>
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-2.5">
+            <button
+              onClick={() => { if (filtered.length === 0 && !closeAsset) { addToast('No assets to send.', 'warning'); return; } if (filtered.length + (closeAsset ? 1 : 0) === 1) { setSendAsset(closeAsset || filtered[0]); setShowSendModal(true); } else { setShowAssetPicker(true); } }}
+              className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)]"
+            >
+              <Send size={17} color="#20190B" /> <span className="text-xs font-medium text-[#20190B]">Send</span>
+            </button>
+            <button
+              onClick={() => setShowSwapModal(true)}
+              className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors"
+            >
+              <ArrowUpDown size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Swap</span>
+            </button>
+            <button
+              onClick={() => setShowBuyModal(true)}
+              className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors"
+            >
+              <CreditCard size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Deposit</span>
+            </button>
+          </div>
 
-      {/* Secondary Actions */}
-      <div className="grid grid-cols-3 gap-2.5">
-        <button onClick={fetchBalances} className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors">
-          <RefreshCw size={17} className={`text-[var(--accent-brass)] ${loading ? 'animate-spin' : ''}`} /> <span className="text-xs font-medium text-[var(--text-secondary)]">Refresh</span>
-        </button>
-        <button onClick={() => setShowHistory(true)} className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors">
-          <History size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">History</span>
-        </button>
-        <button onClick={() => setShowChatTopupModal(true)} disabled={!user?.wallet_address} className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors disabled:opacity-40">
-          <MessageSquare size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Top Up Chat</span>
-        </button>
-      </div>
+          {/* Overflow row - Sell, Refresh, History, Top Up Chat: same handlers, quieter treatment */}
+          <div className="flex items-center justify-around rounded-2xl px-2 py-2.5 bg-white/[0.02] border border-[var(--glass-border)]">
+            <button onClick={() => setShowSellModal(true)} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+              <DollarSign size={14} className="text-[var(--accent-brass-dim)]" /> Sell
+            </button>
+            <button onClick={fetchBalances} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+              <RefreshCw size={14} className={`text-[var(--accent-brass-dim)] ${loading ? 'animate-spin' : ''}`} /> Refresh
+            </button>
+            <button onClick={() => setShowHistory(true)} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+              <History size={14} className="text-[var(--accent-brass-dim)]" /> History
+            </button>
+            <button onClick={() => setShowChatTopupModal(true)} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+              <MessageSquare size={14} className="text-[var(--accent-brass-dim)]" /> Top Up Chat
+            </button>
+          </div>
+        </>
+      )}
 
-      {/* Chain Selector */}
+      {/* Chain Selector - dot shows whether the chain actually holds a balance */}
       <div className="flex gap-2 flex-wrap">
-        {chains.map((c) => (
-          <button
-            key={c}
-            onClick={() => setChain(c)}
-            className={`px-4 py-2 rounded-full text-sm font-mono font-bold touch transition-all ${
-              chain === c
-                ? 'bg-[var(--accent-brass)] text-black'
-                : 'bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]'
-            }`}
-          >
-            {c.toUpperCase()}
-          </button>
-        ))}
+        {chains.map((c) => {
+          const has = c === 'all' || chainsWithBalance.has(c);
+          return (
+            <button
+              key={c}
+              onClick={() => setChain(c)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-mono font-bold touch transition-all ${
+                chain === c
+                  ? 'bg-[var(--accent-brass)] text-black'
+                  : `bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)] ${has ? '' : 'opacity-45'}`
+              }`}
+            >
+              {c !== 'all' && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: has ? 'var(--success)' : 'var(--text-muted)' }}
+                />
+              )}
+              {c.toUpperCase()}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Asset List (ledger style) */}
+      {/* Asset List */}
       {loading && (
         <div className="space-y-0.5">
           {[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-lg bg-white/5" />)}
@@ -653,29 +716,66 @@ function StandardWallet() {
       )}
 
       {!loading && !error && (
-        <div className="glass-panel rounded-xl px-1">
-          {filtered.length === 0 ? (
-            <p className="text-sm py-6 text-center text-[var(--text-muted)]">No assets on this chain yet.</p>
-          ) : (
-            filtered.map((a, i) => (
-              <div key={i} className={`flex items-center justify-between px-4 py-3.5 ${i < filtered.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
-                <div className="flex items-center gap-3">
-                  <span className="text-xl w-9 h-9 rounded-full flex items-center justify-center bg-[var(--accent-brass)]/10">{chainLogos[a.chain] || '🪙'}</span>
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">{a.symbol}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{a.chain}</p>
-                  </div>
+        <div className="space-y-2">
+          {/* CLOSE pinned row */}
+          {closeAsset && (chain === 'all' || closeAsset.chain === chain) && (
+            <div
+              className="flex items-center justify-between px-4 py-3.5 rounded-2xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(201,169,97,0.09), var(--glass-bg, rgba(21,19,14,0.55)))',
+                border: '1px solid rgba(201,169,97,0.32)',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center font-mono font-bold text-[13px]"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-brass-bright), var(--accent-brass-dim))', color: '#14120C' }}
+                >
+                  C
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right font-mono">
-                    <p className="text-sm text-[var(--text-primary)]">{a.balance.toFixed(4)}</p>
-                    <p className="text-xs text-[var(--text-muted)]">${(a.usdValue || 0).toFixed(2)}</p>
-                  </div>
-                  <button onClick={() => { setSendAsset(a); setShowSendModal(true); }} className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] transition-colors"><Send size={15} /></button>
+                <div>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">CLOSE</p>
+                  <p className="text-[10px] font-mono uppercase tracking-wide text-[var(--accent-brass-bright)]">Native · Pinned</p>
                 </div>
               </div>
-            ))
+              <div className="flex items-center gap-3">
+                <div className="text-right font-mono">
+                  <p className="text-sm text-[var(--text-primary)]">{closeAsset.balance.toFixed(4)}</p>
+                  <p className="text-xs text-[var(--text-muted)]">${(closeAsset.usdValue || 0).toFixed(2)}</p>
+                </div>
+                <button onClick={() => { setSendAsset(closeAsset); setShowSendModal(true); }} className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] transition-colors"><Send size={15} /></button>
+              </div>
+            </div>
           )}
+
+          <div className="glass-panel rounded-xl px-1">
+            {filtered.length === 0 ? (
+              !closeAsset && <p className="text-sm py-6 text-center text-[var(--text-muted)]">No assets on this chain yet.</p>
+            ) : (
+              filtered.map((a, i) => {
+                const up = (a.change24h ?? 0) >= 0;
+                return (
+                  <div key={i} className={`flex items-center justify-between px-4 py-3.5 ${i < filtered.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl w-9 h-9 rounded-full flex items-center justify-center bg-[var(--accent-brass)]/10">{chainLogos[a.chain] || '🪙'}</span>
+                      <div>
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{a.symbol}</p>
+                        <p className="text-xs text-[var(--text-muted)]">{a.chain}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Sparkline points={a.sparkline} up={up} />
+                      <div className="text-right font-mono">
+                        <p className="text-sm text-[var(--text-primary)]">{a.balance.toFixed(4)}</p>
+                        <p className="text-xs text-[var(--text-muted)]">${(a.usdValue || 0).toFixed(2)}</p>
+                      </div>
+                      <button onClick={() => { setSendAsset(a); setShowSendModal(true); }} className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] transition-colors"><Send size={15} /></button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
 
@@ -689,7 +789,7 @@ function StandardWallet() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
           <div className="glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-display font-bold mb-2 text-[var(--text-primary)]">Send which asset?</h3>
-            {filtered.map((a, i) => (
+            {(closeAsset ? [closeAsset, ...filtered] : filtered).map((a, i) => (
               <button key={i} onClick={() => { setSendAsset(a); setShowAssetPicker(false); setShowSendModal(true); }}
                 className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]">
                 <span className="text-[var(--text-primary)]">{a.symbol}</span>
@@ -749,7 +849,6 @@ function StandardWallet() {
     </div>
   );
 }
-
 function SafeWallet() {
   return (
     <div className="space-y-6">
