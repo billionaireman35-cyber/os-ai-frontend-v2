@@ -22,8 +22,9 @@ export default function Chat() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
-  const [attachedFile, setAttachedFile] = useState(null);
+  const [attachedImage, setAttachedImage] = useState(null); // { name, dataUrl }
   const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
 
   // Auto-grow the composer textarea with content, capped so it never
   // takes over the screen - matches the max-h-40 constraint below.
@@ -34,25 +35,84 @@ export default function Chat() {
     el.style.height = Math.min(el.scrollHeight, 160) + 'px';
   }, [input]);
 
-  // File upload isn't wired to a backend endpoint yet - captures the
-  // file for later and gives feedback so the button isn't a dead click.
+  // Only images are supported (matches the backend's VISION_MODELS
+  // support - PDFs/other files aren't sent to the model). Converts to a
+  // base64 data URI, which is exactly the format /chat/stream expects
+  // in ChatRequest.images.
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setAttachedFile(file);
-    addToast(`"${file.name}" attached - upload isn't connected yet`, 'info');
+    if (!file.type.startsWith('image/')) {
+      addToast('Only image files are supported right now.', 'error');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachedImage({ name: file.name, dataUrl: reader.result });
+    };
+    reader.onerror = () => {
+      addToast('Failed to read image file.', 'error');
+    };
+    reader.readAsDataURL(file);
     e.target.value = '';
   };
 
-  const handleRemoveFile = () => setAttachedFile(null);
+  const handleRemoveFile = () => setAttachedImage(null);
 
-  // Voice input isn't wired to speech-to-text yet - toggles the visual
-  // state so the mic button is ready to plug into the Web Speech API
-  // or a backend transcription endpoint later.
-  const handleMicClick = () => {
-    setIsListening((prev) => !prev);
-    addToast(isListening ? 'Voice input stopped' : 'Voice input isn\'t connected yet', 'info');
+  // Web Speech API - transcribes speech directly in the browser, no
+  // backend call. Not supported in every browser (notably not in
+  // Firefox as of writing) - handleMicClick checks for that and gives
+  // a clear message rather than a silent no-op.
+  const getSpeechRecognition = () => {
+    if (typeof window === 'undefined') return null;
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null;
   };
+
+  const handleMicClick = () => {
+    const SpeechRecognition = getSpeechRecognition();
+    if (!SpeechRecognition) {
+      addToast('Voice input isn\'t supported in this browser.', 'error');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      if (event.error !== 'aborted') {
+        addToast(`Voice input error: ${event.error}`, 'error');
+      }
+    };
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript || '';
+      if (transcript) {
+        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  // Stop any in-progress recognition if the component unmounts mid-listen
+  // (e.g. user navigates away while the mic is active).
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+    };
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -162,11 +222,18 @@ export default function Chat() {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    if ((!input.trim() && !attachedImage) || loading) return;
 
-    const userMessage = { role: 'user', content: input, createdAt: new Date().toISOString() };
+    const imageForThisMessage = attachedImage;
+    const userMessage = {
+      role: 'user',
+      content: input,
+      image: imageForThisMessage?.dataUrl || null,
+      createdAt: new Date().toISOString(),
+    };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
+    setAttachedImage(null);
     setLoading(true);
 
     try {
@@ -183,6 +250,7 @@ export default function Chat() {
         body: JSON.stringify({
           messages: messagesToSend.map(m => ({ role: m.role, content: m.content })),
           chat_id: chatId,
+          images: imageForThisMessage ? [imageForThisMessage.dataUrl] : undefined,
         }),
       });
 
@@ -376,7 +444,16 @@ export default function Chat() {
                   }`}
                 >
                   {isUser ? (
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    <>
+                      {msg.image && (
+                        <img
+                          src={msg.image}
+                          alt="Attached"
+                          className="rounded-xl max-h-64 max-w-full mb-2 object-contain"
+                        />
+                      )}
+                      {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
+                    </>
                   ) : (
                     <div className={`prose prose-sm max-w-none break-words ${theme === 'dark' ? 'prose-invert' : ''}`}>
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -494,16 +571,19 @@ export default function Chat() {
 
       <div className="p-4">
         <form onSubmit={sendMessage} className="glass-bar rounded-3xl max-w-3xl mx-auto shadow-lg">
-          {attachedFile && (
-            <div className="flex items-center gap-2 px-4 pt-3">
-              <div className="flex items-center gap-2 bg-white/5 border border-[var(--glass-border)] rounded-full pl-3 pr-2 py-1 text-xs text-[var(--text-secondary)]">
-                <Paperclip size={12} className="shrink-0" />
-                <span className="truncate max-w-[180px]">{attachedFile.name}</span>
+          {attachedImage && (
+            <div className="px-4 pt-3">
+              <div className="relative inline-block">
+                <img
+                  src={attachedImage.dataUrl}
+                  alt={attachedImage.name}
+                  className="h-16 w-16 object-cover rounded-xl border border-[var(--glass-border)]"
+                />
                 <button
                   type="button"
                   onClick={handleRemoveFile}
-                  className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-0.5 rounded-full"
-                  aria-label="Remove attached file"
+                  className="absolute -top-1.5 -right-1.5 bg-[var(--bg-primary)] border border-[var(--glass-border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-full p-0.5"
+                  aria-label="Remove attached image"
                 >
                   <XIcon size={12} />
                 </button>
@@ -533,6 +613,7 @@ export default function Chat() {
               <input
                 ref={fileInputRef}
                 type="file"
+                accept="image/*"
                 onChange={handleFileSelect}
                 className="hidden"
                 aria-hidden="true"
@@ -563,7 +644,7 @@ export default function Chat() {
 
             <button
               type="submit"
-              disabled={loading || !input.trim()}
+              disabled={loading || (!input.trim() && !attachedImage)}
               className="w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[#c4a030] text-black shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
               aria-label="Send message"
             >
