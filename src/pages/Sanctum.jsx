@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
-import { Crown, Loader2, Users, Layers, ArrowLeftRight } from 'lucide-react';
+import { Crown, Loader2, Users, Layers, ArrowLeftRight, Coins } from 'lucide-react';
 
 const PAGE_SIZE = 50;
 
@@ -65,15 +65,18 @@ function UsersTab({ active }) {
     <div className="space-y-2">
       <p className="text-xs text-[var(--text-muted)]">{total} users</p>
       {items.map((u) => (
-        <div key={u.id} className="glass-card p-3 flex items-center justify-between border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
-          <div>
+        <div key={u.id} className="glass-card p-3 flex items-center gap-3 border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(99,102,241,0.14)', color: '#818cf8' }}>
+            <Users size={17} />
+          </div>
+          <div className="flex-1 min-w-0">
             <p className="font-bold">{u.name || 'Unnamed'} {u.is_founder && <span className="text-[#d4af37]">👑</span>}</p>
             <p className="text-xs text-[var(--text-muted)]">{u.email}</p>
             <p className="text-xs text-[var(--text-muted)] mt-1">
               {u.stake_tier || 'guest'} · {u.fingerprint_verified ? 'verified' : 'unverified'}
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <p className="font-mono text-[#d4af37]">{u.close_balance} CLOSE</p>
             <p className="text-xs text-[var(--text-muted)]">staked: {u.close_staked}</p>
             <p className="text-xs text-[var(--text-muted)]">
@@ -116,20 +119,21 @@ function WorkspacesTab({ active }) {
     <div className="space-y-2">
       <p className="text-xs text-[var(--text-muted)]">{total} hubs</p>
       {items.map((w) => (
-        <div key={w.id} className="glass-card p-3 border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-bold">{w.name} {w.is_public ? '· public' : '· private'}</p>
-              <p className="text-xs text-[var(--text-muted)]">{w.description || 'No description'}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">owner: {w.owner_email || w.owner_id}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-mono text-sm">{w.room_code}</p>
-              <p className="text-xs text-green-400">{w.approved_members} approved</p>
-              {w.pending_requests > 0 && (
-                <p className="text-xs text-yellow-400">{w.pending_requests} pending</p>
-              )}
-            </div>
+        <div key={w.id} className="glass-card p-3 flex items-center gap-3 border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(110,155,121,0.14)', color: '#6E9B79' }}>
+            <Layers size={17} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold">{w.name} {w.is_public ? '· public' : '· private'}</p>
+            <p className="text-xs text-[var(--text-muted)]">{w.description || 'No description'}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">owner: {w.owner_email || w.owner_id}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="font-mono text-sm">{w.room_code}</p>
+            <p className="text-xs text-green-400">{w.approved_members} approved</p>
+            {w.pending_requests > 0 && (
+              <p className="text-xs text-yellow-400">{w.pending_requests} pending</p>
+            )}
           </div>
         </div>
       ))}
@@ -165,15 +169,18 @@ function TransactionsTab({ active }) {
         <>
           <p className="text-xs text-[var(--text-muted)]">{total} transactions</p>
           {items.map((t) => (
-            <div key={`${t.source}-${t.id}`} className="glass-card p-3 flex items-center justify-between border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
-              <div>
+            <div key={`${t.source}-${t.id}`} className="glass-card p-3 flex items-center gap-3 border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(201,169,97,0.14)', color: '#d4af37' }}>
+                <ArrowLeftRight size={17} />
+              </div>
+              <div className="flex-1 min-w-0">
                 <p className="font-bold">{t.kind}</p>
                 <p className="text-xs text-[var(--text-muted)]">{t.user_email || t.user_id}</p>
                 <p className="text-xs text-[var(--text-muted)] mt-1">
                   {t.source} {t.status ? `· ${t.status}` : ''}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 {t.amount != null && <p className="font-mono text-[#d4af37]">{t.amount}</p>}
                 <p className="text-xs text-[var(--text-muted)]">
                   {t.created ? new Date(t.created).toLocaleString() : ''}
@@ -215,26 +222,51 @@ export default function Sanctum() {
 
   return (
     <div className="p-4 space-y-6 bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-full">
-      <div className="flex items-center gap-3">
-        <Crown size={32} className="text-[#d4af37]" />
-        <div>
-          <h1 className="text-3xl font-display font-bold">Sanctum</h1>
-          <p className="text-sm text-[var(--text-muted)]">Welcome, Founder 👑 — CLOSE Balance: {user.close_balance}</p>
+      <div
+        className="relative rounded-2xl p-5 overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, rgba(201,169,97,0.14), rgba(201,169,97,0.03))',
+          border: '1px solid rgba(201,169,97,0.32)',
+        }}
+      >
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(circle at 15% 0%, rgba(201,169,97,0.2), transparent 65%)' }}
+        />
+        <div className="relative flex items-center gap-3.5">
+          <div
+            className="w-13 h-13 rounded-2xl flex items-center justify-center shrink-0"
+            style={{ width: 52, height: 52, background: 'linear-gradient(135deg, var(--accent-brass-bright, #E8C877), #C9A961)', color: '#14120C' }}
+          >
+            <Crown size={26} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">Sanctum</h1>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Founder-only oversight</p>
+          </div>
+        </div>
+        <div
+          className="relative inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full text-xs font-mono font-semibold"
+          style={{ background: 'rgba(201,169,97,0.12)', border: '1px solid rgba(201,169,97,0.16)', color: '#E8C877' }}
+        >
+          <Coins size={13} /> {user.close_balance} CLOSE
         </div>
       </div>
 
-      <div className="flex gap-2 border-b border-[var(--border-color)]">
+      <div
+        className="flex gap-1 p-1 w-fit rounded-2xl"
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(201,169,97,0.16)' }}
+      >
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              tab === key
-                ? 'border-[#d4af37] text-[#d4af37]'
-                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            }`}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+            style={tab === key
+              ? { background: '#d4af37', color: '#000' }
+              : { color: 'var(--text-muted)' }}
           >
-            <Icon size={16} />
+            <Icon size={15} />
             {label}
           </button>
         ))}
