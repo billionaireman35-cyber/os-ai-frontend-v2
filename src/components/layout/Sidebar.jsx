@@ -375,7 +375,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
         aria-modal={mobileOpen ? 'true' : undefined}
         aria-label="Sidebar navigation"
         aria-hidden={!isOpen}
-        className={`glass-panel fixed top-0 left-0 h-full w-[340px] flex flex-col overflow-y-auto transition-transform duration-300 ease-in-out z-50 ${
+        className={`glass-panel fixed top-0 left-0 h-full w-[400px] flex flex-col overflow-y-auto transition-transform duration-300 ease-in-out z-50 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -384,7 +384,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
             className="flex items-center gap-2 cursor-pointer select-none hover:bg-white/5 transition-colors rounded-lg px-2 py-1"
             onClick={handleLogoClick}
           >
-            <span className="font-display font-bold text-[26px] text-[var(--text-primary)] flex items-center gap-2 pulse-logo">
+            <span className="font-display font-bold text-[30px] text-[var(--text-primary)] flex items-center gap-2 pulse-logo">
               <Zap size={28} className="text-[var(--accent-brass)]" />
               OS AI
             </span>
@@ -401,10 +401,10 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
 
         <button
           onClick={newChat}
-          className="mx-4 mt-4 flex items-center justify-center gap-3 bg-[var(--accent-indigo)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-xl py-4 press-soft touch transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 px-6 text-[17px]"
+          className="mx-4 mt-4 flex items-center justify-center gap-3 bg-[var(--accent-indigo)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-xl py-4.5 press-soft touch transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 px-7 text-[18px]"
         >
           <Plus size={24} className="shrink-0" />
-          <span className="text-[17px]">New Chat</span>
+          <span className="text-[18px]">New Chat</span>
         </button>
 
         <div className="input-glass mx-4 mt-4 flex items-center gap-3 focus-within:border-[var(--accent-brass)] focus-within:shadow-[0_0_0_3px_rgba(212,175,55,0.15)]">
@@ -415,7 +415,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
             aria-label="Search chats"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-transparent border-none outline-none text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)] w-full"
+            className="bg-transparent border-none outline-none text-[17px] text-[var(--text-primary)] placeholder-[var(--text-muted)] w-full"
           />
         </div>
 
@@ -448,7 +448,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               end={to === '/'}
               onClick={() => { if (isMobile()) resetSidebarState(); }}
               className={({ isActive }) =>
-                `flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-medium transition-all touch justify-start ${
+                `flex items-center gap-5 rounded-xl px-5 py-3.5 text-[17px] font-medium transition-all touch justify-start ${
                   isActive
                     ? 'bg-[var(--accent-indigo)]/15 text-[var(--accent-indigo)] border border-[var(--accent-indigo)]/25 shadow-[0_0_20px_rgba(79,70,229,0.1)]'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border border-transparent'
@@ -464,7 +464,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               to="/sanctum"
               onClick={() => { if (isMobile()) resetSidebarState(); }}
               className={({ isActive }) =>
-                `flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-medium transition-all touch justify-start ${
+                `flex items-center gap-5 rounded-xl px-5 py-3.5 text-[17px] font-medium transition-all touch justify-start ${
                   isActive
                     ? 'bg-[var(--accent-brass)]/15 text-[var(--accent-brass)] border border-[var(--accent-brass)]/25 shadow-[0_0_20px_rgba(201,169,97,0.12)]'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border border-transparent'
@@ -575,13 +575,13 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
 
         <div className="border-t border-[var(--glass-border)] px-4 py-4 flex items-center gap-4">
           <div
-            className="w-10 h-10 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-[var(--accent-indigo)] font-bold text-lg shrink-0"
+            className="w-11 h-11 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-[var(--accent-indigo)] font-bold text-xl shrink-0"
             aria-hidden="true"
           >
             {user?.name ? user.name.charAt(0).toUpperCase() : 'G'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[16px] text-[var(--text-primary)] font-medium truncate">{user?.name || 'Guest'}</p>
+            <p className="text-[18px] text-[var(--text-primary)] font-medium truncate">{user?.name || 'Guest'}</p>
             <div className="flex items-center gap-2 text-[14px] text-[var(--text-muted)]">
               <Coins size={16} aria-hidden="true" /> {displayCloseBalance} CLOSE
               <span className="px-2 py-0.5 rounded-full bg-[var(--accent-indigo)]/10 text-[12px] text-[var(--accent-indigo)] font-medium">
