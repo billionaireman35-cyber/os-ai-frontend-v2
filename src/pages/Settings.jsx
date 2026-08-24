@@ -159,9 +159,11 @@ export default function Settings() {
       return;
     }
     try {
-      setExportSeed('mock seed phrase: abandon abandon ...');
+      const res = await api.post('/wallet/export-private-key', { password: exportPassword });
+      setExportSeed(res.data.private_key);
+      setExportPassword('');
     } catch (e) {
-      setExportError(e.message || 'Failed to export seed.');
+      setExportError(e.response?.data?.detail || e.message || 'Failed to export private key.');
     }
   };
 
@@ -409,7 +411,11 @@ export default function Settings() {
             </button>
           </div>
           <div>
-            <label className="text-sm text-[var(--text-muted)] block">Export Seed Phrase</label>
+            <label className="text-sm text-[var(--text-muted)] block">Export Private Key</label>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5 mb-1">
+              This gives full control of your wallet to anyone who sees it. Never share it, and only enter your
+              password if you're about to copy it somewhere safe (e.g. importing into MetaMask).
+            </p>
             <input
               type="password"
               value={exportPassword}
@@ -418,16 +424,27 @@ export default function Settings() {
               placeholder="Enter wallet password"
             />
             {exportError && <p className="text-sm text-[var(--danger)]">{exportError}</p>}
-            <button onClick={handleExportSeed} className="btn-secondary w-full mt-2 justify-center">Export Seed</button>
+            <button onClick={handleExportSeed} className="btn-secondary w-full mt-2 justify-center">Reveal Private Key</button>
             {exportSeed && (
-              <div className="mt-2 p-3 glass-card">
+              <div className="mt-2 p-3 glass-card border" style={{ borderColor: 'var(--danger)' }}>
+                <p className="text-xs font-bold mb-1" style={{ color: 'var(--danger)' }}>
+                  ⚠️ Anyone with this key can take everything in this wallet.
+                </p>
                 <p className="text-sm font-mono break-all">{exportSeed}</p>
-                <button
-                  onClick={() => navigator.clipboard.writeText(exportSeed)}
-                  className="text-xs text-[var(--accent-brass)] mt-1"
-                >
-                  Copy
-                </button>
+                <div className="flex items-center justify-between mt-2">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(exportSeed)}
+                    className="text-xs text-[var(--accent-brass)]"
+                  >
+                    Copy
+                  </button>
+                  <button
+                    onClick={() => setExportSeed(null)}
+                    className="text-xs text-[var(--text-muted)]"
+                  >
+                    Hide
+                  </button>
+                </div>
               </div>
             )}
           </div>
