@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
-import { Crown, Loader2, Users, Layers, ArrowLeftRight, Coins } from 'lucide-react';
+import { Crown, Loader2, Users, Layers, ArrowLeftRight, Coins, Vault, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const PAGE_SIZE = 50;
 
@@ -9,6 +9,7 @@ const TABS = [
   { key: 'users', label: 'Users', icon: Users },
   { key: 'workspaces', label: 'Hubs', icon: Layers },
   { key: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+  { key: 'treasury', label: 'Treasury', icon: Vault },
 ];
 
 function usePaginatedFounderData(endpoint, listKey, active) {
@@ -206,6 +207,117 @@ function TransactionsTab({ active }) {
   );
 }
 
+function TreasuryTab({ active }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/founder-suite/staking-treasury?limit=100&offset=0');
+      setData(res.data);
+      setError(null);
+    } catch (e) {
+      setError(e.response?.data?.detail || e.message || 'Failed to load');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (active && !data && !loading) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
+  if (error) {
+    return (
+      <div className="p-4 text-yellow-400">
+        <p>⚠️ {error}</p>
+        <button onClick={load} className="mt-2 underline text-[#d4af37]">Retry</button>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return loading ? (
+      <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-[#d4af37]" /></div>
+    ) : null;
+  }
+
+  const balanceKnown = data.treasury_balance !== null && data.treasury_balance !== undefined;
+
+  return (
+    <div className="space-y-4">
+      <div
+        className="rounded-2xl p-4"
+        style={{
+          background: data.solvent ? 'rgba(110,155,121,0.1)' : 'rgba(193,85,74,0.1)',
+          border: `1px solid ${data.solvent ? 'rgba(110,155,121,0.35)' : 'rgba(193,85,74,0.4)'}`,
+        }}
+      >
+        <div className="flex items-center gap-2">
+          {data.solvent ? (
+            <CheckCircle size={18} className="text-[var(--success)]" />
+          ) : (
+            <AlertTriangle size={18} className="text-[var(--danger)]" />
+          )}
+          <p className="font-bold text-sm" style={{ color: data.solvent ? 'var(--success)' : 'var(--danger)' }}>
+            {balanceKnown ? (data.solvent ? 'Treasury is solvent' : 'Treasury cannot cover all obligations') : 'Could not read on-chain balance'}
+          </p>
+        </div>
+        <p className="text-xs text-[var(--text-muted)] mt-1 font-mono break-all">{data.treasury_address}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="glass-panel rounded-2xl p-4">
+          <p className="text-[9.5px] font-mono uppercase tracking-wide text-[var(--text-muted)] mb-1.5">On-Chain Balance</p>
+          <p className="text-xl font-display font-bold text-[var(--text-primary)]">
+            {balanceKnown ? data.treasury_balance.toLocaleString() : '—'}
+          </p>
+        </div>
+        <div className="glass-panel rounded-2xl p-4">
+          <p className="text-[9.5px] font-mono uppercase tracking-wide text-[var(--text-muted)] mb-1.5">Total Owed</p>
+          <p className="text-xl font-display font-bold text-[var(--accent-brass-bright)]">{data.total_owed.toLocaleString()}</p>
+        </div>
+        <div className="glass-panel rounded-2xl p-4">
+          <p className="text-[9.5px] font-mono uppercase tracking-wide text-[var(--text-muted)] mb-1.5">Total Staked</p>
+          <p className="text-lg font-display font-bold text-[var(--text-primary)]">{data.total_staked.toLocaleString()}</p>
+        </div>
+        <div className="glass-panel rounded-2xl p-4">
+          <p className="text-[9.5px] font-mono uppercase tracking-wide text-[var(--text-muted)] mb-1.5">Pending Yield</p>
+          <p className="text-lg font-display font-bold text-[var(--text-primary)]">{data.total_pending_yield.toLocaleString()}</p>
+        </div>
+      </div>
+
+      <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">
+        Active Positions ({data.active_position_count})
+      </p>
+
+      {data.positions.length === 0 ? (
+        <div className="glass-panel rounded-2xl p-8 text-center">
+          <p className="text-sm text-[var(--text-muted)]">No active positions.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {data.positions.map((p) => (
+            <div key={p.id} className="glass-card p-3 flex items-center justify-between">
+              <div>
+                <p className="font-bold text-sm">{p.amount.toLocaleString()} CLOSE</p>
+                <p className="text-xs text-[var(--text-muted)]">{p.user_email || p.user_id}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-sm text-[var(--success)]">{p.apy}% APY</p>
+                <p className="text-xs text-[var(--accent-brass)]">+{p.pending_yield.toFixed(2)} pending</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Sanctum() {
   const { user } = useAuth();
   const [tab, setTab] = useState('users');
@@ -254,7 +366,7 @@ export default function Sanctum() {
       </div>
 
       <div
-        className="flex gap-1 p-1 w-fit rounded-2xl"
+        className="flex gap-1 p-1 w-fit rounded-2xl flex-wrap"
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(201,169,97,0.16)' }}
       >
         {TABS.map(({ key, label, icon: Icon }) => (
@@ -276,6 +388,7 @@ export default function Sanctum() {
         {tab === 'users' && <UsersTab active={tab === 'users'} />}
         {tab === 'workspaces' && <WorkspacesTab active={tab === 'workspaces'} />}
         {tab === 'transactions' && <TransactionsTab active={tab === 'transactions'} />}
+        {tab === 'treasury' && <TreasuryTab active={tab === 'treasury'} />}
       </div>
     </div>
   );
