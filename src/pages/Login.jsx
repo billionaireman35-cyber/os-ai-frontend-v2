@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Fingerprint } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
+  const googleButtonRef = useRef(null);
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,12 +26,44 @@ export default function Login() {
     }
   };
 
+  useEffect(() => {
+    if (!window.google || !googleButtonRef.current) return;
+
+    window.google.accounts.id.initialize({
+      client_id: '133012523516-vl47c0e3fn1vbop855g0pbdvhouh08or.apps.googleusercontent.com',
+      callback: async (response) => {
+        setError(null);
+        try {
+          await loginWithGoogle(response.credential);
+          navigate('/');
+        } catch (err) {
+          setError(err.response?.data?.detail || 'Google sign-in failed.');
+        }
+      },
+    });
+
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      theme: 'filled_black',
+      size: 'large',
+      width: 320,
+      text: 'continue_with',
+    });
+  }, []);
+
   return (
     <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <p className="font-display font-bold text-3xl text-[var(--text-primary)]">OS AI</p>
           <p className="text-sm text-[var(--text-muted)] font-mono mt-1">sign in to OS AI</p>
+        </div>
+
+        <div ref={googleButtonRef} className="flex justify-center mb-4" />
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px bg-[var(--border-color)]" />
+          <span className="text-xs text-[var(--text-muted)] font-mono uppercase">or</span>
+          <div className="flex-1 h-px bg-[var(--border-color)]" />
         </div>
 
         <form onSubmit={handleSubmit} className="glass-card p-6 space-y-4">

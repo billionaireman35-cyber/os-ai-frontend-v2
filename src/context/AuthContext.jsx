@@ -50,6 +50,13 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const loginWithGoogle = async (credential) => {
+    const res = await api.post('/auth/google', { credential });
+    localStorage.setItem('token', res.data.token);
+    setUser(res.data.user);
+    return res.data;
+  };
+
   const updateName = async (newName) => {
     try {
       const res = await api.put('/auth/update-profile', { name: newName });
@@ -75,7 +82,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateName, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateName, refreshUser, loginWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );
