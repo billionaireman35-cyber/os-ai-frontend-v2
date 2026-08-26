@@ -1,5 +1,6 @@
 import toast from "react-hot-toast";
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign,
   BarChart, Wallet, RefreshCw, Loader2, Copy, CheckCircle,
@@ -1245,7 +1246,9 @@ function Staking() {
 }
 
 export default function Vault() {
-  const [tab, setTab] = useState('standard');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'staking' ? 'staking' : 'standard';
+  const [tab, setTab] = useState(initialTab);
   return (
     <div className="p-4 tablet:p-6 space-y-6">
       <h1 className="text-3xl font-display font-bold text-[var(--text-primary)] flex items-center gap-2">

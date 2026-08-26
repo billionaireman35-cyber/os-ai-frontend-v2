@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon } from 'lucide-react';
+import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon, Clock } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ToastContainer, useToast } from '../components/ui/Toast';
 
@@ -14,6 +14,9 @@ export default function Chat() {
   const { toasts, addToast, removeToast } = useToast();
   const { theme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [usage, setUsage] = useState(null);
+  const [limitHit, setLimitHit] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -182,6 +185,25 @@ export default function Chat() {
 
   const getToken = () => localStorage.getItem('token');
 
+  const fetchUsage = async () => {
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/chat/usage`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUsage(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch usage', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsage();
+  }, []);
+
   const refreshMessages = async () => {
     if (!chatId) return;
     try {
@@ -224,6 +246,7 @@ export default function Chat() {
     e.preventDefault();
     if ((!input.trim() && !attachedImage) || loading) return;
 
+    setLimitHit(false);
     const imageForThisMessage = attachedImage;
     const userMessage = {
       role: 'user',
@@ -261,6 +284,12 @@ export default function Chat() {
             ...prev,
             { role: 'assistant', content: errorData.content, model: 'system', createdAt: new Date().toISOString() }
           ]);
+          setLoading(false);
+          return;
+        }
+        if (response.status === 429) {
+          setLimitHit(true);
+          fetchUsage();
           setLoading(false);
           return;
         }
@@ -326,6 +355,7 @@ export default function Chat() {
       // recent-chats list is stale (it only fetches once on mount, never
       // on new activity). Tell it to refresh.
       window.dispatchEvent(new CustomEvent('chat-updated'));
+      fetchUsage();
 
     } catch (error) {
       console.error('Chat error:', error);
@@ -400,6 +430,45 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      {usage && (
+        <div className="flex items-center justify-between px-4 py-2 mx-3 mt-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-md shrink-0">
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[9.5px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
+              style={{
+                background:
+                  usage.tier === 'platinum' ? 'rgba(240,237,228,0.14)' :
+                  usage.tier === 'gold' ? 'rgba(232,200,119,0.18)' :
+                  'rgba(138,122,78,0.18)',
+                color:
+                  usage.tier === 'platinum' ? '#F0EDE4' :
+                  usage.tier === 'gold' ? '#E8C877' :
+                  '#C9A961',
+              }}
+            >
+              {usage.tier}
+            </span>
+            {usage.limit != null && (
+              <div className="w-[60px] h-1 rounded-full bg-[var(--bg-tertiary)] overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(100, (usage.used / usage.limit) * 100)}%`,
+                    background: (usage.used / usage.limit) >= 1 ? 'var(--danger)' : (usage.used / usage.limit) >= 0.85 ? '#d89a3a' : 'var(--accent-brass)',
+                  }}
+                />
+              </div>
+            )}
+          </div>
+          {usage.limit != null ? (
+            <span className="text-[11px] font-mono text-[var(--text-muted)]">
+              <strong className="text-[var(--text-primary)] font-semibold">{usage.used}</strong> / {usage.limit} today
+            </span>
+          ) : (
+            <span className="text-[10.5px] font-mono text-[var(--text-muted)]">Unlimited messages</span>
+          )}
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
@@ -510,6 +579,23 @@ export default function Chat() {
             </div>
           );
         })}
+
+        {limitHit && (
+          <div className="max-w-[90%] rounded-2xl px-4 py-3.5" style={{ background: 'rgba(193,85,74,0.08)', border: '1px solid rgba(193,85,74,0.3)' }}>
+            <p className="font-display font-bold text-sm text-[var(--text-primary)] mb-1">Daily limit reached</p>
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-2.5">
+              You've used all {usage?.limit} messages included in your {usage?.tier} tier today.
+              Stake more CLOSE to raise your daily limit, or check back tomorrow (UTC).
+            </p>
+            <button
+              onClick={() => navigate('/vault?tab=staking')}
+              className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-lg"
+              style={{ background: 'linear-gradient(135deg, var(--accent-brass-bright), var(--accent-brass))', color: '#20190B' }}
+            >
+              <Clock size={13} /> View Staking Tiers
+            </button>
+          </div>
+        )}
 
         {loading && (
           <div className="flex justify-start">
