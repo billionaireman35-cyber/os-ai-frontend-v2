@@ -300,13 +300,13 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   });
 
   const tierLabels = {
-    founder: '👑 Founder',
-    enterprise: '🏢 Enterprise',
-    pro: '⭐ Pro',
-    builder: '🔧 Builder',
-    guest: '👤 Guest',
+    platinum: '💎 Platinum',
+    gold: '⭐ Gold',
+    bronze: '🥉 Bronze',
   };
-  const tierBadge = user?.stake_tier ? tierLabels[user.stake_tier] || 'Guest' : 'Guest';
+  const tierBadge = user?.is_founder
+    ? '👑 Founder'
+    : (user?.stake_tier ? tierLabels[user.stake_tier] || '🥉 Bronze' : '🥉 Bronze');
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
