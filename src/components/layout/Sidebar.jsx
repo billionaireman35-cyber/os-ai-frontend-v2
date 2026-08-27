@@ -10,22 +10,16 @@ import {
   Users,
   Code,
   ShieldCheck,
-  Menu,
   X,
-  Plus,
+  SquarePen,
   Search,
   Settings,
   Coins,
-  Moon,
-  Sun,
   LogOut,
   Zap,
   ChevronDown,
   Star,
   Clock,
-  Bell,
-  CheckCircle,
-  AlertCircle,
   Trophy,
 } from 'lucide-react';
 import { api } from '../../utils/api';
@@ -45,9 +39,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { assets: walletAssets } = useWallet();
-  // Real on-chain CLOSE balance (same source Vault displays), not the
-  // legacy internal close_balance DB ledger - see 2026-08-19/20 architecture
-  // decision to make on-chain balance authoritative everywhere.
   const closeAsset = walletAssets?.find((a) => a.symbol === 'CLOSE' && a.chain === 'polygon');
   const displayCloseBalance = closeAsset ? closeAsset.balance : 0;
   const navigate = useNavigate();
@@ -78,11 +69,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const isOpen = mobileOpen || expanded;
   const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 1024;
 
-  // Plain close for navigation-triggered dismissal (New Chat, selecting a
-  // chat, nav links). If we pushed a history entry for the open sidebar,
-  // collapse it in place with replaceState so it can never be popped later
-  // by a stray back-press — this must NOT call history.back(), since that
-  // would race with the router's own navigate() call in the same handler.
   const resetSidebarState = useCallback(() => {
     setExpanded(false);
     if (mobileOpen && window.history.state?.osAiSidebar) {
@@ -91,9 +77,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     setMobileOpen(false);
   }, [setExpanded, setMobileOpen, mobileOpen]);
 
-  // Explicit dismiss — use this ONLY for direct "close" actions (X button,
-  // backdrop click, Escape key). Pops the history entry pushed on open so
-  // hardware/back gesture and this button stay in sync.
   const closeSidebar = useCallback(() => {
     setExpanded(false);
     if (mobileOpen && window.history.state?.osAiSidebar) {
@@ -113,21 +96,12 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     }
   };
 
-  // Push a history entry when the mobile sidebar opens, so the
-  // hardware/back gesture closes it instead of finding no history to pop to.
   useEffect(() => {
     if (!mobileOpen) return;
-
     window.history.pushState({ osAiSidebar: true }, '');
-
-    const handlePopState = () => {
-      setMobileOpen(false);
-    };
+    const handlePopState = () => setMobileOpen(false);
     window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [mobileOpen, setMobileOpen]);
 
   useEffect(() => {
@@ -165,10 +139,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     fetchChats();
   }, [fetchChats]);
 
-  // Refresh the recent-chats list whenever a message is sent anywhere in
-  // the app (Chat.jsx dispatches this after a successful send) - without
-  // this, "Recent" only ever reflects whatever existed at the moment the
-  // sidebar first mounted.
   useEffect(() => {
     const handleChatUpdated = () => fetchChats();
     window.addEventListener('chat-updated', handleChatUpdated);
@@ -263,8 +233,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     setFounderSubmitting(true);
     setFounderError('');
     try {
-      // This elevates the ALREADY-LOGGED-IN user to founder status - no new
-      // token is issued, since it's a privilege upgrade, not a new login.
       const res = await api.post('/founder/', { code: founderKey });
       if (setUser && res.data?.user) {
         setUser(res.data.user);
@@ -274,13 +242,10 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     } catch (e) {
       console.error('Founder login failed - full error:', e);
       if (e.response) {
-        // Got a real response from the server - show its actual message.
         setFounderError(`(${e.response.status}) ${e.response.data?.detail || 'Request rejected'}`);
       } else if (e.request) {
-        // Request was sent but no response ever came back.
         setFounderError('No response from server - check your connection.');
       } else {
-        // Failed before the request was even sent.
         setFounderError(`Request failed to send: ${e.message}`);
       }
     } finally {
@@ -363,7 +328,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-md z-40 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           onClick={closeSidebar}
           aria-hidden="true"
         />
@@ -375,59 +340,57 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
         aria-modal={mobileOpen ? 'true' : undefined}
         aria-label="Sidebar navigation"
         aria-hidden={!isOpen}
-        className={`glass-panel fixed top-0 left-0 h-full w-[400px] flex flex-col overflow-y-auto transition-transform duration-300 ease-in-out z-50 ${
+        className={`glass-panel fixed top-0 left-0 h-full w-[300px] flex flex-col overflow-y-auto transition-transform duration-200 ease-in-out z-50 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-5 border-b border-[var(--glass-border)]">
+        <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--border-color)] shrink-0">
           <div
-            className="flex items-center gap-2 cursor-pointer select-none hover:bg-white/5 transition-colors rounded-lg px-2 py-1"
+            className="flex items-center gap-2 cursor-pointer select-none rounded-lg px-1.5 py-1"
             onClick={handleLogoClick}
           >
-            <span className="font-display font-bold text-[30px] text-[var(--text-primary)] flex items-center gap-2 pulse-logo">
-              <Zap size={28} className="text-[var(--accent-brass)]" />
-              OS AI
-            </span>
+            <Zap size={19} className="text-[var(--accent-brass)]" />
+            <span className="font-display font-bold text-[16px] text-[var(--text-primary)]">OS AI</span>
           </div>
           <button
             ref={closeButtonRef}
             onClick={closeSidebar}
-            className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className="btn-glass-icon w-8 h-8"
             aria-label="Close sidebar"
           >
-            <X size={20} />
+            <X size={17} />
           </button>
         </div>
 
         <button
           onClick={newChat}
-          className="mx-4 mt-4 flex items-center justify-center gap-3 bg-[var(--accent-indigo)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-xl py-4.5 press-soft touch transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 px-7 text-[18px]"
+          className="mx-3 mt-3 flex items-center gap-2.5 rounded-lg px-2.5 py-2 border border-[var(--border-color)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--border-bright)] transition-colors touch text-[14px] font-medium text-[var(--text-primary)]"
         >
-          <Plus size={24} className="shrink-0" />
-          <span className="text-[18px]">New Chat</span>
+          <SquarePen size={17} className="text-[var(--accent-brass)] shrink-0" />
+          New chat
         </button>
 
-        <div className="input-glass mx-4 mt-4 flex items-center gap-3 focus-within:border-[var(--accent-brass)] focus-within:shadow-[0_0_0_3px_rgba(212,175,55,0.15)]">
-          <Search size={18} className="text-[var(--text-muted)] shrink-0" aria-hidden="true" />
+        <div className="mx-3 mt-2 flex items-center gap-2 bg-[var(--bg-tertiary)] rounded-lg px-2.5 py-1.5">
+          <Search size={14} className="text-[var(--text-muted)] shrink-0" aria-hidden="true" />
           <input
             type="text"
-            placeholder="Search chats, messages..."
+            placeholder="Search chats..."
             aria-label="Search chats"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-transparent border-none outline-none text-[17px] text-[var(--text-primary)] placeholder-[var(--text-muted)] w-full"
+            className="bg-transparent border-none outline-none text-[13.5px] text-[var(--text-primary)] placeholder-[var(--text-muted)] w-full"
           />
         </div>
 
         {isSearchActive && searchResults.length > 0 && (
-          <div className="mx-4 mt-2 max-h-40 overflow-y-auto space-y-1" role="listbox" aria-label="Search results">
+          <div className="mx-3 mt-2 max-h-40 overflow-y-auto space-y-0.5" role="listbox" aria-label="Search results">
             {searchResults.map((chat) => (
               <div
                 key={chat.id}
                 {...asButton(() => selectChat(chat.id))}
                 role="option"
                 aria-selected="false"
-                className="p-2 cursor-pointer hover:bg-white/5 focus:bg-white/5 focus:outline-none rounded-lg text-[14px] text-[var(--text-primary)] transition-colors"
+                className="px-2.5 py-1.5 cursor-pointer hover:bg-[var(--bg-tertiary)] focus:bg-[var(--bg-tertiary)] focus:outline-none rounded-md text-[13px] text-[var(--text-primary)] transition-colors"
               >
                 {chat.title || 'New Chat'}
               </div>
@@ -435,12 +398,12 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           </div>
         )}
         {isSearchActive && searchResults.length === 0 && (
-          <div className="mx-4 mt-2 text-[14px] text-[var(--text-muted)]" role="status">
+          <div className="mx-3 mt-2 text-[13px] text-[var(--text-muted)]" role="status">
             No results found
           </div>
         )}
 
-        <nav className="px-3 py-2 border-b border-[var(--glass-border)]" aria-label="Primary">
+        <nav className="px-2 py-2 border-b border-[var(--border-color)] mt-1" aria-label="Primary">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -448,14 +411,14 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               end={to === '/'}
               onClick={() => { if (isMobile()) resetSidebarState(); }}
               className={({ isActive }) =>
-                `flex items-center gap-5 rounded-xl px-5 py-3.5 text-[17px] font-medium transition-all touch justify-start ${
+                `flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors touch mb-0.5 ${
                   isActive
-                    ? 'bg-[var(--accent-indigo)]/15 text-[var(--accent-indigo)] border border-[var(--accent-indigo)]/25 shadow-[0_0_20px_rgba(79,70,229,0.1)]'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border border-transparent'
+                    ? 'bg-[var(--accent-brass)]/10 text-[var(--accent-brass-bright)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                 }`
               }
             >
-              <Icon size={20} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+              <Icon size={16} strokeWidth={2} className="shrink-0 opacity-90" aria-hidden="true" />
               <span>{label}</span>
             </NavLink>
           ))}
@@ -464,41 +427,41 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               to="/sanctum"
               onClick={() => { if (isMobile()) resetSidebarState(); }}
               className={({ isActive }) =>
-                `flex items-center gap-5 rounded-xl px-5 py-3.5 text-[17px] font-medium transition-all touch justify-start ${
+                `flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors touch ${
                   isActive
-                    ? 'bg-[var(--accent-brass)]/15 text-[var(--accent-brass)] border border-[var(--accent-brass)]/25 shadow-[0_0_20px_rgba(201,169,97,0.12)]'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border border-transparent'
+                    ? 'bg-[var(--accent-brass)]/10 text-[var(--accent-brass-bright)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                 }`
               }
             >
-              <ShieldCheck size={20} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+              <ShieldCheck size={16} strokeWidth={2} className="shrink-0 opacity-90" aria-hidden="true" />
               <span>Sanctum</span>
             </NavLink>
           )}
         </nav>
 
-        <div className="px-4 py-3 border-t border-[var(--glass-border)]">
-          <p className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Hustle Hub</p>
+        <div className="px-3 py-2 border-b border-[var(--border-color)]">
+          <p className="text-[10.5px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Hustle Hub</p>
           <button
             onClick={() => {
               navigate('/hustle-hub');
               if (isMobile()) resetSidebarState();
             }}
-            className="flex items-center gap-3 mt-1 text-[14px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer touch w-full"
+            className="flex items-center gap-2 mt-1 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer touch w-full"
           >
-            <Users size={18} aria-hidden="true" /> Switch Hub
+            <Users size={15} aria-hidden="true" /> Switch Hub
           </button>
         </div>
 
-        <div className="px-3 py-2 border-t border-[var(--glass-border)] flex-1 overflow-y-auto" ref={recentRef}>
+        <div className="px-2 py-1 flex-1 overflow-y-auto" ref={recentRef}>
           <div
             {...asButton(() => setRecentDropdownOpen((prev) => !prev))}
-            className="flex items-center justify-between hover:bg-white/5 focus:bg-white/5 focus:outline-none rounded-lg p-2 transition-colors"
+            className="flex items-center justify-between hover:bg-[var(--bg-tertiary)] focus:bg-[var(--bg-tertiary)] focus:outline-none rounded-md px-2.5 py-1.5 mt-1 transition-colors"
             aria-expanded={recentDropdownOpen}
           >
-            <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Recent</span>
+            <span className="text-[10.5px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Recent</span>
             <ChevronDown
-              size={16}
+              size={14}
               aria-hidden="true"
               className={`text-[var(--text-muted)] transition-transform ${recentDropdownOpen ? 'rotate-180' : ''}`}
             />
@@ -506,26 +469,26 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           {recentDropdownOpen && (
             <div className="mt-1 space-y-0.5 max-h-60 overflow-y-auto">
               {loadingChats ? (
-                <div className="text-[13px] text-[var(--text-muted)] p-2" role="status">
+                <div className="text-[12.5px] text-[var(--text-muted)] px-2.5 py-1" role="status">
                   Loading...
                 </div>
               ) : recentChats.length === 0 && pinnedChatsList.length === 0 ? (
-                <div className="text-[13px] text-[var(--text-muted)] p-2">No chats yet</div>
+                <div className="text-[12.5px] text-[var(--text-muted)] px-2.5 py-1">No chats yet</div>
               ) : (
                 <>
                   {pinnedChatsList.length > 0 && (
                     <>
-                      <div className="flex items-center gap-2 px-2 py-1">
-                        <Star size={12} className="text-[var(--accent-brass)]" aria-hidden="true" />
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Pinned</span>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1">
+                        <Star size={11} className="text-[var(--accent-brass)]" aria-hidden="true" />
+                        <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Pinned</span>
                       </div>
                       {pinnedChatsList.map((chat) => (
                         <div
                           key={chat.id}
                           {...asButton(() => selectChat(chat.id))}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 focus:bg-white/5 focus:outline-none transition-colors"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-[var(--bg-tertiary)] focus:bg-[var(--bg-tertiary)] focus:outline-none transition-colors"
                         >
-                          <span className="text-[14px] text-[var(--text-primary)] flex-1 truncate">
+                          <span className="text-[13px] text-[var(--text-primary)] flex-1 truncate">
                             {chat.title || 'New Chat'}
                           </span>
                           <button
@@ -533,7 +496,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                             className="text-[var(--text-muted)] hover:text-[var(--accent-brass)]"
                             aria-label={`Unpin "${chat.title || 'New Chat'}"`}
                           >
-                            <Star size={14} fill="currentColor" />
+                            <Star size={13} fill="currentColor" />
                           </button>
                         </div>
                       ))}
@@ -542,18 +505,18 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                   {recentChats.length > 0 && (
                     <>
                       {pinnedChatsList.length > 0 && (
-                        <div className="flex items-center gap-2 px-2 py-1 mt-1">
-                          <Clock size={12} className="text-[var(--text-muted)]" aria-hidden="true" />
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Recent</span>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 mt-1">
+                          <Clock size={11} className="text-[var(--text-muted)]" aria-hidden="true" />
+                          <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Recent</span>
                         </div>
                       )}
                       {recentChats.map((chat) => (
                         <div
                           key={chat.id}
                           {...asButton(() => selectChat(chat.id))}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 focus:bg-white/5 focus:outline-none transition-colors group"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-[var(--bg-tertiary)] focus:bg-[var(--bg-tertiary)] focus:outline-none transition-colors group"
                         >
-                          <span className="text-[14px] text-[var(--text-primary)] flex-1 truncate">
+                          <span className="text-[13px] text-[var(--text-primary)] flex-1 truncate">
                             {chat.title || 'New Chat'}
                           </span>
                           <button
@@ -561,7 +524,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                             className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] opacity-0 group-hover:opacity-100 group-focus:opacity-100 focus:opacity-100 transition-opacity"
                             aria-label={`Pin "${chat.title || 'New Chat'}"`}
                           >
-                            <Star size={14} />
+                            <Star size={13} />
                           </button>
                         </div>
                       ))}
@@ -573,46 +536,46 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           )}
         </div>
 
-        <div className="border-t border-[var(--glass-border)] px-4 py-4 flex items-center gap-4">
+        <div className="border-t border-[var(--border-color)] px-3 py-3 flex items-center gap-3 shrink-0">
           <div
-            className="w-11 h-11 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-[var(--accent-indigo)] font-bold text-xl shrink-0"
+            className="w-9 h-9 rounded-full bg-[var(--accent-brass)]/15 flex items-center justify-center text-[var(--accent-brass-bright)] font-bold text-[15px] shrink-0"
             aria-hidden="true"
           >
             {user?.name ? user.name.charAt(0).toUpperCase() : 'G'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[18px] text-[var(--text-primary)] font-medium truncate">{user?.name || 'Guest'}</p>
-            <div className="flex items-center gap-2 text-[14px] text-[var(--text-muted)]">
-              <Coins size={16} aria-hidden="true" /> {displayCloseBalance} CLOSE
-              <span className="px-2 py-0.5 rounded-full bg-[var(--accent-indigo)]/10 text-[12px] text-[var(--accent-indigo)] font-medium">
+            <p className="text-[14px] text-[var(--text-primary)] font-medium truncate">{user?.name || 'Guest'}</p>
+            <div className="flex items-center gap-1.5 text-[11.5px] text-[var(--text-muted)]">
+              <Coins size={12} aria-hidden="true" /> {displayCloseBalance} CLOSE
+              <span className="px-1.5 py-0.5 rounded-full bg-[var(--accent-brass)]/10 text-[10px] text-[var(--accent-brass-bright)] font-medium">
                 {tierBadge}
               </span>
             </div>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             <button
               onClick={() => {
                 navigate('/settings');
                 if (isMobile()) resetSidebarState();
               }}
-              className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              className="btn-glass-icon w-8 h-8"
               aria-label="Settings"
             >
-              <Settings size={18} />
+              <Settings size={16} />
             </button>
             <button
               onClick={handleLogout}
-              className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--danger)]"
+              className="btn-glass-icon w-8 h-8 hover:text-[var(--danger)]"
               aria-label="Log out"
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
             </button>
           </div>
         </div>
 
         {showFounderModal && (
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in"
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
             onClick={closeFounderModal}
           >
             <div
@@ -621,7 +584,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               aria-modal="true"
               aria-labelledby="founder-modal-title"
               onClick={(e) => e.stopPropagation()}
-              className="glass-panel rounded-2xl w-full max-w-md p-8 space-y-5"
+              className="glass-card w-full max-w-md p-8 space-y-5"
             >
               <h3 id="founder-modal-title" className="text-2xl font-display font-bold text-[var(--text-primary)]">
                 Founder Login
@@ -631,7 +594,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
                 type="password"
                 value={founderKey}
                 onChange={(e) => setFounderKey(e.target.value)}
-                className="input-glass w-full"
+                className="input-base w-full"
                 placeholder="Founder key"
                 aria-label="Founder key"
                 autoFocus
