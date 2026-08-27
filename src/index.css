@@ -2,226 +2,155 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Base theme variables (brass/void palette) ── */
+/* ── Claude-style neutral theme ── */
 :root {
-  --bg-primary: #0B0A08;
-  --bg-secondary: #15130E;
-  --bg-tertiary: #1E1B14;
-  --bg-raised-2: #26221A;
-  --text-primary: #F0EDE4;
-  --text-secondary: #948B77;
-  --text-muted: #5C5646;
-  --border-color: rgba(201,169,97,0.14);
-  --border-bright: rgba(201,169,97,0.32);
-  --accent-indigo: #4f46e5;
-  --accent-brass: #C9A961;
-  --accent-brass-bright: #E8C877;
-  --accent-brass-dim: #8A7A4E;
+  --bg-primary: #FAF9F6;
+  --bg-secondary: #F2F0EA;
+  --bg-tertiary: #EAE7DF;
+  --bg-raised-2: #E3DFD5;
+  --text-primary: #1F1E1C;
+  --text-secondary: #5E5A52;
+  --text-muted: #8C8779;
+  --border-color: rgba(31,30,28,0.10);
+  --border-bright: rgba(31,30,28,0.20);
+  --accent-indigo: #C05A3C;
+  --accent-brass: #C05A3C;
+  --accent-brass-bright: #D97355;
+  --accent-brass-dim: #A64B32;
   --danger: #C1554A;
-  --success: #6E9B79;
-  --font-display: 'Fraunces', serif;
+  --success: #4B8062;
+  --font-display: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* ── Glass system ── */
-  --glass-bg: rgba(21, 19, 14, 0.55);
-  --glass-bg-raised: rgba(30, 27, 20, 0.6);
-  --glass-border: rgba(201, 169, 97, 0.16);
-  --glass-border-hover: rgba(201, 169, 97, 0.4);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  --glass-blur: 20px;
+  --glass-bg: var(--bg-secondary);
+  --glass-bg-raised: var(--bg-secondary);
+  --glass-border: var(--border-color);
+  --glass-border-hover: var(--border-bright);
+  --glass-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  --glass-blur: 0px;
 }
 
-[data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --bg-tertiary: #e8e8e8;
-  --text-primary: #111111;
-  --text-secondary: #555555;
-  --text-muted: #999999;
-  --border-color: #cccccc;
+[data-theme="dark"] {
+  --bg-primary: #1B1A18;
+  --bg-secondary: #232220;
+  --bg-tertiary: #2C2B28;
+  --bg-raised-2: #35332F;
+  --text-primary: #F2F0EA;
+  --text-secondary: #B5B0A4;
+  --text-muted: #79756A;
+  --border-color: rgba(255,255,255,0.08);
+  --border-bright: rgba(255,255,255,0.16);
 
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-bg-raised: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-border-hover: rgba(201, 169, 97, 0.5);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --glass-bg: var(--bg-secondary);
+  --glass-bg-raised: var(--bg-secondary);
+  --glass-border: var(--border-color);
+  --glass-border-hover: var(--border-bright);
+  --glass-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-/* ── Glass cards ── */
+body {
+  font-family: var(--font-display);
+}
+
 .glass-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
   box-shadow: var(--glass-shadow);
-  border-radius: 16px;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  transition: border-color 0.15s;
 }
-
 .glass-card:hover {
-  border-color: var(--glass-border-hover);
-  box-shadow: var(--glass-shadow), 0 0 0 1px rgba(212, 175, 55, 0.08);
+  border-color: var(--border-bright);
 }
 
-/* Heavier glass panel — for large surfaces like sidebars/headers where
-   content scrolls behind them and needs a stronger frost. */
 .glass-panel {
-  background: var(--glass-bg-raised);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  box-shadow: var(--glass-shadow);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  box-shadow: none;
 }
 
-/* Thin glass — for floating bars like the chat composer, where we want
-   the blur without darkening content too much. */
 .glass-bar {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(16px) saturate(130%);
-  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
 }
 
-/* ── Inputs ── */
 .input-base {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 10px 16px;
+  border-radius: 10px;
+  padding: 10px 14px;
   color: var(--text-primary);
   outline: none;
-  transition: border 0.2s;
+  transition: border 0.15s;
 }
 .input-base:focus {
-  border-color: #d4af37;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+  border-color: var(--accent-brass);
 }
 
-/* Glass variant of input-base — used by the redesigned chat composer. */
 .input-glass {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 12px;
-  padding: 10px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 14px;
   color: var(--text-primary);
   outline: none;
-  transition: border 0.2s, box-shadow 0.2s;
+  transition: border 0.15s;
 }
 .input-glass:focus {
   border-color: var(--accent-brass);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
 }
 
-/* ── Buttons ── */
 .btn-primary {
   background: var(--accent-brass);
-  color: #000;
-  font-weight: 700;
-  padding: 10px 20px;
-  border-radius: 12px;
+  color: #fff;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.2s;
+  transition: background 0.15s;
 }
-.btn-primary:hover {
-  background: #c4a030;
-}
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.btn-primary:hover { background: var(--accent-brass-dim); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btn-secondary {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  padding: 10px 20px;
-  border-radius: 12px;
+  padding: 9px 18px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.2s;
+  transition: background 0.15s;
 }
-.btn-secondary:hover {
-  background: var(--border-color);
-}
+.btn-secondary:hover { background: var(--bg-raised-2); }
 
-/* Circular glass icon button — used by the redesigned composer's send
-   button and other icon-only actions. */
 .btn-glass-icon {
-  background: var(--glass-bg-raised);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 .btn-glass-icon:hover:not(:disabled) {
-  border-color: var(--glass-border-hover);
-  transform: translateY(-1px);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
-.btn-glass-icon:active:not(:disabled) {
-  transform: translateY(0);
-}
-.btn-glass-icon:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+.btn-glass-icon:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #666;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* ── Animations ── */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
-}
-.animate-slide-up-delay {
-  animation: slideUp 0.3s ease-out 0.1s both;
-}
-.animate-pulse-slow {
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-/* ── Pulsing Logo Animation ── */
-@keyframes pulseLogo {
-  0% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.08); }
-  100% { opacity: 0.6; transform: scale(1); }
-}
-.pulse-logo {
-  animation: pulseLogo 2s ease-in-out infinite;
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fadeIn 0.2s ease-out; }
+.animate-slide-up { animation: slideUp 0.15s ease-out; }
+.animate-pulse-slow { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }

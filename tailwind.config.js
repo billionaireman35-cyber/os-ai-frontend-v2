@@ -3,6 +3,7 @@ import typography from '@tailwindcss/typography'
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
       screens: {
@@ -10,12 +11,12 @@ export default {
         'landscape': '1024px', 'laptop': '1280px', 'desktop': '1536px'
       },
       colors: {
-        void: 'var(--bg-main)',
-        bone: 'var(--text-main)',
-        line: 'var(--border)',
-        panel: 'var(--bg-panel)',
-        card: 'var(--bg-card)',
-        accent: 'var(--accent)',
+        void: 'var(--bg-primary)',
+        bone: 'var(--text-primary)',
+        line: 'var(--border-color)',
+        panel: 'var(--bg-secondary)',
+        card: 'var(--bg-tertiary)',
+        accent: 'var(--accent-brass)',
         muted: 'var(--text-muted)'
       }
     }
