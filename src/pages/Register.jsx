@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
+const GOOGLE_CLIENT_ID = '133012523516-vl47c0e3fn1vbop855g0pbdvhouh08or.apps.googleusercontent.com';
 
 export default function Register() {
   const navigate = useNavigate();
+  const { loginWithGoogle } = useAuth();
+  const googleButtonRef = useRef(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,6 +17,30 @@ export default function Register() {
   const [error, setError] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [codeSending, setCodeSending] = useState(false);
+
+  useEffect(() => {
+    if (!window.google || !googleButtonRef.current) return;
+
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: async (response) => {
+        setError('');
+        try {
+          await loginWithGoogle(response.credential);
+          navigate('/');
+        } catch (err) {
+          setError(err.response?.data?.detail || 'Google sign-up failed.');
+        }
+      },
+    });
+
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      theme: 'filled_black',
+      size: 'large',
+      width: 320,
+      text: 'signup_with',
+    });
+  }, []);
 
   const handleSendCode = async () => {
     if (!email) {
@@ -77,6 +105,14 @@ export default function Register() {
         <div className="text-center mb-8">
           <p className="font-display font-bold text-3xl text-[var(--text-primary)]">OS AI</p>
           <p className="text-sm text-[var(--text-muted)] font-mono mt-1">create your account</p>
+        </div>
+
+        <div ref={googleButtonRef} className="flex justify-center mb-4" />
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px bg-[var(--border-color)]" />
+          <span className="text-xs text-[var(--text-muted)] font-mono uppercase">or</span>
+          <div className="flex-1 h-px bg-[var(--border-color)]" />
         </div>
 
         <form onSubmit={handleRegister} className="glass-card p-6 space-y-4">
