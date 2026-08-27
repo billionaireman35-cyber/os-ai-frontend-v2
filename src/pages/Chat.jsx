@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon, Clock } from 'lucide-react';
+import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon, Clock, FileText, Download, Loader2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ToastContainer, useToast } from '../components/ui/Toast';
 
@@ -242,6 +242,41 @@ export default function Chat() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  // Downloads a generated document via an authenticated fetch (a plain
+  // <a href> can't carry the Bearer token), then triggers the browser's
+  // save dialog from the resulting blob.
+  const downloadDocument = async (documentId, filename) => {
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/chat/documents/${documentId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      addToast('Failed to download document.', 'error');
+    }
+  };
+
+  // Assistant messages for a generated document are stored (and streamed)
+  // with a leading [document:id:filename] marker - see chat.py's
+  // generate(). Parsing it here means both live-streamed and
+  // history-loaded messages render the same document card.
+  const parseDocumentMarker = (content) => {
+    if (!content) return null;
+    const match = content.match(/^\[document:([^:]+):([^\]]+)\]/);
+    if (!match) return null;
+    return { documentId: match[1], filename: match[2] };
+  };
+
   const sendMessage = async (e) => {
     e.preventDefault();
     if ((!input.trim() && !attachedImage) || loading) return;
@@ -302,12 +337,26 @@ export default function Chat() {
         role: 'assistant',
         content: '',
         id: Date.now().toString(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        generatingDocument: false,
       };
       let done = false;
       let receivedFirstChunk = false;
 
       setMessages(prev => [...prev, { ...assistantMessage }]);
+
+      const pushUpdate = () => {
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last && last.role === 'assistant' && last.id === assistantMessage.id) {
+            const updated = [...prev];
+            updated[updated.length - 1] = { ...assistantMessage };
+            return updated;
+          } else {
+            return [...prev, { ...assistantMessage }];
+          }
+        });
+      };
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -320,19 +369,19 @@ export default function Chat() {
             if (data === '[DONE]') { done = true; break; }
             try {
               const parsed = JSON.parse(data);
-              if (parsed.content) {
+              if (parsed.status === 'generating_document') {
+                receivedFirstChunk = true;
+                assistantMessage.generatingDocument = true;
+                pushUpdate();
+              } else if (parsed.document_ready) {
+                receivedFirstChunk = true;
+                assistantMessage.generatingDocument = false;
+                assistantMessage.content = `[document:${parsed.document_ready.document_id}:${parsed.document_ready.filename}] Generated **${parsed.document_ready.filename}**`;
+                pushUpdate();
+              } else if (parsed.content) {
                 receivedFirstChunk = true;
                 assistantMessage.content += parsed.content;
-                setMessages(prev => {
-                  const last = prev[prev.length - 1];
-                  if (last && last.role === 'assistant' && last.id === assistantMessage.id) {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = { ...assistantMessage };
-                    return updated;
-                  } else {
-                    return [...prev, { ...assistantMessage }];
-                  }
-                });
+                pushUpdate();
               }
             } catch (e) {}
           }
@@ -485,6 +534,7 @@ export default function Chat() {
         {messages.map((msg, idx) => {
           const isUser = msg.role === 'user';
           const isSystem = msg.role === 'assistant' && msg.model === 'system';
+          const docInfo = !isUser ? parseDocumentMarker(msg.content) : null;
           const msgId = msg.id || `msg-${idx}`;
           const isCopied = copiedId === msgId;
           const timestamp = msg.createdAt || msg.created || Date.now();
@@ -503,34 +553,59 @@ export default function Chat() {
                     {msg.model && <span className="text-[var(--text-muted)] opacity-60">• {msg.model}</span>}
                   </div>
                 )}
-                <div
-                  className={`animate-slide-up rounded-2xl px-5 py-3 ${
-                    isUser
-                      ? 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]'
-                      : isSystem
-                        ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-300'
-                        : 'text-[var(--text-primary)]'
-                  }`}
-                >
-                  {isUser ? (
-                    <>
-                      {msg.image && (
-                        <img
-                          src={msg.image}
-                          alt="Attached"
-                          className="rounded-xl max-h-64 max-w-full mb-2 object-contain"
-                        />
-                      )}
-                      {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
-                    </>
-                  ) : (
-                    <div className={`prose prose-sm max-w-none break-words ${theme === 'dark' ? 'prose-invert' : ''}`}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content || ' '}
-                      </ReactMarkdown>
+                {!isUser && !isSystem && msg.generatingDocument ? (
+                  <div className="animate-slide-up rounded-2xl px-5 py-4 flex items-center gap-2.5">
+                    <Loader2 size={16} className="animate-spin text-[var(--accent-brass)]" />
+                    <span className="text-sm text-[var(--text-secondary)]">Generating document...</span>
+                  </div>
+                ) : !isUser && !isSystem && docInfo ? (
+                  <div className="animate-slide-up rounded-2xl px-4 py-3.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] max-w-[280px]">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-[var(--accent-brass)]/12 text-[var(--accent-brass-bright)] flex items-center justify-center shrink-0">
+                        <FileText size={17} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13.5px] text-[var(--text-primary)] font-medium truncate">{docInfo.filename}</p>
+                        <p className="text-[11px] text-[var(--text-muted)]">Ready to download</p>
+                      </div>
                     </div>
-                  )}
-                </div>
+                    <button
+                      onClick={() => downloadDocument(docInfo.documentId, docInfo.filename)}
+                      className="btn-secondary w-full justify-center mt-3 text-[12.5px] py-1.5"
+                    >
+                      <Download size={13} /> Download
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className={`animate-slide-up rounded-2xl px-5 py-3 ${
+                      isUser
+                        ? 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]'
+                        : isSystem
+                          ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-300'
+                          : 'text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {isUser ? (
+                      <>
+                        {msg.image && (
+                          <img
+                            src={msg.image}
+                            alt="Attached"
+                            className="rounded-xl max-h-64 max-w-full mb-2 object-contain"
+                          />
+                        )}
+                        {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
+                      </>
+                    ) : (
+                      <div className={`prose prose-sm max-w-none break-words ${theme === 'dark' ? 'prose-invert' : ''}`}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content || ' '}
+                        </ReactMarkdown>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-1 mt-1">
                   {Object.entries(reactions).map(([emoji, users]) => (
                     <button
