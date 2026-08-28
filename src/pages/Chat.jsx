@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon, Clock, FileText, Download, Loader2 } from 'lucide-react';
+import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon, Clock, FileText, Download, Loader2, Share2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ToastContainer, useToast } from '../components/ui/Toast';
 
@@ -275,6 +275,30 @@ export default function Chat() {
     const match = content.match(/^\[document:([^:]+):([^\]]+)\]/);
     if (!match) return null;
     return { documentId: match[1], filename: match[2] };
+  };
+
+  const copyDocumentName = (filename) => {
+    copyToClipboard(filename, `doc-${filename}`);
+  };
+
+  const shareDocument = async (documentId, filename) => {
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/chat/documents/${documentId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch document');
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: blob.type });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename });
+      } else {
+        downloadDocument(documentId, filename);
+        addToast('Sharing not supported here - downloaded instead.', 'error');
+      }
+    } catch (e) {
+      addToast('Failed to share document.', 'error');
+    }
   };
 
   const sendMessage = async (e) => {
@@ -569,12 +593,30 @@ export default function Chat() {
                         <p className="text-[11px] text-[var(--text-muted)]">Ready to download</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => downloadDocument(docInfo.documentId, docInfo.filename)}
-                      className="btn-secondary w-full justify-center mt-3 text-[12.5px] py-1.5"
-                    >
-                      <Download size={13} /> Download
-                    </button>
+                    <div className="flex gap-1.5 mt-3">
+                      <button
+                        onClick={() => downloadDocument(docInfo.documentId, docInfo.filename)}
+                        className="btn-secondary flex-1 justify-center text-[12.5px] py-1.5"
+                      >
+                        <Download size={13} /> Download
+                      </button>
+                      <button
+                        onClick={() => copyDocumentName(docInfo.filename)}
+                        className="btn-glass-icon w-8 h-8 shrink-0"
+                        aria-label="Copy filename"
+                        title="Copy filename"
+                      >
+                        {copiedId === `doc-${docInfo.filename}` ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                      </button>
+                      <button
+                        onClick={() => shareDocument(docInfo.documentId, docInfo.filename)}
+                        className="btn-glass-icon w-8 h-8 shrink-0"
+                        aria-label="Share document"
+                        title="Share"
+                      >
+                        <Share2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div
