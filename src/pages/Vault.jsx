@@ -199,12 +199,12 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Deposit Crypto</h3>
+          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Buy CLOSE with Crypto</h3>
           <button onClick={onClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
         </div>
 
         <p className="text-sm text-[var(--text-secondary)]">
-          Send crypto to the address below, then paste your transaction hash to receive CLOSE.
+          This converts crypto you send into CLOSE at the current rate. It is a purchase, not a deposit into your wallet - your CLOSE balance updates once the payment is verified on-chain.
         </p>
 
         <div>
@@ -227,7 +227,7 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
         </div>
 
         <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
-          <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Deposit Address</label>
+          <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Send Payment To</label>
           <div className="flex items-center justify-between mt-1">
             <span className="text-xs font-mono break-all pr-2 text-[var(--text-primary)]">{DEPOSIT_ADDRESS}</span>
             <button onClick={copyAddress} className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
@@ -710,7 +710,7 @@ function StandardWallet() {
               onClick={() => setShowBuyModal(true)}
               className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors"
             >
-              <CreditCard size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Deposit</span>
+              <CreditCard size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Buy CLOSE</span>
             </button>
           </div>
 
@@ -838,7 +838,7 @@ function StandardWallet() {
 
       <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} assets={assets} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
-      <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Credited ${result.close_credited} CLOSE (${result.amount} ${result.token_symbol})`, 'success'); fetchBalances(); }} />
+      <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Purchased ${result.close_credited} CLOSE for ${result.amount} ${result.token_symbol}`, 'success'); fetchBalances(); }} />
       <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
       <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />
       <ChatTopupModal isOpen={showChatTopupModal} onClose={() => setShowChatTopupModal(false)} onToppedUp={(result) => { addToast(`Credited ${result.amount} CLOSE to your chat balance`, 'success'); }} />
