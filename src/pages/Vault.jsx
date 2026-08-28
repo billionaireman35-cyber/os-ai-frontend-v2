@@ -13,6 +13,7 @@ import { SwapModal } from '../components/SwapModal';
 import { Modal } from '../components/ui/Modal';
 import { WalletAnalytics } from '../components/wallet/WalletAnalytics';
 import { ToastContainer, useToast } from '../components/ui/Toast';
+import { Dropdown } from '../components/ui/Dropdown';
 
 const chains = ['all', 'polygon', 'ethereum', 'bsc', 'arbitrum', 'base'];
 const chainLogos = { polygon: '🟣', ethereum: '💎', bsc: '🟡', arbitrum: '🔵', base: '🔷' };
@@ -403,12 +404,11 @@ function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
         </div>
         <div>
           <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Token</label>
-          <select value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} className="input-glass w-full mt-1">
-            <option value="CLOSE">CLOSE</option>
-            {assets && assets.filter(a => a.symbol !== 'CLOSE').map(a => (
-              <option key={a.symbol} value={a.symbol}>{a.symbol}</option>
-            ))}
-          </select>
+          <Dropdown
+            value={tokenSymbol}
+            onChange={setTokenSymbol}
+            options={['CLOSE', ...((assets || []).filter(a => a.symbol !== 'CLOSE').map(a => a.symbol))]}
+          />
         </div>
         <div>
           <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount</label>
@@ -627,15 +627,12 @@ function StandardWallet() {
           />
           <div className="relative flex items-center justify-between mb-2">
             <p className="text-xs uppercase tracking-widest text-[var(--text-muted)]" style={{ letterSpacing: '2px' }}>Total Balance</p>
-            <select
+            <Dropdown
+              variant="compact"
               value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="text-[10px] font-mono uppercase bg-white/5 border border-[var(--glass-border)] rounded-lg px-2 py-1 text-[var(--text-secondary)]"
-            >
-              {supportedCurrencies.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+              onChange={setCurrency}
+              options={supportedCurrencies}
+            />
           </div>
           <div className="relative flex items-baseline gap-2 font-display mb-4">
             <span className="text-xl text-[var(--accent-brass)]">◈</span>
