@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
+import { Modal } from '../components/ui/Modal';
 import { Plus, Trash2, Copy, Check, Lock, X } from 'lucide-react';
 
 const GOLD_THRESHOLD = 10000;
@@ -20,6 +21,8 @@ export default function Developer() {
   const [newWebhookEvents, setNewWebhookEvents] = useState('new_message');
   const [newKey, setNewKey] = useState(null);
   const [copied, setCopied] = useState(false);
+  // { type: 'apiKey' | 'webhook', id } while a delete confirm is open, else null
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   const hasAccess = user?.stake_tier === 'gold' || user?.stake_tier === 'platinum' || user?.is_founder;
   const closeStaked = user?.close_staked || 0;
@@ -63,14 +66,8 @@ export default function Developer() {
     }
   };
 
-  const deleteApiKey = async (id) => {
-    if (!confirm('Delete this API key?')) return;
-    try {
-      await api.delete(`/developer/api-key/${id}`);
-      fetchData();
-    } catch (e) {
-      alert(e.response?.data?.detail || 'Failed to delete');
-    }
+  const deleteApiKey = (id) => {
+    setPendingDelete({ type: 'apiKey', id });
   };
 
   const createWebhook = async () => {
@@ -89,13 +86,20 @@ export default function Developer() {
     }
   };
 
-  const deleteWebhook = async (id) => {
-    if (!confirm('Delete this webhook?')) return;
+  const deleteWebhook = (id) => {
+    setPendingDelete({ type: 'webhook', id });
+  };
+
+  const confirmPendingDelete = async () => {
+    if (!pendingDelete) return;
+    const { type, id } = pendingDelete;
     try {
-      await api.delete(`/developer/webhook/${id}`);
+      await api.delete(type === 'apiKey' ? `/developer/api-key/${id}` : `/developer/webhook/${id}`);
       fetchData();
     } catch (e) {
       alert(e.response?.data?.detail || 'Failed to delete');
+    } finally {
+      setPendingDelete(null);
     }
   };
 
@@ -289,6 +293,17 @@ export default function Developer() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        title={pendingDelete?.type === 'apiKey' ? 'Delete API key' : 'Delete webhook'}
+        message={pendingDelete?.type === 'apiKey' ? 'Delete this API key?' : 'Delete this webhook?'}
+        showInput={false}
+        onConfirm={confirmPendingDelete}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { api } from '../../utils/api';
+import { Modal } from '../ui/Modal';
 
 const navItems = [
   { to: '/', label: 'Intelligence', icon: MessageSquare },
@@ -62,6 +63,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const [tapCount, setTapCount] = useState(0);
   const lastTapRef = useRef(0);
   const [showFounderModal, setShowFounderModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [founderKey, setFounderKey] = useState('');
   const [founderError, setFounderError] = useState('');
   const [founderSubmitting, setFounderSubmitting] = useState(false);
@@ -254,10 +256,12 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   };
 
   const handleLogout = () => {
-    if (confirm('Are you sure you want to log out?')) {
-      logout();
-      navigate('/login');
-    }
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   const newChat = () => {
@@ -572,6 +576,17 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
             </button>
           </div>
         </div>
+
+        <Modal
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          title="Log out"
+          message="Are you sure you want to log out?"
+          showInput={false}
+          onConfirm={confirmLogout}
+          confirmText="Log out"
+          cancelText="Cancel"
+        />
 
         {showFounderModal && (
           <div
