@@ -10,6 +10,33 @@ export function WalletProvider({ children }) {
   const [totalUsd, setTotalUsd] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Seeded from the user's saved preference once loaded (see the effect
+  // below); defaults to USD until then so nothing renders blank.
+  const [currency, setCurrencyState] = useState('USD');
+  const [supportedCurrencies, setSupportedCurrencies] = useState(['USD']);
+
+  useEffect(() => {
+    if (user?.preferred_currency) setCurrencyState(user.preferred_currency);
+  }, [user?.preferred_currency]);
+
+  useEffect(() => {
+    if (!user) return;
+    api.get('/wallet/supported-currencies')
+      .then((res) => setSupportedCurrencies(res.data.currencies || ['USD']))
+      .catch((e) => console.error('Failed to fetch supported currencies', e));
+  }, [user]);
+
+  // Persists the choice server-side, then updates local state - fetchBalances
+  // (called separately by the caller, since it depends on `currency` having
+  // already changed) will pick up the new value on its next call.
+  const setCurrency = async (newCurrency) => {
+    setCurrencyState(newCurrency);
+    try {
+      await api.put('/wallet/preferred-currency', { currency: newCurrency });
+    } catch (e) {
+      console.error('Failed to save currency preference', e);
+    }
+  };
 
   const fetchBalances = async () => {
     if (!user) {
@@ -21,7 +48,7 @@ export function WalletProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get('/wallet/balance');
+      const res = await api.get('/wallet/balance', { params: { currency } });
       const data = res.data.balances || {};
       const items = [];
       let total = 0;
@@ -81,10 +108,10 @@ export function WalletProvider({ children }) {
 
   useEffect(() => {
     fetchBalances();
-  }, [user]);
+  }, [user, currency]);
 
   return (
-    <WalletContext.Provider value={{ assets, totalUsd, loading, error, fetchBalances }}>
+    <WalletContext.Provider value={{ assets, totalUsd, loading, error, fetchBalances, currency, setCurrency, supportedCurrencies }}>
       {children}
     </WalletContext.Provider>
   );

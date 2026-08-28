@@ -494,7 +494,7 @@ function TransactionHistory({ isOpen, onClose }) {
 }
 
 function StandardWallet() {
-  const { assets, totalUsd, loading, error, fetchBalances } = useWallet();
+  const { assets, totalUsd, loading, error, fetchBalances, currency, setCurrency, supportedCurrencies } = useWallet();
   const { user, refreshUser } = useAuth();
   const { toasts, addToast, removeToast } = useToast();
   const [chain, setChain] = useState('all');
@@ -625,10 +625,21 @@ function StandardWallet() {
             className="absolute inset-0 pointer-events-none opacity-60"
             style={{ background: 'radial-gradient(circle at 25% 0%, rgba(201,169,97,0.16), transparent 65%)' }}
           />
-          <p className="relative text-xs uppercase tracking-widest mb-2 text-[var(--text-muted)]" style={{ letterSpacing: '2px' }}>Total Balance</p>
+          <div className="relative flex items-center justify-between mb-2">
+            <p className="text-xs uppercase tracking-widest text-[var(--text-muted)]" style={{ letterSpacing: '2px' }}>Total Balance</p>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="text-[10px] font-mono uppercase bg-white/5 border border-[var(--glass-border)] rounded-lg px-2 py-1 text-[var(--text-secondary)]"
+            >
+              {supportedCurrencies.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
           <div className="relative flex items-baseline gap-2 font-display mb-4">
             <span className="text-xl text-[var(--accent-brass)]">◈</span>
-            <span className="text-4xl font-bold text-[var(--text-primary)]">${totalUsd.toFixed(2)}</span>
+            <span className="text-4xl font-bold text-[var(--text-primary)]">{currency} {totalUsd.toFixed(2)}</span>
           </div>
 
           {/* CLOSE strip - elevated, distinct from the total above it */}
