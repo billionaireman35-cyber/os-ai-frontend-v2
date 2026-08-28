@@ -28,6 +28,20 @@ function extractErrorMessage(e, fallback) {
   return e.message || fallback;
 }
 
+// Converts a decimal amount string (e.g. "500000" or "0.0001") to a wei
+// integer string, using string/BigInt math instead of float multiplication
+// - `parseFloat(amount) * 1e18` loses precision and can render in
+// exponential notation (e.g. "5e+23") for large amounts, which FastAPI's
+// `int` body parser rejects outright.
+function toWeiString(amountStr, decimals = 18) {
+  const s = String(amountStr).trim();
+  const [whole, frac = ''] = s.split('.');
+  const fracPadded = (frac + '0'.repeat(decimals)).slice(0, decimals);
+  const wholeDigits = whole.replace(/[^0-9]/g, '') || '0';
+  const combined = (wholeDigits + fracPadded).replace(/^0+(?=\d)/, '');
+  return BigInt(combined || '0').toString();
+}
+
 function SendModal({ isOpen, onClose, asset, assets, onSent }) {
   // _prefillTo/_prefillAmount are optional extra fields a caller can set
   // on the asset object to pre-populate the form (e.g. Staking's "Send
@@ -79,7 +93,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent }) {
       const res = await api.post('/wallet/send', {
         chain: asset.chain,
         to_address: to,
-        amount_wei: (parseFloat(amount) * 1e18).toString(),
+        amount_wei: toWeiString(amount),
         password,
         token_address: asset.address || null,
       });
