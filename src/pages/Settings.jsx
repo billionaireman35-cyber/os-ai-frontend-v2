@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../utils/api';
+import { Dropdown } from '../components/ui/Dropdown';
 import {
   Moon, Sun, LogOut, User, Wallet, Copy, CheckCircle,
   Bell, Lock, Eye, Globe, Server, MessageSquare, Languages, Info, FileText,
@@ -473,16 +474,16 @@ export default function Settings() {
     <div className="p-4 space-y-4">
       <div>
         <label className="text-sm text-[var(--text-muted)] block">Default AI Model</label>
-        <select
+        <Dropdown
           value={settings.chat.defaultModel}
-          onChange={(e) => updateSettings({ chat: { ...settings.chat, defaultModel: e.target.value } })}
-          className="input-glass w-full mt-1"
-        >
-          <option value="llama-3.3-70b">Llama 3.3 70B</option>
-          <option value="gpt-4o">GPT-4o</option>
-          <option value="claude-sonnet-5">Claude Sonnet 5</option>
-          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-        </select>
+          onChange={(v) => updateSettings({ chat: { ...settings.chat, defaultModel: v } })}
+          options={[
+            { value: 'llama-3.3-70b', label: 'Llama 3.3 70B' },
+            { value: 'gpt-4o', label: 'GPT-4o' },
+            { value: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
+            { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+          ]}
+        />
       </div>
       <div>
         <label className="text-sm text-[var(--text-muted)] block">Temperature: {settings.chat.temperature.toFixed(1)}</label>
@@ -503,18 +504,18 @@ export default function Settings() {
     <div className="p-4 space-y-4">
       <div>
         <label className="text-sm text-[var(--text-muted)] block">Interface Language</label>
-        <select
+        <Dropdown
           value={settings.language}
-          onChange={(e) => updateSettings({ language: e.target.value })}
-          className="input-glass w-full mt-1"
-        >
-          <option value="en">English</option>
-          <option value="es">Español</option>
-          <option value="fr">Français</option>
-          <option value="pt">Português</option>
-          <option value="ar">العربية</option>
-          <option value="zh">中文</option>
-        </select>
+          onChange={(v) => updateSettings({ language: v })}
+          options={[
+            { value: 'en', label: 'English' },
+            { value: 'es', label: 'Español' },
+            { value: 'fr', label: 'Français' },
+            { value: 'pt', label: 'Português' },
+            { value: 'ar', label: 'العربية' },
+            { value: 'zh', label: '中文' },
+          ]}
+        />
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon, Clock, FileText, Download, Loader2, Share2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ToastContainer, useToast } from '../components/ui/Toast';
+import { Dropdown } from '../components/ui/Dropdown';
 
 const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
 
@@ -735,17 +736,17 @@ export default function Chat() {
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Report this response</h3>
             <p className="text-[var(--text-secondary)] text-sm">Help us review potentially problematic AI-generated content.</p>
-            <select
+            <Dropdown
               value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-              className="input-base w-full"
-            >
-              <option value="">Select a reason...</option>
-              <option value="inappropriate">Inappropriate content</option>
-              <option value="harmful">Harmful or dangerous</option>
-              <option value="misinformation">Misinformation</option>
-              <option value="other">Other</option>
-            </select>
+              onChange={setReportReason}
+              placeholder="Select a reason..."
+              options={[
+                { value: 'inappropriate', label: 'Inappropriate content' },
+                { value: 'harmful', label: 'Harmful or dangerous' },
+                { value: 'misinformation', label: 'Misinformation' },
+                { value: 'other', label: 'Other' },
+              ]}
+            />
             <textarea
               value={reportDetails}
               onChange={(e) => setReportDetails(e.target.value)}
