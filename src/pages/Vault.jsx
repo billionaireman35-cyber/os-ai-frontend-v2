@@ -43,7 +43,7 @@ function toWeiString(amountStr, decimals = 18) {
   return BigInt(combined || '0').toString();
 }
 
-function SendModal({ isOpen, onClose, asset, assets, onSent }) {
+function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) {
   // _prefillTo/_prefillAmount are optional extra fields a caller can set
   // on the asset object to pre-populate the form (e.g. Staking's "Send
   // from OS Vaults" shortcut, which pre-fills the treasury address and
@@ -61,6 +61,17 @@ function SendModal({ isOpen, onClose, asset, assets, onSent }) {
     if (isOpen && asset?._prefillTo) setTo(asset._prefillTo);
     if (isOpen && asset?._prefillAmount) setAmount(asset._prefillAmount);
   }, [isOpen, asset?._prefillTo, asset?._prefillAmount]);
+
+  // Force a fresh balance fetch every time the modal opens - `assets`
+  // (and therefore polBalance/insufficientGas below) can otherwise be
+  // stale from whenever the page last loaded or last refreshed, which
+  // has caused real failed sends: gas actually available on-chain, but
+  // insufficientGas read true/false against outdated cached data (seen
+  // 2026-08-28 - a send failed with 0 gas balance shortly after a
+  // network outage, while the wallet's real POL balance was nonzero).
+  useEffect(() => {
+    if (isOpen) refreshBalances?.();
+  }, [isOpen]);
 
   if (!isOpen || !asset) return null;
 
@@ -836,7 +847,7 @@ function StandardWallet() {
         </div>
       )}
 
-      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} refreshBalances={fetchBalances} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} assets={assets} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Purchased ${result.close_credited} CLOSE for ${result.amount} ${result.token_symbol}`, 'success'); fetchBalances(); }} />
       <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
@@ -1257,6 +1268,7 @@ function Staking() {
           onClose={() => setShowSendFromVault(false)}
           asset={{ ...closeAsset, _prefillTo: treasuryAddress, _prefillAmount: stakeAmount }}
           assets={assets}
+          refreshBalances={fetchBalances}
           onSent={(txHash) => {
             setShowSendFromVault(false);
             setStakeTxHash(txHash);
