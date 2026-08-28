@@ -383,6 +383,14 @@ export default function Chat() {
         });
       };
 
+      // Track whether the stream ended because the server actually said
+      // [DONE], vs. the connection just breaking (network drop, mobile
+      // backgrounding, a host closing an idle connection). Both look
+      // identical to reader.read() (readerDone: true either way) - without
+      // this flag, an interrupted stream silently looked like a normal,
+      // complete response with no error shown. Added 2026-08-21.
+      let receivedDoneSentinel = false;
+
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         if (readerDone) { done = true; break; }
@@ -391,7 +399,7 @@ export default function Chat() {
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
-            if (data === '[DONE]') { done = true; break; }
+            if (data === '[DONE]') { done = true; receivedDoneSentinel = true; break; }
             try {
               const parsed = JSON.parse(data);
               if (parsed.status === 'generating_document') {
@@ -419,6 +427,23 @@ export default function Chat() {
           const last = updated[updated.length - 1];
           if (last && last.role === 'assistant' && last.id === assistantMessage.id) {
             updated[updated.length - 1] = { ...last, content: 'No response received.' };
+          }
+          return updated;
+        });
+      } else if (!receivedDoneSentinel) {
+        // Stream ended without the server's own [DONE] marker - the
+        // connection was interrupted partway through, not a real
+        // completion. Mark it visibly instead of pretending the partial
+        // content is the full answer.
+        setMessages(prev => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last && last.role === 'assistant' && last.id === assistantMessage.id) {
+            updated[updated.length - 1] = {
+              ...last,
+              interrupted: true,
+              content: last.content + '\n\n⚠️ *Response was interrupted - connection dropped before it finished.*',
+            };
           }
           return updated;
         });
