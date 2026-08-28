@@ -59,6 +59,23 @@ function SendModal({ isOpen, onClose, asset, assets, onSent }) {
     setLoading(true);
     setError(null);
     try {
+      // Sponsored path: CLOSE-only, relayer pays gas. Anything else with
+      // insufficient POL stays blocked (button is disabled via
+      // `insufficientGas` below in that case, so this branch is CLOSE-only
+      // by construction).
+      if (asset.symbol === 'CLOSE' && insufficientGas) {
+        const res = await api.post('/swap/send-sponsored', {
+          to_address: to,
+          amount: parseFloat(amount),
+          password,
+        });
+        // Backend returns { fee_tx, send_tx } - send_tx is the user-facing
+        // transaction, fee_tx is the relayer's internal fee pull.
+        onSent?.(res.data.send_tx);
+        onClose();
+        return;
+      }
+
       const res = await api.post('/wallet/send', {
         chain: asset.chain,
         to_address: to,
@@ -95,14 +112,19 @@ function SendModal({ isOpen, onClose, asset, assets, onSent }) {
           <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
             <span>Chain: <span className="text-[var(--text-primary)] font-medium">{asset.chain}</span></span>
           </div>
-          {insufficientGas && (
+          {insufficientGas && asset.symbol === 'CLOSE' && (
+            <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
+              ⚡ Low POL balance - this send will use gasless (sponsored) delivery instead.
+            </p>
+          )}
+          {insufficientGas && asset.symbol !== 'CLOSE' && (
             <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
               ⚠️ Low POL balance ({polBalance.toFixed(4)} POL) - you need at least {MIN_GAS_POL} POL to cover gas for this transaction.
             </p>
           )}
           {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
           <div className="flex gap-2">
-            <button onClick={() => setShowPasswordModal(true)} disabled={loading || insufficientGas} className="btn-primary flex-1 justify-center">
+            <button onClick={() => setShowPasswordModal(true)} disabled={loading || (insufficientGas && asset.symbol !== 'CLOSE')} className="btn-primary flex-1 justify-center">
               {loading ? <Loader2 size={20} className="animate-spin" /> : 'Send'}
             </button>
             <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
