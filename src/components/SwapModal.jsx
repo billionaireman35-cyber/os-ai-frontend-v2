@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2, ArrowUpDown } from 'lucide-react';
 import { api } from '../utils/api';
 import { Modal } from './ui/Modal';
+import { Dropdown } from './ui/Dropdown';
 
 const TOKEN_MAP = {
   MATIC: '0x0000000000000000000000000000000000001010',
@@ -110,9 +111,9 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }
           <div>
             <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">From</label>
             <div className="flex gap-2 mt-1">
-              <select value={fromToken} onChange={(e) => setFromToken(e.target.value)} className="input-base flex-1">
-                {tokens.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <div className="flex-1">
+                <Dropdown value={fromToken} onChange={setFromToken} options={tokens} />
+              </div>
               <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-base w-32" placeholder="0.0" min="0" step="0.001" />
             </div>
           </div>
@@ -125,9 +126,7 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }
 
           <div>
             <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">To</label>
-            <select value={toToken} onChange={(e) => setToToken(e.target.value)} className="input-base w-full">
-              {tokens.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <Dropdown value={toToken} onChange={setToToken} options={tokens} />
           </div>
 
           {loading && <div className="text-sm text-[var(--text-muted)]">Getting quote...</div>}

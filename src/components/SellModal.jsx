@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { api } from '../utils/api';
+import { Dropdown } from './ui/Dropdown';
 
 export function SellModal({ isOpen, onClose, onSell }) {
   const [currency, setCurrency] = useState('eth');
@@ -41,13 +42,17 @@ export function SellModal({ isOpen, onClose, onSell }) {
         </div>
         <div>
           <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Currency</label>
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="input-base">
-            <option value="eth">Ethereum (ETH)</option>
-            <option value="polygon">Polygon (POL)</option>
-            <option value="bnb">BNB</option>
-            <option value="usdc">USDC</option>
-            <option value="usdt">USDT</option>
-          </select>
+          <Dropdown
+            value={currency}
+            onChange={setCurrency}
+            options={[
+              { value: 'eth', label: 'Ethereum (ETH)' },
+              { value: 'polygon', label: 'Polygon (POL)' },
+              { value: 'bnb', label: 'BNB' },
+              { value: 'usdc', label: 'USDC' },
+              { value: 'usdt', label: 'USDT' },
+            ]}
+          />
         </div>
         <div>
           <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount (Crypto)</label>
