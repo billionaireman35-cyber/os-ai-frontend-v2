@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { useWallet } from '../../context/WalletContext';
 import {
   MessageSquare,
   Wallet,
@@ -14,8 +13,6 @@ import {
   SquarePen,
   Search,
   Settings,
-  Coins,
-  LogOut,
   Zap,
   ChevronDown,
   Star,
@@ -23,7 +20,6 @@ import {
   Trophy,
 } from 'lucide-react';
 import { api } from '../../utils/api';
-import { Modal } from '../ui/Modal';
 
 const navItems = [
   { to: '/', label: 'Intelligence', icon: MessageSquare },
@@ -39,9 +35,6 @@ const PINNED_KEY = 'os-ai-pinned';
 export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNewChat, onSelectChat }) {
   const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { assets: walletAssets } = useWallet();
-  const closeAsset = walletAssets?.find((a) => a.symbol === 'CLOSE' && a.chain === 'polygon');
-  const displayCloseBalance = closeAsset ? closeAsset.balance : 0;
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
   const recentRef = useRef(null);
@@ -63,7 +56,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
   const [tapCount, setTapCount] = useState(0);
   const lastTapRef = useRef(0);
   const [showFounderModal, setShowFounderModal] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [founderKey, setFounderKey] = useState('');
   const [founderError, setFounderError] = useState('');
   const [founderSubmitting, setFounderSubmitting] = useState(false);
@@ -255,15 +247,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     }
   };
 
-  const handleLogout = () => {
-    setShowLogoutConfirm(true);
-  };
-
-  const confirmLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const newChat = () => {
     if (onNewChat) {
       onNewChat();
@@ -303,15 +286,6 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
     },
   });
 
-  const tierLabels = {
-    platinum: '💎 Platinum',
-    gold: '⭐ Gold',
-    bronze: '🥉 Bronze',
-  };
-  const tierBadge = user?.is_founder
-    ? '👑 Founder'
-    : (user?.stake_tier ? tierLabels[user.stake_tier] || '🥉 Bronze' : '🥉 Bronze');
-
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
@@ -344,7 +318,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
         aria-modal={mobileOpen ? 'true' : undefined}
         aria-label="Sidebar navigation"
         aria-hidden={!isOpen}
-        className={`glass-panel fixed top-0 left-0 h-full w-[300px] flex flex-col overflow-y-auto transition-transform duration-200 ease-in-out z-50 ${
+        className={`glass-panel fixed top-0 left-0 h-full w-[380px] flex flex-col overflow-y-auto transition-transform duration-200 ease-in-out z-50 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -540,7 +514,13 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           )}
         </div>
 
-        <div className="border-t border-[var(--border-color)] px-3 py-3 flex items-center gap-3 shrink-0">
+        <button
+          onClick={() => {
+            navigate('/settings');
+            if (isMobile()) resetSidebarState();
+          }}
+          className="border-t border-[var(--border-color)] px-3 py-3 flex items-center gap-3 shrink-0 hover:bg-[var(--bg-tertiary)] transition-colors w-full text-left"
+        >
           <div
             className="w-9 h-9 rounded-full bg-[var(--accent-brass)]/15 flex items-center justify-center text-[var(--accent-brass-bright)] font-bold text-[15px] shrink-0"
             aria-hidden="true"
@@ -549,44 +529,10 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[14px] text-[var(--text-primary)] font-medium truncate">{user?.name || 'Guest'}</p>
-            <div className="flex items-center gap-1.5 text-[11.5px] text-[var(--text-muted)]">
-              <Coins size={12} aria-hidden="true" /> {displayCloseBalance} CLOSE
-              <span className="px-1.5 py-0.5 rounded-full bg-[var(--accent-brass)]/10 text-[10px] text-[var(--accent-brass-bright)] font-medium">
-                {tierBadge}
-              </span>
-            </div>
+            <p className="text-[11.5px] text-[var(--text-muted)]">Tap for settings</p>
           </div>
-          <div className="flex gap-0.5">
-            <button
-              onClick={() => {
-                navigate('/settings');
-                if (isMobile()) resetSidebarState();
-              }}
-              className="btn-glass-icon w-8 h-8"
-              aria-label="Settings"
-            >
-              <Settings size={16} />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="btn-glass-icon w-8 h-8 hover:text-[var(--danger)]"
-              aria-label="Log out"
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-
-        <Modal
-          isOpen={showLogoutConfirm}
-          onClose={() => setShowLogoutConfirm(false)}
-          title="Log out"
-          message="Are you sure you want to log out?"
-          showInput={false}
-          onConfirm={confirmLogout}
-          confirmText="Log out"
-          cancelText="Cancel"
-        />
+          <Settings size={16} className="text-[var(--text-muted)] shrink-0" aria-hidden="true" />
+        </button>
 
         {showFounderModal && (
           <div

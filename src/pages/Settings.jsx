@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../utils/api';
+import { Modal } from '../components/ui/Modal';
 import { Dropdown } from '../components/ui/Dropdown';
 import {
   Moon, Sun, LogOut, User, Wallet, Copy, CheckCircle,
   Bell, Lock, Eye, Globe, Server, MessageSquare, Languages, Info, FileText,
-  ChevronRight, ArrowLeft, Save, RefreshCw, AlertTriangle, Camera, Plus
+  ChevronRight, ArrowLeft, Save, RefreshCw, AlertTriangle, Camera, Plus,
+  Coins, Crown,
 } from 'lucide-react';
 
 const defaultSettings = {
@@ -47,6 +49,7 @@ function Toggle({ on, onClick }) {
 export default function Settings() {
   const navigate = useNavigate();
   const { user, setUser, logout, updateName } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState(loadSettings);
   const [section, setSection] = useState(null);
@@ -212,8 +215,44 @@ export default function Settings() {
     { key: 'terms', label: 'Terms & Conditions', icon: FileText, path: '/privacy-terms' },
   ];
 
+  const tierLabels = {
+    platinum: 'Platinum',
+    gold: 'Gold',
+    bronze: 'Bronze',
+  };
+  const tierBadgeLabel = user?.is_founder
+    ? 'Founder'
+    : (user?.stake_tier ? tierLabels[user.stake_tier] || 'Bronze' : 'Bronze');
+
   const renderMain = () => (
     <div className="p-4 space-y-2">
+      <div className="relative rounded-2xl p-5 mb-2 overflow-hidden bg-gradient-to-br from-[var(--accent-brass)]/15 to-[var(--accent-brass)]/[0.02] border border-[var(--accent-brass)]/30">
+        <div className="flex items-center gap-3.5">
+          <div className="w-14 h-14 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-2xl font-bold text-[var(--accent-indigo)] overflow-hidden shrink-0">
+            {profilePic ? (
+              <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              user?.name?.charAt(0).toUpperCase() || 'G'
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-lg font-bold text-[var(--text-primary)] truncate">{user?.name || 'Guest'}</p>
+            <p className="text-xs text-[var(--text-muted)] truncate">{user?.email}</p>
+            <span className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full bg-[var(--accent-brass)]/12 border border-[var(--accent-brass)]/25 text-[var(--accent-brass)] text-xs font-semibold">
+              <Crown size={12} /> {tierBadgeLabel}
+            </span>
+          </div>
+        </div>
+        <div className="mt-4 bg-white/[0.04] rounded-xl px-4 py-3">
+          <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
+            <Coins size={11} /> CLOSE Balance
+          </p>
+          <p className="text-xl font-display font-bold text-[var(--accent-brass)] mt-0.5">
+            {user?.close_balance?.toLocaleString() ?? 0}
+          </p>
+        </div>
+      </div>
+
       {sections.map(({ key, label, icon: Icon }) => (
         <button
           key={key}
@@ -264,13 +303,24 @@ export default function Settings() {
       )}
 
       <button
-        onClick={() => { logout(); navigate('/login'); }}
+        onClick={() => setShowLogoutConfirm(true)}
         className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-[var(--danger)] bg-[var(--danger)]/[0.06] hover:bg-[var(--danger)]/[0.12] transition-colors mt-1"
       >
         <LogOut size={19} />
         <span className="text-sm">Logout</span>
       </button>
       <div className="text-xs text-[var(--text-muted)] font-mono p-3 text-center">OS AI v2.0</div>
+
+      <Modal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="Log out"
+        message="Are you sure you want to log out?"
+        showInput={false}
+        onConfirm={() => { logout(); navigate('/login'); }}
+        confirmText="Log out"
+        cancelText="Cancel"
+      />
     </div>
   );
 
