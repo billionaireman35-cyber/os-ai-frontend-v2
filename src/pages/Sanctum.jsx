@@ -324,6 +324,8 @@ function TreasuryTab({ active }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sweeping, setSweeping] = useState(false);
+  const [sweepResult, setSweepResult] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -337,6 +339,22 @@ function TreasuryTab({ active }) {
       setLoading(false);
     }
   }, []);
+
+  const handleSweep = async () => {
+    setSweeping(true);
+    setSweepResult(null);
+    try {
+      const res = await api.post('/founder-suite/staking-treasury/sweep');
+      setSweepResult({ ok: true, ...res.data });
+      // Refresh the overview - the on-chain balance and swept status
+      // both just changed.
+      load();
+    } catch (e) {
+      setSweepResult({ ok: false, message: e.response?.data?.detail || e.message || 'Sweep failed' });
+    } finally {
+      setSweeping(false);
+    }
+  };
 
   useEffect(() => {
     if (active && !data && !loading) load();
@@ -381,6 +399,36 @@ function TreasuryTab({ active }) {
         </div>
         <p className="text-xs text-[var(--text-muted)] mt-1 font-mono break-all">{data.treasury_address}</p>
       </div>
+
+      <button
+        onClick={handleSweep}
+        disabled={sweeping}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-semibold text-sm transition disabled:opacity-50 bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B]"
+      >
+        {sweeping ? <Loader2 size={16} className="animate-spin" /> : null}
+        {sweeping ? 'Sweeping...' : 'Sweep Unswept Funding to Treasury'}
+      </button>
+
+      {sweepResult && (
+        <div
+          className="rounded-xl p-3 text-xs"
+          style={{
+            background: sweepResult.ok ? 'rgba(110,155,121,0.1)' : 'rgba(193,85,74,0.1)',
+            border: `1px solid ${sweepResult.ok ? 'rgba(110,155,121,0.35)' : 'rgba(193,85,74,0.4)'}`,
+            color: sweepResult.ok ? 'var(--success)' : 'var(--danger)',
+          }}
+        >
+          {sweepResult.ok ? (
+            sweepResult.swept ? (
+              <>Swept {sweepResult.amount.toLocaleString()} CLOSE from {sweepResult.row_count} messages. Tx: {sweepResult.tx_hash?.slice(0, 14)}...</>
+            ) : (
+              <>Nothing to sweep - no unswept funding rows.</>
+            )
+          ) : (
+            <>⚠️ {sweepResult.message}</>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2.5">
         <div className="glass-panel rounded-2xl p-4">
