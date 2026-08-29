@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
-import { Crown, Loader2, Users, Layers, ArrowLeftRight, Coins, Vault, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Crown, Loader2, Users, Layers, ArrowLeftRight, Coins, Vault, CheckCircle, AlertTriangle, Vote } from 'lucide-react';
 
 const PAGE_SIZE = 50;
 
@@ -10,6 +10,7 @@ const TABS = [
   { key: 'workspaces', label: 'Hubs', icon: Layers },
   { key: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
   { key: 'treasury', label: 'Treasury', icon: Vault },
+  { key: 'governance', label: 'Governance', icon: Vote },
 ];
 
 function usePaginatedFounderData(endpoint, listKey, active) {
@@ -207,6 +208,118 @@ function TransactionsTab({ active }) {
   );
 }
 
+function GovernanceTab({ active }) {
+  const [proposals, setProposals] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [reasonDrafts, setReasonDrafts] = useState({});
+  const [submitting, setSubmitting] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/governance/proposals');
+      setProposals(res.data.proposals || []);
+      setError(null);
+    } catch (e) {
+      setError(e.response?.data?.detail || e.message || 'Failed to load');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (active) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
+  const decide = async (proposalId, decision) => {
+    const reason = (reasonDrafts[proposalId] || '').trim();
+    if (!reason) return;
+    setSubmitting(proposalId);
+    try {
+      await api.post(`/governance/proposals/${proposalId}/founder-decision`, { decision, reason });
+      await load();
+    } catch (e) {
+      setError(e.response?.data?.detail || e.message || 'Failed to record decision');
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="p-4 text-yellow-400">
+        <p>⚠️ {error}</p>
+        <button onClick={load} className="mt-2 underline text-[#d4af37]">Retry</button>
+      </div>
+    );
+  }
+
+  if (loading && proposals.length === 0) {
+    return <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-[#d4af37]" /></div>;
+  }
+
+  const needsDecision = proposals.filter((p) => p.status !== 'active' && !p.founder_decision);
+  const rest = proposals.filter((p) => !(p.status !== 'active' && !p.founder_decision));
+
+  const statusColor = (status) => ({
+    active: '#d4af37', passed: '#6E9B79', failed: '#C1554A',
+    quorum_not_reached: 'var(--text-muted)', approved: '#6E9B79', rejected: '#C1554A',
+  }[status] || 'var(--text-muted)');
+
+  const renderProposal = (p, awaitingDecision) => (
+    <div key={p.id} className="glass-card p-3 border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl space-y-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-bold">{p.title}</p>
+          <p className="text-xs text-[var(--text-muted)] line-clamp-2">{p.description}</p>
+        </div>
+        <span className="text-[10px] font-mono uppercase whitespace-nowrap px-2 py-1 rounded-full shrink-0" style={{ color: statusColor(p.effective_status), background: 'rgba(255,255,255,0.05)' }}>
+          {p.effective_status.replace(/_/g, ' ')}
+        </span>
+      </div>
+      <p className="text-xs font-mono text-[var(--text-muted)]">
+        {p.voter_count} voters · {p.vote_totals.for.toLocaleString()} for · {p.vote_totals.against.toLocaleString()} against
+      </p>
+      {p.founder_reason && (
+        <p className="text-xs text-[var(--text-secondary)] italic">"{p.founder_reason}"</p>
+      )}
+      {awaitingDecision && (
+        <div className="space-y-2 pt-2 border-t border-dashed border-[var(--border-color)]">
+          <textarea
+            value={reasonDrafts[p.id] || ''}
+            onChange={(e) => setReasonDrafts((prev) => ({ ...prev, [p.id]: e.target.value }))}
+            className="input-glass w-full min-h-[60px] text-sm"
+            placeholder="Reason (shown publicly on this proposal)"
+          />
+          <div className="flex gap-2">
+            <button onClick={() => decide(p.id, 'approved')} disabled={submitting === p.id} className="flex-1 py-2 rounded-xl text-xs font-semibold bg-[#6E9B79] text-black">Approve</button>
+            <button onClick={() => decide(p.id, 'rejected')} disabled={submitting === p.id} className="flex-1 py-2 rounded-xl text-xs font-semibold bg-[#C1554A] text-white">Reject</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {needsDecision.length > 0 && (
+        <>
+          <p className="text-xs font-mono uppercase tracking-wide text-[var(--accent-brass-bright)]">Awaiting Decision ({needsDecision.length})</p>
+          <div className="space-y-2">{needsDecision.map((p) => renderProposal(p, true))}</div>
+        </>
+      )}
+      <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">All Proposals</p>
+      {rest.length === 0 && needsDecision.length === 0 ? (
+        <div className="text-center text-[var(--text-muted)] py-10">No proposals found</div>
+      ) : (
+        <div className="space-y-2">{rest.map((p) => renderProposal(p, false))}</div>
+      )}
+    </div>
+  );
+}
+
 function TreasuryTab({ active }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -389,6 +502,7 @@ export default function Sanctum() {
         {tab === 'workspaces' && <WorkspacesTab active={tab === 'workspaces'} />}
         {tab === 'transactions' && <TransactionsTab active={tab === 'transactions'} />}
         {tab === 'treasury' && <TreasuryTab active={tab === 'treasury'} />}
+        {tab === 'governance' && <GovernanceTab active={tab === 'governance'} />}
       </div>
     </div>
   );
