@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign,
   BarChart, Wallet, RefreshCw, Loader2, Copy, CheckCircle,
-  ArrowUpRight, ArrowDownRight, Flame, Coins, History, ExternalLink, MessageSquare
+  ArrowUpRight, ArrowDownRight, Flame, Coins, History, ExternalLink, MessageSquare, Vote
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { useAuth } from '../context/AuthContext';
@@ -1301,6 +1301,231 @@ function Staking() {
   );
 }
 
+function Governance() {
+  const { assets } = useWallet();
+  const { user } = useAuth();
+  const { toasts, addToast, removeToast } = useToast();
+
+  const [params, setParams] = useState(null);
+  const [proposals, setProposals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [selectedProposal, setSelectedProposal] = useState(null);
+  const [votingPower, setVotingPower] = useState(null);
+  const [voting, setVoting] = useState(false);
+
+  const [showNewProposal, setShowNewProposal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [submittingProposal, setSubmittingProposal] = useState(false);
+
+  const closeStaked = 0; // proposal eligibility is checked server-side against real stake_positions, not this display value
+
+  const loadData = () => {
+    setLoading(true);
+    Promise.all([
+      api.get('/governance/params'),
+      api.get('/governance/proposals'),
+    ])
+      .then(([paramsRes, proposalsRes]) => {
+        setParams(paramsRes.data);
+        setProposals(proposalsRes.data.proposals || []);
+      })
+      .catch((e) => addToast(extractErrorMessage(e, 'Failed to load governance data'), 'error'))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { if (user) loadData(); }, [user]);
+
+  const openProposal = (proposal) => {
+    setSelectedProposal(proposal);
+    setVotingPower(null);
+    api.get(`/governance/proposals/${proposal.id}/my-power`)
+      .then((res) => setVotingPower(res.data))
+      .catch((e) => addToast(extractErrorMessage(e, 'Failed to load voting power'), 'error'));
+  };
+
+  const castVote = async (support) => {
+    if (!selectedProposal) return;
+    setVoting(true);
+    try {
+      await api.post(`/governance/proposals/${selectedProposal.id}/vote`, { support });
+      addToast('Vote cast!', 'success');
+      setSelectedProposal(null);
+      loadData();
+    } catch (e) {
+      addToast(extractErrorMessage(e, 'Vote failed'), 'error');
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  const submitProposal = async () => {
+    if (!newTitle.trim() || !newDescription.trim()) {
+      addToast('Title and description are required', 'error');
+      return;
+    }
+    setSubmittingProposal(true);
+    try {
+      await api.post('/governance/proposals', { title: newTitle.trim(), description: newDescription.trim() });
+      addToast('Proposal created!', 'success');
+      setShowNewProposal(false);
+      setNewTitle('');
+      setNewDescription('');
+      loadData();
+    } catch (e) {
+      addToast(extractErrorMessage(e, 'Failed to create proposal'), 'error');
+    } finally {
+      setSubmittingProposal(false);
+    }
+  };
+
+  const statusLabel = (status) => ({
+    active: 'Active',
+    passed: 'Passed',
+    failed: 'Failed',
+    quorum_not_reached: 'Quorum not reached',
+  }[status] || status);
+
+  const statusColor = (status) => ({
+    active: 'var(--accent-brass-bright)',
+    passed: 'var(--success)',
+    failed: 'var(--danger)',
+    quorum_not_reached: 'var(--text-muted)',
+  }[status] || 'var(--text-muted)');
+
+  return (
+    <div className="space-y-6">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      {params && (
+        <div className="glass-panel rounded-2xl p-4 space-y-1.5">
+          <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Requirements</p>
+          <p className="text-sm text-[var(--text-secondary)]">
+            {params.min_staked_to_propose.toLocaleString()} CLOSE staked to propose · {params.voting_period_days}-day voting period · {params.quorum_percent}% quorum
+          </p>
+        </div>
+      )}
+
+      {loading && (
+        <div className="space-y-2">
+          {[1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-white/5" />)}
+        </div>
+      )}
+
+      {!loading && (
+        <>
+          <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Proposals</p>
+
+          {proposals.length === 0 ? (
+            <div className="glass-panel rounded-2xl p-8 text-center">
+              <p className="text-sm text-[var(--text-muted)]">No proposals yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {proposals.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => openProposal(p)}
+                  className="w-full text-left glass-panel rounded-2xl p-4 transition hover:border-[var(--glass-border-hover)]"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <p className="font-display font-bold text-base text-[var(--text-primary)] pr-3">{p.title}</p>
+                    <span className="text-[10px] font-mono uppercase whitespace-nowrap px-2 py-1 rounded-full" style={{ color: statusColor(p.status), background: 'rgba(255,255,255,0.05)' }}>
+                      {statusLabel(p.status)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] line-clamp-2">{p.description}</p>
+                  <div className="flex items-center gap-3 mt-3 text-[10px] font-mono text-[var(--text-muted)]">
+                    <span>{p.voter_count} voters</span>
+                    <span>{p.vote_totals.for.toLocaleString()} for · {p.vote_totals.against.toLocaleString()} against</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowNewProposal(true); }}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B]"
+          >
+            + New Proposal
+          </button>
+        </>
+      )}
+
+      {showNewProposal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowNewProposal(false)}>
+          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Proposal</h3>
+              <button onClick={() => setShowNewProposal(false)} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+            </div>
+            {params && (
+              <p className="text-xs text-[var(--text-muted)]">Requires {params.min_staked_to_propose.toLocaleString()} CLOSE actively staked.</p>
+            )}
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Title</label>
+              <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="input-glass w-full mt-1" placeholder="Proposal title" />
+            </div>
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Description</label>
+              <textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} className="input-glass w-full mt-1 min-h-[120px]" placeholder="Explain the proposal in detail" />
+            </div>
+            <button onClick={submitProposal} disabled={submittingProposal} className="btn-primary w-full justify-center">
+              {submittingProposal ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Submit Proposal'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedProposal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setSelectedProposal(null)}>
+          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">{selectedProposal.title}</h3>
+              <button onClick={() => setSelectedProposal(null)} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+            </div>
+            <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{selectedProposal.description}</p>
+
+            <div className="flex items-center justify-between text-[11.5px] text-[var(--text-secondary)] py-2.5 border-t border-b border-dashed border-[var(--glass-border)]">
+              <span>For</span>
+              <span className="font-mono font-semibold text-[var(--success)]">{selectedProposal.vote_totals.for.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between text-[11.5px] text-[var(--text-secondary)] pb-2.5 border-b border-dashed border-[var(--glass-border)]">
+              <span>Against</span>
+              <span className="font-mono font-semibold text-[var(--danger)]">{selectedProposal.vote_totals.against.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between text-[11.5px] text-[var(--text-secondary)] pb-2.5 border-b border-dashed border-[var(--glass-border)]">
+              <span>Abstain</span>
+              <span className="font-mono font-semibold text-[var(--text-muted)]">{selectedProposal.vote_totals.abstain.toLocaleString()}</span>
+            </div>
+
+            {votingPower === null ? (
+              <p className="text-xs text-center text-[var(--text-muted)]">Checking your voting eligibility...</p>
+            ) : votingPower.already_voted ? (
+              <p className="text-xs text-center text-[var(--text-muted)]">You voted "{votingPower.voted_support}" on this proposal.</p>
+            ) : !votingPower.eligible ? (
+              <p className="text-xs text-center text-[var(--text-muted)]">You had no active staked CLOSE when this proposal was created, so you can't vote on it.</p>
+            ) : selectedProposal.status !== 'active' ? (
+              <p className="text-xs text-center text-[var(--text-muted)]">Voting has closed on this proposal.</p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-center text-[var(--text-muted)]">Your voting weight: {votingPower.weight.toLocaleString()} CLOSE</p>
+                <div className="flex gap-2">
+                  <button onClick={() => castVote('for')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--success)] text-black">For</button>
+                  <button onClick={() => castVote('against')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--danger)] text-white">Against</button>
+                  <button onClick={() => castVote('abstain')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]">Abstain</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Vault() {
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'staking' ? 'staking' : 'standard';
@@ -1316,11 +1541,13 @@ export default function Vault() {
         <button onClick={() => setTab('analytics')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'analytics' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
         <button onClick={() => setTab('safe')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'safe' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
         <button onClick={() => setTab('staking')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'staking' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Coins size={16} /> Staking</button>
+        <button onClick={() => setTab('governance')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'governance' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Vote size={16} /> Governance</button>
       </div>
       {tab === 'standard' && <StandardWallet />}
       {tab === 'analytics' && <WalletAnalytics />}
       {tab === 'safe' && <SafeWallet />}
       {tab === 'staking' && <Staking />}
+      {tab === 'governance' && <Governance />}
     </div>
   );
 }
