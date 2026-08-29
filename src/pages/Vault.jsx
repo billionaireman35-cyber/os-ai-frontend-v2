@@ -1319,6 +1319,9 @@ function Governance() {
   const [newDescription, setNewDescription] = useState('');
   const [submittingProposal, setSubmittingProposal] = useState(false);
 
+  const [founderReason, setFounderReason] = useState('');
+  const [submittingDecision, setSubmittingDecision] = useState(false);
+
   const closeStaked = 0; // proposal eligibility is checked server-side against real stake_positions, not this display value
 
   const loadData = () => {
@@ -1360,6 +1363,29 @@ function Governance() {
     }
   };
 
+  const submitFounderDecision = async (decision) => {
+    if (!selectedProposal) return;
+    if (!founderReason.trim()) {
+      addToast('A reason is required', 'error');
+      return;
+    }
+    setSubmittingDecision(true);
+    try {
+      await api.post(`/governance/proposals/${selectedProposal.id}/founder-decision`, {
+        decision,
+        reason: founderReason.trim(),
+      });
+      addToast('Decision recorded', 'success');
+      setSelectedProposal(null);
+      setFounderReason('');
+      loadData();
+    } catch (e) {
+      addToast(extractErrorMessage(e, 'Failed to record decision'), 'error');
+    } finally {
+      setSubmittingDecision(false);
+    }
+  };
+
   const submitProposal = async () => {
     if (!newTitle.trim() || !newDescription.trim()) {
       addToast('Title and description are required', 'error');
@@ -1385,6 +1411,8 @@ function Governance() {
     passed: 'Passed',
     failed: 'Failed',
     quorum_not_reached: 'Quorum not reached',
+    approved: 'Founder Approved',
+    rejected: 'Founder Rejected',
   }[status] || status);
 
   const statusColor = (status) => ({
@@ -1392,6 +1420,8 @@ function Governance() {
     passed: 'var(--success)',
     failed: 'var(--danger)',
     quorum_not_reached: 'var(--text-muted)',
+    approved: 'var(--success)',
+    rejected: 'var(--danger)',
   }[status] || 'var(--text-muted)');
 
   return (
@@ -1431,8 +1461,8 @@ function Governance() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <p className="font-display font-bold text-base text-[var(--text-primary)] pr-3">{p.title}</p>
-                    <span className="text-[10px] font-mono uppercase whitespace-nowrap px-2 py-1 rounded-full" style={{ color: statusColor(p.status), background: 'rgba(255,255,255,0.05)' }}>
-                      {statusLabel(p.status)}
+                    <span className="text-[10px] font-mono uppercase whitespace-nowrap px-2 py-1 rounded-full" style={{ color: statusColor(p.effective_status), background: 'rgba(255,255,255,0.05)' }}>
+                      {statusLabel(p.effective_status)}
                     </span>
                   </div>
                   <p className="text-xs text-[var(--text-muted)] line-clamp-2">{p.description}</p>
@@ -1501,6 +1531,18 @@ function Governance() {
               <span className="font-mono font-semibold text-[var(--text-muted)]">{selectedProposal.vote_totals.abstain.toLocaleString()}</span>
             </div>
 
+            {selectedProposal.founder_decision && (
+              <div className="rounded-xl p-3" style={{
+                background: selectedProposal.founder_decision === 'approved' ? 'rgba(52,199,89,0.08)' : 'rgba(255,69,58,0.08)',
+                border: `1px solid ${selectedProposal.founder_decision === 'approved' ? 'rgba(52,199,89,0.25)' : 'rgba(255,69,58,0.25)'}`,
+              }}>
+                <p className="text-xs font-mono uppercase tracking-wide" style={{ color: statusColor(selectedProposal.founder_decision) }}>
+                  {statusLabel(selectedProposal.founder_decision)}
+                </p>
+                <p className="text-sm text-[var(--text-secondary)] mt-1">{selectedProposal.founder_reason}</p>
+              </div>
+            )}
+
             {votingPower === null ? (
               <p className="text-xs text-center text-[var(--text-muted)]">Checking your voting eligibility...</p>
             ) : votingPower.already_voted ? (
@@ -1516,6 +1558,22 @@ function Governance() {
                   <button onClick={() => castVote('for')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--success)] text-black">For</button>
                   <button onClick={() => castVote('against')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--danger)] text-white">Against</button>
                   <button onClick={() => castVote('abstain')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]">Abstain</button>
+                </div>
+              </div>
+            )}
+
+            {user?.is_founder && selectedProposal.status !== 'active' && !selectedProposal.founder_decision && (
+              <div className="space-y-2 pt-2 border-t border-dashed border-[var(--glass-border)]">
+                <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Founder Decision</p>
+                <textarea
+                  value={founderReason}
+                  onChange={(e) => setFounderReason(e.target.value)}
+                  className="input-glass w-full min-h-[80px]"
+                  placeholder="Reason (shown publicly on this proposal)"
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => submitFounderDecision('approved')} disabled={submittingDecision} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--success)] text-black">Approve</button>
+                  <button onClick={() => submitFounderDecision('rejected')} disabled={submittingDecision} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--danger)] text-white">Reject</button>
                 </div>
               </div>
             )}
