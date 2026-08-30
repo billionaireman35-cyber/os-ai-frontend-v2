@@ -12,14 +12,17 @@ export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
-  const [codeSending, setCodeSending] = useState(false);
+
+  // Set once registration succeeds; showing this screen blocks navigation
+  // until the user confirms they've saved it, since it's never shown again.
+  const [recoveryPhrase, setRecoveryPhrase] = useState(null);
+  const [pendingToken, setPendingToken] = useState(null);
+  const [confirmedSaved, setConfirmedSaved] = useState(false);
 
   useEffect(() => {
-    if (!window.google || !googleButtonRef.current) return;
+    if (!window.google || !googleButtonRef.current || recoveryPhrase) return;
 
     window.google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
@@ -40,32 +43,7 @@ export default function Register() {
       width: 320,
       text: 'signup_with',
     });
-  }, []);
-
-  const handleSendCode = async () => {
-    if (!email) {
-      setError('Please enter your email first.');
-      return;
-    }
-    setCodeSending(true);
-    setError('');
-    try {
-      const response = await fetch(`${API_BASE}/auth/send-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, purpose: 'verification' }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to send code.');
-      }
-      setCodeSent(true);
-    } catch (err) {
-      setError(err.message || 'Could not send verification code.');
-    } finally {
-      setCodeSending(false);
-    }
-  };
+  }, [recoveryPhrase]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -79,7 +57,6 @@ export default function Register() {
           name,
           email,
           password,
-          verification_code: verificationCode,
           fingerprint: 'web_' + Date.now(),
         }),
       });
@@ -87,14 +64,69 @@ export default function Register() {
       if (!response.ok) {
         throw new Error(data.detail || 'Registration failed.');
       }
-      localStorage.setItem('token', data.token);
-      navigate('/chat');
+      // Hold the token and show the recovery phrase before actually
+      // logging the user in - this is the only time it's ever shown.
+      setPendingToken(data.token);
+      setRecoveryPhrase(data.recovery_phrase);
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  const finishSignup = () => {
+    localStorage.setItem('token', pendingToken);
+    navigate('/chat');
+  };
+
+  if (recoveryPhrase) {
+    const words = recoveryPhrase.trim().split(/\s+/);
+    return (
+      <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-6">
+            <p className="font-display font-bold text-2xl text-[var(--text-primary)]">Save your recovery phrase</p>
+            <p className="text-sm text-[var(--text-muted)] mt-2">
+              This is the only way to reset your password if you forget it. It will not be shown again.
+              Write it down and keep it somewhere safe.
+            </p>
+          </div>
+
+          <div className="glass-card p-5 mb-5">
+            <div className="grid grid-cols-3 gap-2">
+              {words.map((word, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-sm font-mono">
+                  <span className="text-[var(--text-muted)]">{i + 1}.</span>
+                  <span className="text-[var(--text-primary)]">{word}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <label className="flex items-start gap-2.5 mb-5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={confirmedSaved}
+              onChange={(e) => setConfirmedSaved(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span className="text-sm text-[var(--text-secondary)]">
+              I've saved my recovery phrase somewhere safe. I understand it won't be shown again.
+            </span>
+          </label>
+
+          <button
+            onClick={finishSignup}
+            disabled={!confirmedSaved}
+            className="btn-primary w-full justify-center text-[16px] disabled:opacity-50"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
@@ -129,24 +161,14 @@ export default function Register() {
           </div>
           <div>
             <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Email</label>
-            <div className="flex gap-2 mt-1">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-base flex-1"
-                placeholder="you@example.com"
-                required
-              />
-              <button
-                type="button"
-                onClick={handleSendCode}
-                disabled={codeSending || codeSent}
-                className="btn-secondary text-sm whitespace-nowrap disabled:opacity-50"
-              >
-                {codeSending ? 'Sending...' : codeSent ? 'Sent ✓' : 'Send Code'}
-              </button>
-            </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input-base mt-1"
+              placeholder="you@example.com"
+              required
+            />
           </div>
           <div>
             <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Password</label>
@@ -160,21 +182,9 @@ export default function Register() {
               minLength={8}
             />
           </div>
-          <div>
-            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Verification Code</label>
-            <input
-              type="text"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value.toUpperCase())}
-              className="input-base mt-1"
-              placeholder="6-digit code"
-              required
-              maxLength={6}
-            />
-          </div>
           <button
             type="submit"
-            disabled={loading || !codeSent}
+            disabled={loading}
             className="btn-primary w-full justify-center text-[16px] disabled:opacity-50"
           >
             {loading ? 'Creating account...' : 'Create account'}

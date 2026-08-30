@@ -100,6 +100,12 @@ export default function Login() {
             <Fingerprint size={18} />
             {submitting ? 'Signing in…' : 'Sign in'}
           </button>
+
+          <p className="text-center text-xs">
+            <Link to="/recover-password" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)]">
+              Forgot password?
+            </Link>
+          </p>
         </form>
 
         <p className="text-center text-sm text-[var(--text-muted)] mt-5">

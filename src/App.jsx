@@ -7,6 +7,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Omnibar } from './components/layout/Omnibar';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import RecoverPassword from './pages/RecoverPassword';
 import Chat from './pages/Chat';
 import Vault from './pages/Vault';
 import Pulse from './pages/Pulse';
@@ -64,6 +65,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/recover-password" element={<RecoverPassword />} />
               <Route
                 path="/*"
                 element={
