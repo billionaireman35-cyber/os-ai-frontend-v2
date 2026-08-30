@@ -59,9 +59,6 @@ export default function Register() {
       if (!response.ok) {
         throw new Error(data.detail || 'Failed to send code.');
       }
-      if (data.code) {
-        setVerificationCode(data.code);
-      }
       setCodeSent(true);
     } catch (err) {
       setError(err.message || 'Could not send verification code.');
