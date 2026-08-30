@@ -390,6 +390,7 @@ export default function Chat() {
       // this flag, an interrupted stream silently looked like a normal,
       // complete response with no error shown. Added 2026-08-21.
       let receivedDoneSentinel = false;
+      let receivedTruncatedSignal = false;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -415,6 +416,8 @@ export default function Chat() {
                 receivedFirstChunk = true;
                 assistantMessage.content += parsed.content;
                 pushUpdate();
+              } else if (parsed.truncated) {
+                receivedTruncatedSignal = true;
               }
             } catch (e) {}
           }
@@ -443,6 +446,23 @@ export default function Chat() {
               ...last,
               interrupted: true,
               content: last.content + '\n\n⚠️ *Response was interrupted - connection dropped before it finished.*',
+            };
+          }
+          return updated;
+        });
+      } else if (receivedTruncatedSignal) {
+        // Stream completed normally ([DONE] received), but the model hit
+        // its response length limit mid-answer - different from a dropped
+        // connection, so it gets its own message rather than being shown
+        // as either a clean success or the connection-drop warning above.
+        setMessages(prev => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last && last.role === 'assistant' && last.id === assistantMessage.id) {
+            updated[updated.length - 1] = {
+              ...last,
+              truncated: true,
+              content: last.content + '\n\n⚠️ *Response was cut off - it hit the length limit before finishing. Try asking for it in parts, or ask to continue.*',
             };
           }
           return updated;
