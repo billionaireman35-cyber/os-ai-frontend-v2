@@ -232,6 +232,20 @@ export default function Chat() {
     }
   };
 
+  const shareMessage = async (text) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+      } catch (e) {
+        // user cancelled the share sheet, or share failed - nothing to do
+      }
+    } else {
+      // No Web Share API support (e.g. desktop browsers) - fall back to
+      // copying, so the button still does something useful.
+      copyToClipboard(text, 'share-fallback');
+    }
+  };
+
   const fallbackCopy = (text, id) => {
     const textarea = document.createElement('textarea');
     textarea.value = text;
@@ -719,11 +733,20 @@ export default function Chat() {
                 <div className={`flex items-center gap-1 mt-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
                   <button
                     onClick={() => copyToClipboard(msg.content, msgId)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded"
+                    className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded"
                     aria-label="Copy message"
                   >
                     {isCopied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
                   </button>
+                  {!isUser && !isSystem && (
+                    <button
+                      onClick={() => shareMessage(msg.content)}
+                      className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded"
+                      aria-label="Share message"
+                    >
+                      <Share2 size={14} />
+                    </button>
+                  )}
                   {!isUser && !isSystem && (
                     <>
                       <button
