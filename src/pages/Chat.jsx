@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { CodeBlock } from '../components/chat/CodeBlock';
 import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon, Clock, FileText, Download, Loader2, Share2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ToastContainer, useToast } from '../components/ui/Toast';
@@ -716,7 +717,19 @@ export default function Chat() {
                       </>
                     ) : (
                       <div className={`prose prose-sm max-w-none break-words ${theme === 'dark' ? 'prose-invert' : ''}`}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            code({ inline, className, children, ...props }) {
+                              const match = /language-(\w+)/.exec(className || '');
+                              const value = String(children).replace(/\n$/, '');
+                              if (inline) {
+                                return <code className={className} {...props}>{children}</code>;
+                              }
+                              return <CodeBlock language={match ? match[1] : undefined} value={value} />;
+                            },
+                          }}
+                        >
                           {msg.content || ' '}
                         </ReactMarkdown>
                       </div>
