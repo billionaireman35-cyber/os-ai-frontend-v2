@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Claude-style neutral theme ── */
+/* ── OS Vault theme ── */
 :root {
   --bg-primary: #FAF9F6;
   --bg-secondary: #F2F0EA;
@@ -13,10 +13,10 @@
   --text-muted: #8C8779;
   --border-color: rgba(31,30,28,0.10);
   --border-bright: rgba(31,30,28,0.20);
-  --accent-indigo: #C05A3C;
-  --accent-brass: #C05A3C;
-  --accent-brass-bright: #D97355;
-  --accent-brass-dim: #A64B32;
+  --accent-indigo: #F97316;
+  --accent-brass: #F97316;
+  --accent-brass-bright: #FB923C;
+  --accent-brass-dim: #EA580C;
   --danger: #C1554A;
   --success: #4B8062;
   --font-display: 'Inter', system-ui, sans-serif;
@@ -31,11 +31,11 @@
 }
 
 [data-theme="dark"] {
-  --bg-primary: #1B1A18;
-  --bg-secondary: #232220;
-  --bg-tertiary: #2C2B28;
-  --bg-raised-2: #35332F;
-  --text-primary: #F2F0EA;
+  --bg-primary: #000000;
+  --bg-secondary: #0A0A0A;
+  --bg-tertiary: #141412;
+  --bg-raised-2: #1C1C19;
+  --text-primary: #F5F5F0;
   --text-secondary: #B5B0A4;
   --text-muted: #79756A;
   --border-color: rgba(255,255,255,0.08);
@@ -45,7 +45,7 @@
   --glass-bg-raised: var(--bg-secondary);
   --glass-border: var(--border-color);
   --glass-border-hover: var(--border-bright);
-  --glass-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --glass-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 body {

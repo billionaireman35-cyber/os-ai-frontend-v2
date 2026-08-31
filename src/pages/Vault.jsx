@@ -16,7 +16,7 @@ import { ToastContainer, useToast } from '../components/ui/Toast';
 import { Dropdown } from '../components/ui/Dropdown';
 
 const chains = ['all', 'polygon', 'ethereum', 'bsc', 'arbitrum', 'base'];
-const chainLogos = { polygon: '🟣', ethereum: '💎', bsc: '🟡', arbitrum: '🔵', base: '🔷' };
+const chainColors = { polygon: '#8247E5', ethereum: '#627EEA', bsc: '#F0B90B', arbitrum: '#28A0F0', base: '#0052FF' };
 
 
 function extractErrorMessage(e, fallback) {
@@ -634,7 +634,7 @@ function StandardWallet() {
         <div className="glass-panel relative overflow-hidden rounded-2xl p-6">
           <div
             className="absolute inset-0 pointer-events-none opacity-60"
-            style={{ background: 'radial-gradient(circle at 25% 0%, rgba(201,169,97,0.16), transparent 65%)' }}
+            style={{ background: 'radial-gradient(circle at 25% 0%, rgba(249,115,22,0.16), transparent 65%)' }}
           />
           <div className="relative flex items-center justify-between mb-2">
             <p className="text-xs uppercase tracking-widest text-[var(--text-muted)]" style={{ letterSpacing: '2px' }}>Total Balance</p>
@@ -655,8 +655,8 @@ function StandardWallet() {
             <div
               className="relative flex items-center justify-between rounded-2xl px-3.5 py-3 mb-4"
               style={{
-                background: 'linear-gradient(135deg, rgba(201,169,97,0.14), rgba(201,169,97,0.04))',
-                border: '1px solid rgba(201,169,97,0.32)',
+                background: 'linear-gradient(135deg, rgba(249,115,22,0.14), rgba(249,115,22,0.04))',
+                border: '1px solid rgba(249,115,22,0.32)',
               }}
             >
               <div className="flex items-center gap-2.5">
@@ -790,8 +790,8 @@ function StandardWallet() {
             <div
               className="flex items-center justify-between px-4 py-3.5 rounded-2xl"
               style={{
-                background: 'linear-gradient(135deg, rgba(201,169,97,0.09), var(--glass-bg, rgba(21,19,14,0.55)))',
-                border: '1px solid rgba(201,169,97,0.32)',
+                background: 'linear-gradient(135deg, rgba(249,115,22,0.09), var(--glass-bg, rgba(21,19,14,0.55)))',
+                border: '1px solid rgba(249,115,22,0.32)',
               }}
             >
               <div className="flex items-center gap-3">
@@ -825,7 +825,7 @@ function StandardWallet() {
                 return (
                   <div key={i} className={`flex items-center justify-between px-4 py-3.5 ${i < filtered.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
                     <div className="flex items-center gap-3">
-                      <span className="text-xl w-9 h-9 rounded-full flex items-center justify-center bg-[var(--accent-brass)]/10">{chainLogos[a.chain] || '🪙'}</span>
+                      <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: chainColors[a.chain] || 'var(--text-muted)' }} />
                       <div>
                         <p className="text-sm font-medium text-[var(--text-primary)]">{a.symbol}</p>
                         <p className="text-xs text-[var(--text-muted)]">{a.chain}</p>
@@ -1193,7 +1193,7 @@ function Staking() {
                         onClick={() => setSelectedTerm(key)}
                         className="rounded-xl p-3 text-center border transition"
                         style={selectedTerm === key
-                          ? { borderColor: 'var(--accent-brass)', background: 'rgba(201,169,97,0.08)' }
+                          ? { borderColor: 'var(--accent-brass)', background: 'rgba(249,115,22,0.08)' }
                           : { borderColor: 'var(--glass-border)' }}
                       >
                         <p className="text-xs font-semibold text-[var(--text-primary)]">{termLabel(key)}</p>
