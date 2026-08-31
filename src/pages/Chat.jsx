@@ -27,6 +27,7 @@ export default function Chat() {
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   const [attachedImage, setAttachedImage] = useState(null); // { name, dataUrl }
+  const [attachedText, setAttachedText] = useState(null); // { content }
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
 
@@ -63,6 +64,17 @@ export default function Chat() {
   };
 
   const handleRemoveFile = () => setAttachedImage(null);
+
+  const PASTE_THRESHOLD = 400;
+
+  const handlePaste = (e) => {
+    const text = e.clipboardData?.getData('text');
+    if (!text || text.length < PASTE_THRESHOLD) return;
+    e.preventDefault();
+    setAttachedText({ content: text });
+  };
+
+  const handleRemoveText = () => setAttachedText(null);
 
   // Web Speech API - transcribes speech directly in the browser, no
   // backend call. Not supported in every browser (notably not in
@@ -318,19 +330,21 @@ export default function Chat() {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if ((!input.trim() && !attachedImage) || loading) return;
+    if ((!input.trim() && !attachedImage && !attachedText) || loading) return;
 
     setLimitHit(false);
     const imageForThisMessage = attachedImage;
+    const textForThisMessage = attachedText;
     const userMessage = {
       role: 'user',
-      content: input,
+      content: textForThisMessage ? `${input}\n\n${textForThisMessage.content}` : input,
       image: imageForThisMessage?.dataUrl || null,
       createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setAttachedImage(null);
+    setAttachedText(null);
     setLoading(true);
 
     try {
@@ -865,10 +879,33 @@ export default function Chat() {
             </div>
           )}
 
+          {attachedText && (
+            <div className="px-4 pt-3">
+              <div className="flex items-center gap-2.5 bg-[var(--bg-tertiary)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 max-w-[220px]">
+                <div className="w-8 h-8 rounded-lg bg-[var(--accent-brass)]/15 text-[var(--accent-brass-bright)] flex items-center justify-center shrink-0 text-[10px] font-mono font-bold">
+                  TXT
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12.5px] text-[var(--text-primary)] font-medium truncate">Pasted content</p>
+                  <p className="text-[10.5px] text-[var(--text-muted)]">{attachedText.content.length.toLocaleString()} characters</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveText}
+                  className="text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0"
+                  aria-label="Remove pasted content"
+                >
+                  <XIcon size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onPaste={handlePaste}
             placeholder="Message OS AI..."
             rows={1}
             className="w-full bg-transparent border-none outline-none px-4 pt-3 pb-2 text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)] resize-none"
@@ -918,7 +955,7 @@ export default function Chat() {
 
             <button
               type="submit"
-              disabled={loading || (!input.trim() && !attachedImage)}
+              disabled={loading || (!input.trim() && !attachedImage && !attachedText)}
               className="w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[var(--accent-brass-dim)] text-black shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
               aria-label="Send message"
             >
