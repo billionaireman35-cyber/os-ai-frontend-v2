@@ -564,7 +564,7 @@ export default function Chat() {
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
       {usage && (
-        <div className="flex items-center justify-between px-4 py-2 mx-3 mt-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-md shrink-0">
+        <div className="flex items-center justify-between px-4 py-2 mx-3 mt-2.5 max-w-3xl lg:mx-auto rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2">
             <span
               className="text-[9.5px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
@@ -602,11 +602,12 @@ export default function Chat() {
           )}
         </div>
       )}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        <div className="max-w-3xl mx-auto w-full space-y-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="mb-6">
-              <span className="text-5xl font-light text-[#d4af37]">✦</span>
+              <span className="text-5xl font-light text-[var(--accent-brass-bright)]">✦</span>
             </div>
             <p className="text-2xl font-light text-[var(--text-primary)]/80">{getGreeting()}</p>
             <p className="text-sm max-w-sm mt-2 text-[var(--text-muted)]">
@@ -632,7 +633,7 @@ export default function Chat() {
               <div className={`max-w-[80%] relative ${isUser ? 'order-2' : 'order-1'}`}>
                 {!isUser && !isSystem && (
                   <div className="flex items-center gap-2 mb-1 text-xs text-[var(--text-muted)]">
-                    <span className="font-medium text-[#d4af37]">OS AI</span>
+                    <span className="font-medium text-[var(--accent-brass-bright)]">OS AI</span>
                     <span>{formatTime(timestamp)}</span>
                     {msg.model && <span className="text-[var(--text-muted)] opacity-60">• {msg.model}</span>}
                   </div>
@@ -713,7 +714,7 @@ export default function Chat() {
                     <button
                       key={emoji}
                       onClick={() => handleReaction(msgId, emoji)}
-                      className="text-sm bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full border border-[var(--border-color)] hover:border-[#d4af37] transition"
+                      className="text-sm bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full border border-[var(--border-color)] hover:border-[var(--accent-brass-bright)] transition"
                     >
                       {emoji} {users.length}
                     </button>
@@ -723,7 +724,7 @@ export default function Chat() {
                       <button
                         key={emoji}
                         onClick={() => handleReaction(msgId, emoji)}
-                        className="text-sm bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full border border-[var(--border-color)] hover:border-[#d4af37] transition"
+                        className="text-sm bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full border border-[var(--border-color)] hover:border-[var(--accent-brass-bright)] transition"
                       >
                         {emoji}
                       </button>
@@ -795,6 +796,7 @@ export default function Chat() {
           </div>
         )}
         <div ref={messagesEndRef} />
+        </div>
       </div>
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />
@@ -917,7 +919,7 @@ export default function Chat() {
             <button
               type="submit"
               disabled={loading || (!input.trim() && !attachedImage)}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[#c4a030] text-black shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[var(--accent-brass-dim)] text-black shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
               aria-label="Send message"
             >
               <ArrowUp size={18} strokeWidth={2.5} />

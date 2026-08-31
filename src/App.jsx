@@ -21,7 +21,7 @@ import Leaderboard from './pages/Leaderboard';
 import { useState } from 'react';
 
 function Shell() {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -35,7 +35,7 @@ function Shell() {
   return (
     <div className="flex h-screen bg-[var(--bg-primary)] overflow-hidden">
       <Sidebar expanded={expanded} setExpanded={setExpanded} mobileOpen={mobileSidebarOpen} setMobileOpen={setMobileSidebarOpen} />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0 transition-[margin] duration-200 ease-in-out ${expanded ? 'lg:ml-[380px]' : 'lg:ml-0'}`}>
         <Omnibar toggleSidebar={toggleSidebar} />
         <main className="flex-1 min-h-0 overflow-y-auto animate-fade-in">
           <Routes>

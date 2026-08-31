@@ -1589,17 +1589,17 @@ export default function Vault() {
   const initialTab = searchParams.get('tab') === 'staking' ? 'staking' : 'standard';
   const [tab, setTab] = useState(initialTab);
   return (
-    <div className="p-4 tablet:p-6 space-y-6">
+    <div className="p-4 tablet:p-6 space-y-6 max-w-6xl mx-auto w-full">
       <h1 className="text-3xl font-display font-bold text-[var(--text-primary)] flex items-center gap-2">
         <Wallet size={28} className="text-[var(--accent-brass)]" /> OS Vaults
       </h1>
       <p className="text-sm text-[var(--text-muted)]">Multi-chain non-custodial asset hub</p>
-      <div className="glass-panel flex gap-1 p-1 w-fit rounded-2xl">
-        <button onClick={() => setTab('standard')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all ${tab === 'standard' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
-        <button onClick={() => setTab('analytics')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'analytics' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
-        <button onClick={() => setTab('safe')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'safe' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
-        <button onClick={() => setTab('staking')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'staking' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Coins size={16} /> Staking</button>
-        <button onClick={() => setTab('governance')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all flex items-center gap-2 ${tab === 'governance' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Vote size={16} /> Governance</button>
+      <div className="glass-panel flex gap-1 p-1 rounded-2xl overflow-x-auto max-w-full">
+        <button onClick={() => setTab('standard')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap ${tab === 'standard' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
+        <button onClick={() => setTab('analytics')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'analytics' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
+        <button onClick={() => setTab('safe')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'safe' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
+        <button onClick={() => setTab('staking')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'staking' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Coins size={16} /> Staking</button>
+        <button onClick={() => setTab('governance')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'governance' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Vote size={16} /> Governance</button>
       </div>
       {tab === 'standard' && <StandardWallet />}
       {tab === 'analytics' && <WalletAnalytics />}
