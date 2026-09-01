@@ -54,6 +54,8 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [sentResult, setSentResult] = useState(null); // { txHash, feeTxHash? } once a send succeeds
+  const [copiedHash, setCopiedHash] = useState(false);
 
   // Re-sync if the modal is reopened with a different prefilled asset
   // while already mounted (useState's initial value only applies once).
@@ -71,9 +73,23 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) 
   // network outage, while the wallet's real POL balance was nonzero).
   useEffect(() => {
     if (isOpen) refreshBalances?.();
+    if (isOpen) setSentResult(null);
   }, [isOpen]);
 
   if (!isOpen || !asset) return null;
+
+  const handleClose = () => {
+    setSentResult(null);
+    setTo('');
+    setAmount('');
+    onClose();
+  };
+
+  const copyHash = (hash) => {
+    navigator.clipboard.writeText(hash);
+    setCopiedHash(true);
+    setTimeout(() => setCopiedHash(false), 2000);
+  };
 
   const MIN_GAS_POL = 0.01;
   const polAsset = (assets || []).find((a) => a.chain === 'polygon' && a.symbol === 'POL');
@@ -96,9 +112,11 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) 
           password,
         });
         // Backend returns { fee_tx, send_tx } - send_tx is the user-facing
-        // transaction, fee_tx is the relayer's internal fee pull.
+        // transaction, fee_tx is the relayer's internal fee pull. Both are
+        // shown in the confirmation view so a user checking Polygonscan
+        // can find either one, not just the primary send.
         onSent?.(res.data.send_tx);
-        onClose();
+        setSentResult({ txHash: res.data.send_tx, feeTxHash: res.data.fee_tx });
         return;
       }
 
@@ -110,7 +128,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) 
         token_address: asset.address || null,
       });
       onSent?.(res.data.tx_hash);
-      onClose();
+      setSentResult({ txHash: res.data.tx_hash });
     } catch (e) {
       setError(extractErrorMessage(e, 'Transaction failed'));
     } finally {
@@ -119,42 +137,93 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) 
     }
   };
 
+  const EXPLORER_BASE = { polygon: 'https://polygonscan.com/tx/', ethereum: 'https://etherscan.io/tx/', bsc: 'https://bscscan.com/tx/' }[asset.chain];
+
   return (
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
         <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Send {asset.symbol}</h3>
-            <button onClick={onClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
-          </div>
-          <div>
-            <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Recipient</label>
-            <input type="text" value={to} onChange={(e) => setTo(e.target.value)} className="input-glass w-full mt-1" placeholder="0x..." />
-          </div>
-          <div>
-            <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount ({asset.symbol})</label>
-            <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-glass w-full mt-1" placeholder="0.0" />
-          </div>
-          <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-            <span>Chain: <span className="text-[var(--text-primary)] font-medium">{asset.chain}</span></span>
-          </div>
-          {insufficientGas && asset.symbol === 'CLOSE' && (
-            <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
-              ⚡ Low POL balance - this send will use gasless (sponsored) delivery instead.
-            </p>
+          {sentResult ? (
+            <>
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-display font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <CheckCircle size={22} className="text-green-400" /> Sent
+                </h3>
+                <button onClick={handleClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+              </div>
+              <p className="text-sm text-[var(--text-secondary)]">
+                {amount} {asset.symbol} is on its way to {to.slice(0, 8)}...{to.slice(-6)}.
+              </p>
+
+              <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+                <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Transaction Hash</label>
+                <div className="flex items-center justify-between mt-1 gap-2">
+                  <span className="text-xs font-mono break-all text-[var(--text-primary)]">{sentResult.txHash}</span>
+                  <button onClick={() => copyHash(sentResult.txHash)} className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                    {copiedHash ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
+                  </button>
+                </div>
+                {EXPLORER_BASE && (
+                  <a href={`${EXPLORER_BASE}${sentResult.txHash}`} target="_blank" rel="noopener noreferrer"
+                     className="flex items-center gap-1 text-xs mt-2 text-[var(--accent-brass)]">
+                    View on Explorer <ExternalLink size={12} />
+                  </a>
+                )}
+              </div>
+
+              {sentResult.feeTxHash && (
+                <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+                  <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Sponsorship Fee Transaction</label>
+                  <div className="flex items-center justify-between mt-1 gap-2">
+                    <span className="text-xs font-mono break-all text-[var(--text-secondary)]">{sentResult.feeTxHash}</span>
+                  </div>
+                  {EXPLORER_BASE && (
+                    <a href={`${EXPLORER_BASE}${sentResult.feeTxHash}`} target="_blank" rel="noopener noreferrer"
+                       className="flex items-center gap-1 text-xs mt-2 text-[var(--accent-brass)]">
+                      View on Explorer <ExternalLink size={12} />
+                    </a>
+                  )}
+                </div>
+              )}
+
+              <button onClick={handleClose} className="btn-primary w-full justify-center">Done</button>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Send {asset.symbol}</h3>
+                <button onClick={handleClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+              </div>
+              <div>
+                <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Recipient</label>
+                <input type="text" value={to} onChange={(e) => setTo(e.target.value)} className="input-glass w-full mt-1" placeholder="0x..." />
+              </div>
+              <div>
+                <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount ({asset.symbol})</label>
+                <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-glass w-full mt-1" placeholder="0.0" />
+              </div>
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                <span>Chain: <span className="text-[var(--text-primary)] font-medium">{asset.chain}</span></span>
+              </div>
+              {insufficientGas && asset.symbol === 'CLOSE' && (
+                <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
+                  ⚡ Low POL balance - this send will use gasless (sponsored) delivery instead.
+                </p>
+              )}
+              {insufficientGas && asset.symbol !== 'CLOSE' && (
+                <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
+                  ⚠️ Low POL balance ({polBalance.toFixed(4)} POL) - you need at least {MIN_GAS_POL} POL to cover gas for this transaction.
+                </p>
+              )}
+              {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
+              <div className="flex gap-2">
+                <button onClick={() => setShowPasswordModal(true)} disabled={loading || (insufficientGas && asset.symbol !== 'CLOSE')} className="btn-primary flex-1 justify-center">
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : 'Send'}
+                </button>
+                <button onClick={handleClose} className="btn-secondary flex-1 justify-center">Cancel</button>
+              </div>
+            </>
           )}
-          {insufficientGas && asset.symbol !== 'CLOSE' && (
-            <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
-              ⚠️ Low POL balance ({polBalance.toFixed(4)} POL) - you need at least {MIN_GAS_POL} POL to cover gas for this transaction.
-            </p>
-          )}
-          {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
-          <div className="flex gap-2">
-            <button onClick={() => setShowPasswordModal(true)} disabled={loading || (insufficientGas && asset.symbol !== 'CLOSE')} className="btn-primary flex-1 justify-center">
-              {loading ? <Loader2 size={20} className="animate-spin" /> : 'Send'}
-            </button>
-            <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
-          </div>
         </div>
       </div>
 
