@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useEffect, useRef } from 'react';
+import { Copy, Check, ShieldAlert } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
 const GOOGLE_CLIENT_ID = '133012523516-vl47c0e3fn1vbop855g0pbdvhouh08or.apps.googleusercontent.com';
@@ -20,6 +22,15 @@ export default function Register() {
   const [recoveryPhrase, setRecoveryPhrase] = useState(null);
   const [pendingToken, setPendingToken] = useState(null);
   const [confirmedSaved, setConfirmedSaved] = useState(false);
+
+  // Set once registration succeeds - switches the whole page into the
+  // "save your recovery phrase" step instead of navigating away
+  // immediately. The phrase is only ever returned by the API this one
+  // time (see auth.py /register) - if the user leaves without seeing
+  // it, their account has no password-recovery path at all.
+  const [recoveryPhrase, setRecoveryPhrase] = useState(null);
+  const [phraseConfirmed, setPhraseConfirmed] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!window.google || !googleButtonRef.current || recoveryPhrase) return;
@@ -44,6 +55,37 @@ export default function Register() {
       text: 'signup_with',
     });
   }, [recoveryPhrase]);
+<<<<<<< HEAD
+=======
+
+  const handleSendCode = async () => {
+    if (!email) {
+      setError('Please enter your email first.');
+      return;
+    }
+    setCodeSending(true);
+    setError('');
+    try {
+      const response = await fetch(`${API_BASE}/auth/send-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, purpose: 'verification' }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to send code.');
+      }
+      if (data.code) {
+        setVerificationCode(data.code);
+      }
+      setCodeSent(true);
+    } catch (err) {
+      setError(err.message || 'Could not send verification code.');
+    } finally {
+      setCodeSending(false);
+    }
+  };
+>>>>>>> 1c6d058 (Show recovery phrase after registration with explicit save-confirmation step)
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -64,10 +106,21 @@ export default function Register() {
       if (!response.ok) {
         throw new Error(data.detail || 'Registration failed.');
       }
+<<<<<<< HEAD
       // Hold the token and show the recovery phrase before actually
       // logging the user in - this is the only time it's ever shown.
       setPendingToken(data.token);
       setRecoveryPhrase(data.recovery_phrase);
+=======
+      localStorage.setItem('token', data.token);
+      if (data.recovery_phrase) {
+        setRecoveryPhrase(data.recovery_phrase);
+      } else {
+        // Backend didn't return one (older server, or a flow that
+        // doesn't issue one) - nothing to show, proceed as before.
+        navigate('/chat');
+      }
+>>>>>>> 1c6d058 (Show recovery phrase after registration with explicit save-confirmation step)
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -75,14 +128,22 @@ export default function Register() {
     }
   };
 
+<<<<<<< HEAD
   const finishSignup = () => {
     localStorage.setItem('token', pendingToken);
     navigate('/chat');
+=======
+  const copyPhrase = () => {
+    navigator.clipboard.writeText(recoveryPhrase);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+>>>>>>> 1c6d058 (Show recovery phrase after registration with explicit save-confirmation step)
   };
 
   if (recoveryPhrase) {
     const words = recoveryPhrase.trim().split(/\s+/);
     return (
+<<<<<<< HEAD
       <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-6">
@@ -113,15 +174,68 @@ export default function Register() {
             />
             <span className="text-sm text-[var(--text-secondary)]">
               I've saved my recovery phrase somewhere safe. I understand it won't be shown again.
+=======
+      <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-6">
+            <div className="w-11 h-11 rounded-xl bg-[var(--accent-brass)]/12 text-[var(--accent-brass-bright)] flex items-center justify-center mx-auto mb-3">
+              <ShieldAlert size={20} />
+            </div>
+            <p className="text-xl font-display font-bold text-[var(--text-primary)]">Save your recovery phrase</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1.5 leading-relaxed">
+              This is the <strong className="text-[var(--text-secondary)]">only</strong> way to reset your password.
+              It's shown once and never again — write it down or save it somewhere safe.
+            </p>
+          </div>
+
+          <div className="glass-card p-5">
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {words.map((word, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-1.5 bg-[var(--bg-tertiary)] rounded-lg px-2.5 py-2"
+                >
+                  <span className="text-[10px] text-[var(--text-muted)] font-mono">{i + 1}</span>
+                  <span className="text-[13px] text-[var(--text-primary)] font-mono">{word}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={copyPhrase}
+              className="btn-secondary w-full justify-center text-[13.5px]"
+            >
+              {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+              {copied ? 'Copied' : 'Copy phrase'}
+            </button>
+          </div>
+
+          <label className="flex items-start gap-2.5 mt-5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={phraseConfirmed}
+              onChange={(e) => setPhraseConfirmed(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+              I've saved my recovery phrase somewhere safe. I understand OS AI cannot recover it for me if I lose it.
+>>>>>>> 1c6d058 (Show recovery phrase after registration with explicit save-confirmation step)
             </span>
           </label>
 
           <button
+<<<<<<< HEAD
             onClick={finishSignup}
             disabled={!confirmedSaved}
             className="btn-primary w-full justify-center text-[16px] disabled:opacity-50"
           >
             Continue
+=======
+            onClick={() => navigate('/')}
+            disabled={!phraseConfirmed}
+            className="btn-primary w-full justify-center text-[15px] mt-4 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Continue to OS AI
+>>>>>>> 1c6d058 (Show recovery phrase after registration with explicit save-confirmation step)
           </button>
         </div>
       </div>
