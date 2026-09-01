@@ -274,10 +274,10 @@ export default function HustleHub() {
           <p className="text-sm text-[var(--text-muted)]">Private, invite-only workspaces - 5000 CLOSE to create, 6000 CLOSE to join</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => { setShowCreate(true); setCreateError(''); }} className="bg-[var(--accent-brass)] hover:bg-[#c4a030] text-black font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition">
+          <button onClick={() => { setShowCreate(true); setCreateError(''); }} className="btn-primary">
             <Plus size={18} /> New
           </button>
-          <button onClick={() => document.getElementById('join-input').focus()} className="bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] backdrop-blur-md text-[var(--text-primary)] px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
+          <button onClick={() => document.getElementById('join-input').focus()} className="btn-secondary">
             <LogIn size={18} /> Join
           </button>
         </div>
@@ -290,8 +290,8 @@ export default function HustleHub() {
             onClick={() => setSelectedWorkspace(ws)}
             className={`px-4 py-2 rounded-full text-sm transition flex items-center gap-1 ${
               selectedWorkspace?.id === ws.id
-                ? 'bg-[var(--accent-brass)] text-black font-bold'
-                : 'bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] text-[var(--text-primary)]'
+                ? 'bg-[var(--accent-brass)] text-white font-bold'
+                : 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] hover:border-[var(--border-bright)] text-[var(--text-primary)]'
             }`}
           >
             {ws.is_public ? <Globe size={14} /> : <Lock size={14} />}
@@ -308,7 +308,7 @@ export default function HustleHub() {
               onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinStatus(''); setJoinError(''); }}
               className="input-glass flex-1 text-sm"
             />
-            <button onClick={handleJoinWorkspace} className="bg-[var(--accent-brass)] text-black px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap">Request to Join</button>
+            <button onClick={handleJoinWorkspace} className="bg-[var(--accent-brass)] text-white px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap">Request to Join</button>
           </div>
           {joinStatus && <p className="text-xs text-[var(--success)]">{joinStatus}</p>}
           {joinError && <p className="text-xs text-[var(--danger)]">{joinError}</p>}
@@ -411,7 +411,7 @@ export default function HustleHub() {
               <button
                 type="submit"
                 disabled={!newMessage.trim()}
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[#c4a030] text-black shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[var(--accent-brass-dim)] text-white shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
               >
                 <Send size={17} />
               </button>
@@ -426,7 +426,7 @@ export default function HustleHub() {
 
       {/* Create modal - form first, then password confirm triggers payment + creation */}
       {showCreate && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Hustle Hub</h3>
