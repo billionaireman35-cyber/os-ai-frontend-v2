@@ -390,6 +390,14 @@ export default function Chat() {
         throw new Error(errorData.detail || errorData.content || 'Chat request failed');
       }
 
+      // Backend commits the chats/chat_messages rows before it starts
+      // streaming a response, so the chat already exists in the DB the
+      // moment we get a successful response here - no need to wait for
+      // the stream (or the typewriter animation on top of it) to finish
+      // before the sidebar's recent-chats list can show it. Moved from
+      // after the full stream completed on 2026-09-02.
+      window.dispatchEvent(new CustomEvent('chat-updated'));
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let assistantMessage = {
@@ -534,11 +542,6 @@ export default function Chat() {
         });
       }
 
-      // Backend commits the chats/chat_messages rows before it starts
-      // streaming a response, so by the time we get here the sidebar's
-      // recent-chats list is stale (it only fetches once on mount, never
-      // on new activity). Tell it to refresh.
-      window.dispatchEvent(new CustomEvent('chat-updated'));
       fetchUsage();
 
     } catch (error) {
