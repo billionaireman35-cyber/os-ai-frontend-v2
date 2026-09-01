@@ -348,6 +348,11 @@ export default function Chat() {
     setAttachedText(null);
     setLoading(true);
 
+    // Hoisted above the try so `finally` can always clear it, even if
+    // the stream throws before the drain loop below gets torn down
+    // normally.
+    let drainTimer = null;
+
     try {
       const token = getToken();
       const headers = { 'Content-Type': 'application/json' };
@@ -421,6 +426,31 @@ export default function Chat() {
       let receivedDoneSentinel = false;
       let receivedTruncatedSignal = false;
 
+      // Typewriter buffer: network chunks can arrive in bursty, uneven
+      // sizes (a whole sentence at once, then nothing for a beat) which
+      // reads as stuttery if rendered the instant each chunk lands.
+      // Content chunks go into this queue instead of straight onto the
+      // message; a steady interval below drains a few characters at a
+      // time onto the screen, decoupling arrival speed from display
+      // speed. Added 2026-09-02.
+      let pendingText = '';
+      const DRAIN_CHARS_PER_TICK = 3;
+      const DRAIN_INTERVAL_MS = 16;
+      drainTimer = setInterval(() => {
+        if (!pendingText) return;
+        const take = pendingText.slice(0, DRAIN_CHARS_PER_TICK);
+        pendingText = pendingText.slice(DRAIN_CHARS_PER_TICK);
+        assistantMessage.content += take;
+        pushUpdate();
+      }, DRAIN_INTERVAL_MS);
+      const waitForDrain = () => new Promise((resolve) => {
+        const check = () => {
+          if (!pendingText) { resolve(); return; }
+          setTimeout(check, DRAIN_INTERVAL_MS);
+        };
+        check();
+      });
+
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         if (readerDone) { done = true; break; }
@@ -443,8 +473,7 @@ export default function Chat() {
                 pushUpdate();
               } else if (parsed.content) {
                 receivedFirstChunk = true;
-                assistantMessage.content += parsed.content;
-                pushUpdate();
+                pendingText += parsed.content;
               } else if (parsed.truncated) {
                 receivedTruncatedSignal = true;
               }
@@ -452,6 +481,13 @@ export default function Chat() {
           }
         }
       }
+
+      // Stop draining on the interval and let any text still queued
+      // finish rendering before deciding the message is complete - the
+      // network stream can finish well before the typewriter effect has
+      // caught up to it.
+      clearInterval(drainTimer);
+      await waitForDrain();
 
       if (!receivedFirstChunk && assistantMessage.content === '') {
         setMessages(prev => {
@@ -512,6 +548,7 @@ export default function Chat() {
         { role: 'assistant', content: '⚠️ Error: ' + error.message, createdAt: new Date().toISOString() }
       ]);
     } finally {
+      if (drainTimer) clearInterval(drainTimer);
       setLoading(false);
     }
   };
