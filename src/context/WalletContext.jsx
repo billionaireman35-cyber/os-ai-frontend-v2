@@ -14,6 +14,7 @@ export function WalletProvider({ children }) {
   // below); defaults to USD until then so nothing renders blank.
   const [currency, setCurrencyState] = useState('USD');
   const [supportedCurrencies, setSupportedCurrencies] = useState(['USD']);
+  const [viewingWallet, setViewingWallet] = useState(null); // null = primary wallet
 
   useEffect(() => {
     if (user?.preferred_currency) setCurrencyState(user.preferred_currency);
@@ -48,7 +49,7 @@ export function WalletProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get('/wallet/balance', { params: { currency } });
+      const res = await api.get('/wallet/balance', { params: { currency, wallet_address: viewingWallet || undefined } });
       const data = res.data.balances || {};
       const items = [];
       let total = 0;
@@ -108,10 +109,10 @@ export function WalletProvider({ children }) {
 
   useEffect(() => {
     fetchBalances();
-  }, [user, currency]);
+  }, [user, currency, viewingWallet]);
 
   return (
-    <WalletContext.Provider value={{ assets, totalUsd, loading, error, fetchBalances, currency, setCurrency, supportedCurrencies }}>
+    <WalletContext.Provider value={{ assets, totalUsd, loading, error, fetchBalances, currency, setCurrency, supportedCurrencies, viewingWallet, setViewingWallet }}>
       {children}
     </WalletContext.Provider>
   );

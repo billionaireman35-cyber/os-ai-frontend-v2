@@ -13,7 +13,8 @@ const TOKEN_MAP = {
   DAI: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
 };
 
-export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }) {
+export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets, wallets = [] }) {
+  const [fromWallet, setFromWallet] = useState('');
   const [fromToken, setFromToken] = useState('MATIC');
   const [toToken, setToToken] = useState('CLOSE');
   const [amount, setAmount] = useState('');
@@ -65,7 +66,7 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }
       const buildRes = await api.post('/swap/swap', {
         chain: 'polygon',
         routeSummary,
-        fromAddress: userWalletAddress,
+        fromAddress: fromWallet || userWalletAddress,
       });
       const { to, data, value } = buildRes.data;
 
@@ -75,6 +76,7 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }
         data,
         value,
         password,
+        wallet_address: fromWallet || undefined,
       });
 
       onSwap?.(execRes.data.tx_hash);
@@ -91,7 +93,7 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }
   const MIN_GAS_POL = 0.01;
   const polAsset = (assets || []).find((a) => a.chain === 'polygon' && a.symbol === 'POL');
   const polBalance = polAsset ? polAsset.balance : 0;
-  const insufficientGas = polBalance < MIN_GAS_POL;
+  const insufficientGas = !fromWallet && polBalance < MIN_GAS_POL;
 
   const outputAmount = routeSummary?.amountOut ? (parseInt(routeSummary.amountOut) / 1e18).toFixed(4) : '—';
   const outputUsd = routeSummary?.amountOutUsd ? parseFloat(routeSummary.amountOutUsd).toFixed(2) : null;
@@ -103,10 +105,28 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }
         <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
           <div className="flex justify-between items-center">
             <h3 className="text-2xl font-display font-bold text-[var(--text-primary)] flex items-center gap-2">
-              <ArrowUpDown size={24} className="text-[#d4af37]" /> Swap Tokens
+              <ArrowUpDown size={24} className="text-[var(--accent-brass)]" /> Swap Tokens
             </h3>
             <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={24} /></button>
           </div>
+
+          {wallets.length > 0 && (
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Swap From</label>
+              <select
+                value={fromWallet}
+                onChange={(e) => setFromWallet(e.target.value)}
+                className="input-base w-full mt-1"
+              >
+                <option value="">Primary Wallet</option>
+                {wallets.map((w) => (
+                  <option key={w.id} value={w.address}>
+                    {w.label} ({w.address.slice(0, 6)}...{w.address.slice(-4)})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">From</label>
@@ -151,7 +171,7 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }
           )}
 
           {insufficientGas && (
-            <p className="text-sm font-mono" style={{ color: '#d4af37' }}>
+            <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
               ⚠️ Low POL balance ({polBalance.toFixed(4)} POL) - you need at least {MIN_GAS_POL} POL to cover gas for this swap.
             </p>
           )}
@@ -161,7 +181,7 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets }
             onClick={handleConfirmSwap}
             disabled={!routeSummary || executing || loading || insufficientGas}
             className="btn-primary w-full justify-center gap-2"
-            style={{ background: '#d4af37', color: 'black' }}
+            style={{ background: 'var(--accent-brass)', color: 'black' }}
           >
             {executing ? <Loader2 size={20} className="animate-spin" /> : 'Confirm Swap'}
           </button>

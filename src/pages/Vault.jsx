@@ -595,7 +595,7 @@ function TransactionHistory({ isOpen, onClose }) {
 }
 
 function StandardWallet() {
-  const { assets, totalUsd, loading, error, fetchBalances, currency, setCurrency, supportedCurrencies } = useWallet();
+  const { assets, totalUsd, loading, error, fetchBalances, currency, setCurrency, supportedCurrencies, viewingWallet, setViewingWallet } = useWallet();
   const { user, refreshUser } = useAuth();
   const { toasts, addToast, removeToast } = useToast();
   const [chain, setChain] = useState('all');
@@ -748,6 +748,16 @@ function StandardWallet() {
               options={supportedCurrencies}
             />
           </div>
+          {viewingWallet && (
+            <div className="relative flex items-center gap-1.5 mb-3 text-[11px] font-mono">
+              <span className="text-[var(--accent-brass-bright)]">
+                Viewing: {importedWallets.find((w) => w.address === viewingWallet)?.label || 'Imported Wallet'}
+              </span>
+              <button onClick={() => setViewingWallet(null)} className="text-[var(--text-muted)] underline hover:text-[var(--text-primary)]">
+                Back to Primary
+              </button>
+            </div>
+          )}
           <div className="relative flex items-baseline gap-2 font-display mb-4">
             <span className="text-xl text-[var(--accent-brass)]">◈</span>
             <span className="text-4xl font-bold text-[var(--text-primary)]">{currency} {totalUsd.toFixed(2)}</span>
@@ -863,15 +873,22 @@ function StandardWallet() {
           ) : (
             <div className="space-y-1.5">
               {importedWallets.map((w) => (
-                <div
+                <button
                   key={w.id}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/5 border border-[var(--glass-border)]"
+                  onClick={() => setViewingWallet(viewingWallet === w.address ? null : w.address)}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-colors text-left"
+                  style={viewingWallet === w.address
+                    ? { background: 'rgba(249,115,22,0.10)', borderColor: 'var(--accent-brass)' }
+                    : { background: 'rgba(255,255,255,0.05)', borderColor: 'var(--glass-border)' }}
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-[var(--text-primary)] truncate">{w.label}</p>
                     <p className="text-[11px] font-mono text-[var(--text-muted)]">{w.address.slice(0, 8)}...{w.address.slice(-6)}</p>
                   </div>
-                </div>
+                  {viewingWallet === w.address && (
+                    <span className="text-[10px] font-mono uppercase text-[var(--accent-brass-bright)] shrink-0">Viewing</span>
+                  )}
+                </button>
               ))}
             </div>
           )}
@@ -984,7 +1001,7 @@ function StandardWallet() {
 
       <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} wallets={importedWallets} refreshBalances={fetchBalances} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <ImportWalletModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} onImported={() => { addToast('Wallet imported!', 'success'); fetchImportedWallets(); }} />
-      <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} assets={assets} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} assets={assets} wallets={importedWallets} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Purchased ${result.close_credited} CLOSE for ${result.amount} ${result.token_symbol}`, 'success'); fetchBalances(); }} />
       <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
       <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />
