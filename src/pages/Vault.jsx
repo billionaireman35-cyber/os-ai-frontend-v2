@@ -1689,6 +1689,16 @@ function WalletsTab() {
   const [sendAsset, setSendAsset] = useState(null);
   const [showSwapModal, setShowSwapModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
+  const [showReceiveModal, setShowReceiveModal] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
+
+  const copyActiveAddress = () => {
+    if (!activeAddress) return;
+    navigator.clipboard.writeText(activeAddress);
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
 
   const fetchImportedWallets = () => {
     api.get('/wallet/import/list')
@@ -1802,12 +1812,15 @@ function WalletsTab() {
               <button
                 onClick={() => {
                   if (walletAssets.length === 0) { addToast('No assets to send from this wallet.', 'warning'); return; }
-                  setSendAsset(walletAssets[0]);
-                  setShowSendModal(true);
+                  if (walletAssets.length === 1) { setSendAsset(walletAssets[0]); setShowSendModal(true); }
+                  else { setShowAssetPicker(true); }
                 }}
                 className="btn-primary flex-1 justify-center"
               >
                 <Send size={16} /> Send
+              </button>
+              <button onClick={() => setShowReceiveModal(true)} className="btn-secondary flex-1 justify-center">
+                <ArrowDownRight size={16} /> Receive
               </button>
               <button onClick={() => setShowSwapModal(true)} className="btn-secondary flex-1 justify-center">
                 <ArrowUpDown size={16} /> Swap
@@ -1838,6 +1851,41 @@ function WalletsTab() {
             )}
           </div>
         </>
+      )}
+
+      {showAssetPicker && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
+          <div className="glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-display font-bold mb-2 text-[var(--text-primary)]">Send which asset?</h3>
+            {walletAssets.map((a, i) => (
+              <button key={i} onClick={() => { setSendAsset(a); setShowAssetPicker(false); setShowSendModal(true); }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]">
+                <span className="text-[var(--text-primary)]">{a.symbol}</span>
+                <span className="text-xs font-mono text-[var(--text-muted)]">{a.balance.toFixed(4)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showReceiveModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowReceiveModal(false)}>
+          <div className="glass-panel rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Receive</h3>
+              <button onClick={() => setShowReceiveModal(false)} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+            </div>
+            <p className="text-xs text-[var(--text-muted)]">
+              Send only Polygon-network assets to this address. Sending from another network may result in permanent loss of funds.
+            </p>
+            <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+              <p className="text-xs font-mono break-all text-[var(--text-primary)]">{activeAddress}</p>
+            </div>
+            <button onClick={copyActiveAddress} className="btn-primary w-full justify-center">
+              {copiedAddress ? <CheckCircle size={18} /> : <Copy size={18} />} {copiedAddress ? 'Copied' : 'Copy Address'}
+            </button>
+          </div>
+        </div>
       )}
 
       <SendModal
