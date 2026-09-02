@@ -12,6 +12,7 @@ import { api } from '../utils/api';
 import { SwapModal } from '../components/SwapModal';
 import { Modal } from '../components/ui/Modal';
 import { WalletAnalytics } from '../components/wallet/WalletAnalytics';
+import { ImportWalletModal } from '../components/wallet/ImportWalletModal';
 import { ToastContainer, useToast } from '../components/ui/Toast';
 import { Dropdown } from '../components/ui/Dropdown';
 
@@ -43,7 +44,8 @@ function toWeiString(amountStr, decimals = 18) {
   return BigInt(combined || '0').toString();
 }
 
-function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) {
+function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wallets = [] }) {
+  const [fromWallet, setFromWallet] = useState('');
   // _prefillTo/_prefillAmount are optional extra fields a caller can set
   // on the asset object to pre-populate the form (e.g. Staking's "Send
   // from OS Vaults" shortcut, which pre-fills the treasury address and
@@ -110,6 +112,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) 
           to_address: to,
           amount: parseFloat(amount),
           password,
+          wallet_address: fromWallet || undefined,
         });
         // Backend returns { fee_tx, send_tx } - send_tx is the user-facing
         // transaction, fee_tx is the relayer's internal fee pull. Both are
@@ -126,6 +129,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) 
         amount_wei: toWeiString(amount),
         password,
         token_address: asset.address || null,
+        wallet_address: fromWallet || undefined,
       });
       onSent?.(res.data.tx_hash);
       setSentResult({ txHash: res.data.tx_hash });
@@ -205,6 +209,23 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances }) 
               <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                 <span>Chain: <span className="text-[var(--text-primary)] font-medium">{asset.chain}</span></span>
               </div>
+              {wallets.length > 0 && (
+                <div>
+                  <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Send From</label>
+                  <select
+                    value={fromWallet}
+                    onChange={(e) => setFromWallet(e.target.value)}
+                    className="input-glass w-full mt-1"
+                  >
+                    <option value="">Primary Wallet</option>
+                    {wallets.map((w) => (
+                      <option key={w.id} value={w.address}>
+                        {w.label} ({w.address.slice(0, 6)}...{w.address.slice(-4)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {insufficientGas && asset.symbol === 'CLOSE' && (
                 <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
                   ⚡ Low POL balance - this send will use gasless (sponsored) delivery instead.
@@ -594,6 +615,19 @@ function StandardWallet() {
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
+  const [importedWallets, setImportedWallets] = useState([]);
+  const [showImportModal, setShowImportModal] = useState(false);
+
+  const fetchImportedWallets = async () => {
+    try {
+      const res = await api.get('/wallet/import/list');
+      setImportedWallets(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch imported wallets', e);
+    }
+  };
+
+  useEffect(() => { if (user) fetchImportedWallets(); }, [user]);
 
   // CLOSE is pinned separately (hero strip + pinned row), so it's excluded
   // from the plain chain-filtered ledger list below to avoid showing twice.
@@ -812,6 +846,38 @@ function StandardWallet() {
         </>
       )}
 
+      {/* Imported Wallets */}
+      {user?.wallet_address && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Imported Wallets</span>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="text-xs font-medium text-[var(--accent-brass-bright)]"
+            >
+              + Import
+            </button>
+          </div>
+          {importedWallets.length === 0 ? (
+            <p className="text-xs text-[var(--text-muted)]">No imported wallets yet.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {importedWallets.map((w) => (
+                <div
+                  key={w.id}
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/5 border border-[var(--glass-border)]"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">{w.label}</p>
+                    <p className="text-[11px] font-mono text-[var(--text-muted)]">{w.address.slice(0, 8)}...{w.address.slice(-6)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Chain Selector - dot shows whether the chain actually holds a balance */}
       <div className="flex gap-2 flex-wrap">
         {chains.map((c) => {
@@ -916,7 +982,8 @@ function StandardWallet() {
         </div>
       )}
 
-      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} refreshBalances={fetchBalances} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} wallets={importedWallets} refreshBalances={fetchBalances} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <ImportWalletModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} onImported={() => { addToast('Wallet imported!', 'success'); fetchImportedWallets(); }} />
       <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} assets={assets} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Purchased ${result.close_credited} CLOSE for ${result.amount} ${result.token_symbol}`, 'success'); fetchBalances(); }} />
       <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
