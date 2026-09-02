@@ -13,8 +13,8 @@ const TOKEN_MAP = {
   DAI: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
 };
 
-export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets, wallets = [] }) {
-  const [fromWallet, setFromWallet] = useState('');
+export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets, wallets = [], defaultWalletAddress = '' }) {
+  const [fromWallet, setFromWallet] = useState(defaultWalletAddress);
   const [fromToken, setFromToken] = useState('MATIC');
   const [toToken, setToToken] = useState('CLOSE');
   const [amount, setAmount] = useState('');

@@ -44,8 +44,8 @@ function toWeiString(amountStr, decimals = 18) {
   return BigInt(combined || '0').toString();
 }
 
-function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wallets = [] }) {
-  const [fromWallet, setFromWallet] = useState('');
+function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wallets = [], defaultWalletAddress = '' }) {
+  const [fromWallet, setFromWallet] = useState(defaultWalletAddress);
   // _prefillTo/_prefillAmount are optional extra fields a caller can set
   // on the asset object to pre-populate the form (e.g. Staking's "Send
   // from OS Vaults" shortcut, which pre-fills the treasury address and
@@ -595,7 +595,7 @@ function TransactionHistory({ isOpen, onClose }) {
 }
 
 function StandardWallet() {
-  const { assets, totalUsd, loading, error, fetchBalances, currency, setCurrency, supportedCurrencies, viewingWallet, setViewingWallet } = useWallet();
+  const { assets, totalUsd, loading, error, fetchBalances, currency, setCurrency, supportedCurrencies } = useWallet();
   const { user, refreshUser } = useAuth();
   const { toasts, addToast, removeToast } = useToast();
   const [chain, setChain] = useState('all');
@@ -615,19 +615,6 @@ function StandardWallet() {
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
-  const [importedWallets, setImportedWallets] = useState([]);
-  const [showImportModal, setShowImportModal] = useState(false);
-
-  const fetchImportedWallets = async () => {
-    try {
-      const res = await api.get('/wallet/import/list');
-      setImportedWallets(res.data || []);
-    } catch (e) {
-      console.error('Failed to fetch imported wallets', e);
-    }
-  };
-
-  useEffect(() => { if (user) fetchImportedWallets(); }, [user]);
 
   // CLOSE is pinned separately (hero strip + pinned row), so it's excluded
   // from the plain chain-filtered ledger list below to avoid showing twice.
@@ -748,16 +735,7 @@ function StandardWallet() {
               options={supportedCurrencies}
             />
           </div>
-          {viewingWallet && (
-            <div className="relative flex items-center gap-1.5 mb-3 text-[11px] font-mono">
-              <span className="text-[var(--accent-brass-bright)]">
-                Viewing: {importedWallets.find((w) => w.address === viewingWallet)?.label || 'Imported Wallet'}
-              </span>
-              <button onClick={() => setViewingWallet(null)} className="text-[var(--text-muted)] underline hover:text-[var(--text-primary)]">
-                Back to Primary
-              </button>
-            </div>
-          )}
+
           <div className="relative flex items-baseline gap-2 font-display mb-4">
             <span className="text-xl text-[var(--accent-brass)]">◈</span>
             <span className="text-4xl font-bold text-[var(--text-primary)]">{currency} {totalUsd.toFixed(2)}</span>
@@ -854,45 +832,6 @@ function StandardWallet() {
             </button>
           </div>
         </>
-      )}
-
-      {/* Imported Wallets */}
-      {user?.wallet_address && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Imported Wallets</span>
-            <button
-              onClick={() => setShowImportModal(true)}
-              className="text-xs font-medium text-[var(--accent-brass-bright)]"
-            >
-              + Import
-            </button>
-          </div>
-          {importedWallets.length === 0 ? (
-            <p className="text-xs text-[var(--text-muted)]">No imported wallets yet.</p>
-          ) : (
-            <div className="space-y-1.5">
-              {importedWallets.map((w) => (
-                <button
-                  key={w.id}
-                  onClick={() => setViewingWallet(viewingWallet === w.address ? null : w.address)}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-colors text-left"
-                  style={viewingWallet === w.address
-                    ? { background: 'rgba(249,115,22,0.10)', borderColor: 'var(--accent-brass)' }
-                    : { background: 'rgba(255,255,255,0.05)', borderColor: 'var(--glass-border)' }}
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">{w.label}</p>
-                    <p className="text-[11px] font-mono text-[var(--text-muted)]">{w.address.slice(0, 8)}...{w.address.slice(-6)}</p>
-                  </div>
-                  {viewingWallet === w.address && (
-                    <span className="text-[10px] font-mono uppercase text-[var(--accent-brass-bright)] shrink-0">Viewing</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       )}
 
       {/* Chain Selector - dot shows whether the chain actually holds a balance */}
@@ -999,9 +938,8 @@ function StandardWallet() {
         </div>
       )}
 
-      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} wallets={importedWallets} refreshBalances={fetchBalances} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
-      <ImportWalletModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} onImported={() => { addToast('Wallet imported!', 'success'); fetchImportedWallets(); }} />
-      <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} assets={assets} wallets={importedWallets} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} refreshBalances={fetchBalances} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+      <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} assets={assets} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
       <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Purchased ${result.close_credited} CLOSE for ${result.amount} ${result.token_symbol}`, 'success'); fetchBalances(); }} />
       <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
       <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />
@@ -1737,6 +1675,195 @@ function Governance() {
   );
 }
 
+function WalletsTab() {
+  const { user } = useAuth();
+  const { toasts, addToast, removeToast } = useToast();
+  const [importedWallets, setImportedWallets] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null); // null = primary
+  const [walletAssets, setWalletAssets] = useState([]);
+  const [walletTotalUsd, setWalletTotalUsd] = useState(0);
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [sendAsset, setSendAsset] = useState(null);
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+
+  const fetchImportedWallets = () => {
+    api.get('/wallet/import/list')
+      .then((res) => setImportedWallets(res.data || []))
+      .catch((e) => console.error('Failed to fetch imported wallets', e));
+  };
+
+  useEffect(() => { if (user) fetchImportedWallets(); }, [user]);
+
+  const allWallets = user?.wallet_address
+    ? [
+        { id: 'primary', address: user.wallet_address, label: 'Primary', isPrimary: true },
+        ...importedWallets.filter((w) => w.address.toLowerCase() !== user.wallet_address.toLowerCase()),
+      ]
+    : [];
+
+  const activeAddress = selectedAddress || user?.wallet_address;
+  const activeWallet = allWallets.find((w) => w.address === activeAddress);
+
+  const fetchWalletBalance = (address) => {
+    if (!address) return;
+    setBalanceLoading(true);
+    const params = address.toLowerCase() !== user?.wallet_address?.toLowerCase() ? { wallet_address: address } : {};
+    api.get('/wallet/balance', { params })
+      .then((res) => {
+        const data = res.data.balances || {};
+        const items = [];
+        let total = 0;
+        for (const [chain, chainData] of Object.entries(data)) {
+          if (chain === 'close') continue;
+          const native = chainData.native;
+          if (native && native.balance > 0) {
+            items.push({ chain, symbol: native.symbol || chain.toUpperCase(), balance: native.balance, usdValue: native.usd || 0 });
+            total += native.usd || 0;
+          }
+          const tokens = chainData.tokens || {};
+          for (const [symbol, token] of Object.entries(tokens)) {
+            if (token.balance > 0) {
+              items.push({ chain, symbol, balance: token.balance, usdValue: token.usd || 0, address: token.address || null });
+              total += token.usd || 0;
+            }
+          }
+        }
+        setWalletAssets(items);
+        setWalletTotalUsd(total);
+      })
+      .catch((e) => {
+        console.error('Failed to fetch wallet balance', e);
+        setWalletAssets([]);
+        setWalletTotalUsd(0);
+      })
+      .finally(() => setBalanceLoading(false));
+  };
+
+  const fetchWalletHistory = (address) => {
+    if (!address) return;
+    setHistoryLoading(true);
+    const params = { wallet_address: address };
+    api.get('/wallet/transactions/history', { params })
+      .then((res) => setHistory(res.data.history || []))
+      .catch((e) => { console.error('Failed to fetch wallet history', e); setHistory([]); })
+      .finally(() => setHistoryLoading(false));
+  };
+
+  useEffect(() => {
+    if (!activeAddress) return;
+    fetchWalletBalance(activeAddress);
+    fetchWalletHistory(activeAddress);
+  }, [activeAddress]);
+
+  return (
+    <div className="space-y-6">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Your Wallets</p>
+        <button onClick={() => setShowImportModal(true)} className="text-xs font-medium text-[var(--accent-brass-bright)]">+ Import</button>
+      </div>
+
+      <div className="space-y-2">
+        {allWallets.map((w) => (
+          <button
+            key={w.address}
+            onClick={() => setSelectedAddress(w.isPrimary ? null : w.address)}
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-colors text-left"
+            style={activeAddress === w.address
+              ? { background: 'rgba(249,115,22,0.10)', borderColor: 'var(--accent-brass)' }
+              : { background: 'rgba(255,255,255,0.05)', borderColor: 'var(--glass-border)' }}
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-[var(--text-primary)] truncate">{w.label}{w.isPrimary ? ' (Primary)' : ''}</p>
+              <p className="text-[11px] font-mono text-[var(--text-muted)]">{w.address?.slice(0, 8)}...{w.address?.slice(-6)}</p>
+            </div>
+            {activeAddress === w.address && (
+              <span className="text-[10px] font-mono uppercase text-[var(--accent-brass-bright)] shrink-0">Active</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {activeWallet && (
+        <>
+          <div className="glass-panel rounded-2xl p-5">
+            <p className="text-xs uppercase tracking-widest text-[var(--text-muted)] mb-2" style={{ letterSpacing: '2px' }}>
+              {activeWallet.label} Balance
+            </p>
+            <div className="text-3xl font-display font-bold text-[var(--text-primary)] mb-4">
+              {balanceLoading ? '...' : `$${walletTotalUsd.toFixed(2)}`}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (walletAssets.length === 0) { addToast('No assets to send from this wallet.', 'warning'); return; }
+                  setSendAsset(walletAssets[0]);
+                  setShowSendModal(true);
+                }}
+                className="btn-primary flex-1 justify-center"
+              >
+                <Send size={16} /> Send
+              </button>
+              <button onClick={() => setShowSwapModal(true)} className="btn-secondary flex-1 justify-center">
+                <ArrowUpDown size={16} /> Swap
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)] flex items-center gap-1.5">
+              <History size={12} /> Transaction History
+            </p>
+            {historyLoading ? (
+              <div className="h-14 animate-pulse rounded-lg bg-white/5" />
+            ) : history.length === 0 ? (
+              <p className="text-sm text-[var(--text-muted)] py-4 text-center">No transactions for this wallet yet.</p>
+            ) : (
+              <div className="glass-panel rounded-xl px-1">
+                {history.map((tx, i) => (
+                  <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < history.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
+                    <div>
+                      <p className="text-sm font-medium capitalize text-[var(--text-primary)]">{tx.kind}</p>
+                      <p className="text-xs text-[var(--text-muted)]">{tx.amount} {tx.token_symbol || 'CLOSE'} {tx.status ? `\u00b7 ${tx.status}` : ''}</p>
+                    </div>
+                    <span className="text-xs text-[var(--text-muted)]">{tx.created ? new Date(tx.created).toLocaleDateString() : ''}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      <SendModal
+        isOpen={showSendModal}
+        onClose={() => setShowSendModal(false)}
+        asset={sendAsset}
+        assets={walletAssets}
+        wallets={[]}
+        defaultWalletAddress={activeWallet && !activeWallet.isPrimary ? activeWallet.address : ''}
+        refreshBalances={() => fetchWalletBalance(activeAddress)}
+        onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchWalletBalance(activeAddress); fetchWalletHistory(activeAddress); }}
+      />
+      <SwapModal
+        isOpen={showSwapModal}
+        onClose={() => setShowSwapModal(false)}
+        userWalletAddress={activeAddress}
+        assets={walletAssets}
+        wallets={[]}
+        defaultWalletAddress={activeWallet && !activeWallet.isPrimary ? activeWallet.address : ''}
+        onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchWalletBalance(activeAddress); fetchWalletHistory(activeAddress); }}
+      />
+      <ImportWalletModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} onImported={() => { addToast('Wallet imported!', 'success'); fetchImportedWallets(); }} />
+    </div>
+  );
+}
+
 export default function Vault() {
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'staking' ? 'staking' : 'standard';
@@ -1753,12 +1880,14 @@ export default function Vault() {
         <button onClick={() => setTab('safe')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'safe' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
         <button onClick={() => setTab('staking')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'staking' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Coins size={16} /> Staking</button>
         <button onClick={() => setTab('governance')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'governance' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Vote size={16} /> Governance</button>
+        <button onClick={() => setTab('wallets')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'wallets' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Wallet size={16} /> Wallets</button>
       </div>
       {tab === 'standard' && <StandardWallet />}
       {tab === 'analytics' && <WalletAnalytics />}
       {tab === 'safe' && <SafeWallet />}
       {tab === 'staking' && <Staking />}
       {tab === 'governance' && <Governance />}
+      {tab === 'wallets' && <WalletsTab />}
     </div>
   );
 }
