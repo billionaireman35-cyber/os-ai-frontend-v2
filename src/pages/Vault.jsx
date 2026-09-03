@@ -626,38 +626,184 @@ function TransactionHistory({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
+  const getKind = (tx) => String(tx.kind || 'transaction').toLowerCase();
+
+  const getIcon = (tx) => {
+    const kind = getKind(tx);
+
+    if (kind.includes('receive') || kind.includes('deposit') || kind.includes('purchase') || kind.includes('buy')) {
+      return <ArrowDownRight size={17} />;
+    }
+
+    if (kind.includes('swap')) {
+      return <ArrowUpDown size={17} />;
+    }
+
+    if (kind.includes('send') || kind.includes('withdraw')) {
+      return <ArrowUpRight size={17} />;
+    }
+
+    return <Coins size={17} />;
+  };
+
+  const getTone = (tx) => {
+    const kind = getKind(tx);
+
+    if (kind.includes('receive') || kind.includes('deposit') || kind.includes('purchase') || kind.includes('buy')) {
+      return {
+        icon: 'text-emerald-300',
+        shell: 'bg-emerald-400/[0.08] border-emerald-300/[0.15]',
+        amount: 'text-emerald-300',
+      };
+    }
+
+    if (kind.includes('swap')) {
+      return {
+        icon: 'text-violet-300',
+        shell: 'bg-violet-400/[0.08] border-violet-300/[0.15]',
+        amount: 'text-[var(--text-primary)]',
+      };
+    }
+
+    return {
+      icon: 'text-[var(--accent-brass-bright)]',
+      shell: 'bg-[rgba(217,164,65,0.07)] border-[rgba(217,164,65,0.15)]',
+      amount: 'text-[var(--text-primary)]',
+    };
+  };
+
+  const formatStatus = (status) => {
+    if (!status) return 'Internal';
+    return String(status).replace(/_/g, ' ');
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="glass-panel rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Transaction History</h3>
-          <button onClick={onClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
-        </div>
-        <div className="overflow-y-auto flex-1 -mx-2 px-2">
-          {loading ? (
-            <p className="text-sm text-center py-8 text-[var(--text-muted)]">Loading...</p>
-          ) : items.length === 0 ? (
-            <p className="text-sm text-center py-8 text-[var(--text-muted)]">No transactions yet.</p>
-          ) : (
-            items.map((tx, i) => (
-              <div key={i} className={`flex items-center justify-between py-3 ${i < items.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
-                <div>
-                  <p className="text-sm font-medium capitalize text-[var(--text-primary)]">{tx.kind}</p>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    {tx.amount} {tx.token_symbol || 'CLOSE'} {tx.status ? `· ${tx.status}` : ''}
-                  </p>
-                </div>
-                {tx.tx_hash && tx.chain && EXPLORERS[tx.chain] ? (
-                  <a href={`${EXPLORERS[tx.chain]}${tx.tx_hash}`} target="_blank" rel="noopener noreferrer"
-                     className="flex items-center gap-1 text-xs text-[var(--accent-brass)]">
-                    View <ExternalLink size={12} />
-                  </a>
-                ) : (
-                  <span className="text-xs text-[var(--text-muted)]">{tx.status || 'internal'}</span>
-                )}
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div
+        className="relative overflow-hidden w-full max-w-xl max-h-[86vh] flex flex-col rounded-[28px] border border-white/[0.08] bg-[#09090d]/[0.98] shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+      >
+        <div
+          className="absolute -right-24 -top-24 w-64 h-64 rounded-full pointer-events-none"
+          style={{ background: 'rgba(124,58,237,0.10)', filter: 'blur(70px)' }}
+        />
+
+        <div className="relative z-10 px-5 sm:px-7 pt-6 pb-5 border-b border-white/[0.06]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-violet-400" style={{ boxShadow: '0 0 10px rgba(139,92,246,0.8)' }} />
+                <p className="text-[9px] uppercase font-semibold tracking-[3px] text-violet-300/80">
+                  OS VAULT
+                </p>
               </div>
-            ))
+              <h3 className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-[var(--text-primary)]">
+                Activity
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Your recent wallet activity and transaction history.
+              </p>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border border-white/[0.07] bg-white/[0.025] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.06] active:scale-[0.96] transition-all duration-200"
+              aria-label="Close activity"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div className="relative z-10 overflow-y-auto flex-1 px-4 sm:px-6 py-4">
+          {loading ? (
+            <div className="py-16 text-center">
+              <div className="mx-auto w-10 h-10 rounded-2xl border border-violet-400/20 bg-violet-400/[0.06] flex items-center justify-center">
+                <RefreshCw size={17} className="text-violet-300 animate-spin" />
+              </div>
+              <p className="text-sm text-[var(--text-secondary)] mt-4">Loading activity</p>
+              <p className="text-[10px] text-[var(--text-muted)] mt-1">Fetching your latest transactions</p>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="py-16 text-center">
+              <div className="mx-auto w-14 h-14 rounded-2xl border border-white/[0.07] bg-white/[0.025] flex items-center justify-center">
+                <History size={20} className="text-violet-300/70" />
+              </div>
+              <p className="text-sm font-medium text-[var(--text-primary)] mt-4">No activity yet</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1 max-w-[260px] mx-auto">
+                Your sends, receives, swaps and CLOSE purchases will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {items.map((tx, i) => {
+                const tone = getTone(tx);
+                const kind = getKind(tx);
+                const label = kind.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const status = formatStatus(tx.status);
+
+                return (
+                  <div
+                    key={i}
+                    className="group flex items-center gap-3 rounded-2xl px-3.5 py-3.5 border border-white/[0.045] bg-white/[0.018] hover:bg-white/[0.035] hover:border-white/[0.08] transition-all duration-200"
+                  >
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ${tone.shell} ${tone.icon}`}>
+                      {getIcon(tx)}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium capitalize text-[var(--text-primary)] truncate">
+                          {label}
+                        </p>
+                        {tx.status && (
+                          <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[8px] uppercase tracking-[1px] border border-white/[0.06] text-[var(--text-muted)]">
+                            {status}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-1 truncate">
+                        {tx.amount} {tx.token_symbol || 'CLOSE'}
+                        {tx.chain ? ` · ${tx.chain}` : ''}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="text-right">
+                        <p className={`text-sm font-mono font-semibold ${tone.amount}`}>
+                          {tx.amount} {tx.token_symbol || 'CLOSE'}
+                        </p>
+                        <p className="text-[9px] text-[var(--text-muted)] mt-1">
+                          {status}
+                        </p>
+                      </div>
+
+                      {tx.tx_hash && tx.chain && EXPLORERS[tx.chain] ? (
+                        <a
+                          href={`${EXPLORERS[tx.chain]}${tx.tx_hash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="View transaction"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border border-white/[0.05] hover:text-[var(--accent-brass-bright)] hover:bg-white/[0.04] transition-all"
+                        >
+                          <ExternalLink size={13} />
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
+        </div>
+
+        <div className="relative z-10 px-5 sm:px-7 py-3.5 border-t border-white/[0.06] flex items-center justify-between">
+          <span className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">
+            Secure activity
+          </span>
+          <span className="flex items-center gap-1.5 text-[9px] text-[var(--text-muted)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Non-custodial
+          </span>
         </div>
       </div>
     </div>
@@ -1154,108 +1300,97 @@ function StandardWallet() {
             <span className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">Live balance</span>
           </div>
 
-          {/* OS VAULT — Pinned CLOSE Asset */}
+          {/* OS VAULT — Flagship CLOSE Asset */}
           {closeAsset && (chain === 'all' || closeAsset.chain === chain) && (
             <div
-              className="relative overflow-hidden rounded-[28px] p-5 sm:p-6 shadow-[0_22px_70px_rgba(0,0,0,0.28)]"
+              className="group relative overflow-hidden rounded-[30px] p-5 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.30)] transition-all duration-300 hover:-translate-y-[1px]"
               style={{
                 background:
-                  'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.13), transparent 42%), linear-gradient(135deg, rgba(20,19,25,0.96), rgba(8,8,12,0.98))',
-                border: '1px solid rgba(139,92,246,0.18)',
-                boxShadow: '0 14px 45px rgba(0,0,0,0.20)',
+                  'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.16), transparent 38%), radial-gradient(circle at 0% 100%, rgba(217,164,65,0.06), transparent 34%), linear-gradient(135deg, rgba(21,20,27,0.98), rgba(7,7,11,0.99))',
+                border: '1px solid rgba(139,92,246,0.20)',
               }}
             >
-              {/* subtle violet glow */}
               <div
-                className="absolute -right-12 -top-12 w-32 h-32 rounded-full pointer-events-none"
+                className="absolute -right-16 -top-16 w-44 h-44 rounded-full pointer-events-none"
                 style={{
-                  background: 'rgba(139,92,246,0.12)',
-                  filter: 'blur(35px)',
+                  background: 'rgba(139,92,246,0.13)',
+                  filter: 'blur(50px)',
                 }}
               />
 
               <div className="relative z-10">
-                {/* Label */}
-                <div className="flex items-center justify-between mb-5">
-                  <p
-                    className="text-[9px] uppercase font-medium text-violet-300/70"
-                    style={{ letterSpacing: '3px' }}
-                  >
-                    Pinned Asset
-                  </p>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <p className="text-[9px] uppercase font-semibold text-violet-300/75" style={{ letterSpacing: '3px' }}>
+                      Featured Asset
+                    </p>
+                    <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                      Native to the OS AI ecosystem
+                    </p>
+                  </div>
 
                   <span
-                    className="px-2.5 py-1 rounded-full text-[8px] font-mono uppercase"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[8px] font-mono uppercase"
                     style={{
-                      color: '#a78bfa',
+                      color: '#c4b5fd',
                       background: 'rgba(139,92,246,0.08)',
                       border: '1px solid rgba(139,92,246,0.20)',
                       letterSpacing: '1px',
                     }}
                   >
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
                     {closeAsset.chain || 'Polygon'}
                   </span>
                 </div>
 
-                {/* Asset */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5 min-w-0">
-                    {/* CLOSE identity */}
                     <div
-                      className="relative w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-[0_10px_30px_rgba(217,164,65,0.15)]"
+                      className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-[1.03]"
                       style={{
                         background:
                           'linear-gradient(145deg, var(--accent-brass-bright), var(--accent-brass-dim))',
                         boxShadow:
-                          '0 0 24px rgba(217,164,65,0.20), inset 0 1px rgba(255,255,255,0.22)',
+                          '0 0 28px rgba(217,164,65,0.22), inset 0 1px rgba(255,255,255,0.25)',
                       }}
                     >
-                      <span
-                        className="font-display font-black text-lg"
-                        style={{ color: '#14120C' }}
-                      >
+                      <span className="font-display font-black text-xl sm:text-2xl" style={{ color: '#14120C' }}>
                         C
                       </span>
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-base font-display font-semibold text-[var(--text-primary)]">
+                        <p className="text-lg font-display font-bold text-[var(--text-primary)]">
                           CLOSE
                         </p>
-                        <span className="text-[8px] uppercase tracking-wider text-[var(--accent-brass-bright)]">
+                        <span className="px-1.5 py-0.5 rounded-md text-[7px] uppercase font-semibold text-[var(--accent-brass-bright)] bg-[rgba(217,164,65,0.07)] border border-[rgba(217,164,65,0.14)]">
                           Native
                         </span>
                       </div>
-
-                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                      <p className="text-[10px] text-[var(--text-muted)] mt-1">
                         OS AI Token
                       </p>
                     </div>
                   </div>
 
-                  {/* Balance */}
                   <div className="text-right flex-shrink-0">
-                    <p className="font-mono text-lg font-semibold text-[var(--text-primary)]">
+                    <p className="font-mono text-xl sm:text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
                       {closeAsset.balance.toFixed(4)}
                     </p>
-                    <p className="font-mono text-[11px] text-[var(--text-muted)] mt-0.5">
+                    <p className="font-mono text-[11px] text-[var(--text-muted)] mt-1">
                       ${(closeAsset.usdValue || 0).toFixed(2)}
                     </p>
                   </div>
                 </div>
 
-                {/* Bottom metadata / action */}
-                <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center justify-between">
+                <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{
-                        background: '#8b5cf6',
-                        boxShadow: '0 0 8px rgba(139,92,246,0.9)',
-                      }}
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                      style={{ boxShadow: '0 0 9px rgba(52,211,153,0.75)' }}
                     />
-                    <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                    <span className="text-[9px] font-mono uppercase tracking-[1.5px] text-[var(--text-muted)]">
                       Available
                     </span>
                   </div>
@@ -1265,7 +1400,7 @@ function StandardWallet() {
                       setSendAsset(closeAsset);
                       setShowSendModal(true);
                     }}
-                    className="flex items-center gap-1.5 text-[10px] font-medium text-violet-300 hover:text-violet-200 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-semibold text-violet-200 border border-violet-400/15 bg-violet-400/[0.05] hover:bg-violet-400/[0.10] hover:border-violet-300/30 active:scale-[0.97] transition-all duration-200"
                   >
                     Send CLOSE
                     <ArrowUpRight size={13} />
@@ -1275,28 +1410,77 @@ function StandardWallet() {
             </div>
           )}
 
-          <div className="glass-panel rounded-[24px] px-1 overflow-hidden border border-white/[0.055]">
+          {/* Other Assets */}
+          <div className="overflow-hidden rounded-[26px] border border-white/[0.06] bg-white/[0.018] shadow-[0_18px_55px_rgba(0,0,0,0.18)]">
+            <div className="px-4 sm:px-5 py-3 border-b border-white/[0.05] flex items-center justify-between">
+              <p className="text-[9px] uppercase tracking-[2px] font-semibold text-[var(--text-muted)]">
+                Other Assets
+              </p>
+              <span className="text-[9px] text-[var(--text-muted)]">
+                {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}
+              </span>
+            </div>
+
             {filtered.length === 0 ? (
-              !closeAsset && <p className="text-sm py-6 text-center text-[var(--text-muted)]">No assets on this network yet.</p>
+              <div className="py-8 px-5 text-center">
+                <p className="text-sm text-[var(--text-secondary)]">No other assets</p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                  Assets on this network will appear here.
+                </p>
+              </div>
             ) : (
               filtered.map((a, i) => {
                 const up = (a.change24h ?? 0) >= 0;
+
                 return (
-                  <div key={i} className={`flex items-center justify-between px-4 py-4 ${i < filtered.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
-                    <div className="flex items-center gap-3">
-                      <span className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner" style={{ background: chainColors[a.chain] || 'var(--text-muted)' }} />
-                      <div>
-                        <p className="text-sm font-medium text-[var(--text-primary)]">{a.symbol}</p>
-                        <p className="text-xs text-[var(--text-muted)]">{a.chain}</p>
+                  <div
+                    key={i}
+                    className={`group flex items-center justify-between gap-3 px-4 sm:px-5 py-4 hover:bg-white/[0.025] transition-colors ${
+                      i < filtered.length - 1 ? 'border-b border-white/[0.045]' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner flex-shrink-0"
+                        style={{
+                          background: chainColors[a.chain] || 'var(--text-muted)',
+                          opacity: 0.9,
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
+                          {a.symbol}
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                          {a.chain}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Sparkline points={a.sparkline} up={up} />
-                      <div className="text-right font-mono">
-                        <p className="text-sm text-[var(--text-primary)]">{a.balance.toFixed(4)}</p>
-                        <p className="text-xs text-[var(--text-muted)]">${(a.usdValue || 0).toFixed(2)}</p>
+
+                    <div className="flex items-center gap-2.5 flex-shrink-0">
+                      <div className="hidden sm:block opacity-80 group-hover:opacity-100 transition-opacity">
+                        <Sparkline points={a.sparkline} up={up} />
                       </div>
-                      <button onClick={() => { setSendAsset(a); setShowSendModal(true); }} className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] transition-colors"><Send size={15} /></button>
+
+                      <div className="text-right font-mono">
+                        <p className="text-sm font-medium text-[var(--text-primary)]">
+                          {a.balance.toFixed(4)}
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                          ${(a.usdValue || 0).toFixed(2)}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setSendAsset(a);
+                          setShowSendModal(true);
+                        }}
+                        aria-label={`Send ${a.symbol}`}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border border-transparent hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-[var(--accent-brass)] active:scale-[0.95] transition-all"
+                      >
+                        <Send size={14} />
+                      </button>
                     </div>
                   </div>
                 );
