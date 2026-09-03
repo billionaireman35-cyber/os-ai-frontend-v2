@@ -5,7 +5,7 @@ import { Modal } from '../components/ui/Modal';
 import {
   Plus, Users, MessageSquare, X, Send, Copy, CheckCircle, LogIn, UserPlus,
   Lock, Globe, Check, XCircle, Loader2, Search, UserMinus, LogOut,
-  Pencil, Trash2, Compass,
+  Pencil, Trash2, Compass, Sparkles,
 } from 'lucide-react';
 
 const CLOSE_TOKEN_ADDRESS = '0x3c6833cFDdED80fE76474a3Cb2Cc050Daec91fe8';
@@ -327,8 +327,17 @@ export default function HustleHub() {
     e.preventDefault();
     if (!newMessage.trim() || !selectedWorkspace) return;
     try {
-      await api.post(`/workspace/${selectedWorkspace.id}/message`, { content: newMessage.trim() });
+      const res = await api.post(`/workspace/${selectedWorkspace.id}/message`, { content: newMessage.trim() });
       setNewMessage('');
+      // When the message contains @osai, the response shape is
+      // {message, ai_message, ai_error?} instead of the flat message
+      // object - ai_message itself doesn't need handling here (the
+      // fetchMessages() call below picks it up from the DB like any
+      // other message), but a failed AI reply (insufficient balance)
+      // is worth surfacing immediately rather than silently dropped.
+      if (res.data?.ai_error) {
+        alert(res.data.ai_error);
+      }
       await fetchMessages(selectedWorkspace.id);
     } catch (e) {
       const status = e.response?.status;
@@ -528,9 +537,10 @@ export default function HustleHub() {
                 return (
                   <div key={msg.id} className={`flex ${isOwnMsg ? 'justify-end' : 'justify-start'} group`}>
                     <div className="max-w-[75%]">
-                      <div className="glass-card rounded-2xl px-4 py-2">
+                      <div className={`glass-card rounded-2xl px-4 py-2 ${msg.is_ai ? 'border border-[var(--accent-indigo)]/30' : ''}`}>
                         <div className="flex items-center gap-2 text-xs mb-1">
-                          <span className="font-bold text-[var(--accent-brass)]">{msg.user_name || 'Unknown'}</span>
+                          {msg.is_ai && <Sparkles size={12} className="text-[var(--accent-indigo)]" />}
+                          <span className={`font-bold ${msg.is_ai ? 'text-[var(--accent-indigo)]' : 'text-[var(--accent-brass)]'}`}>{msg.user_name || 'Unknown'}</span>
                           <span className="text-[var(--text-muted)]">{msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : ''}</span>
                           {msg.edited_at && <span className="text-[var(--text-muted)] italic">(edited)</span>}
                         </div>
@@ -584,7 +594,7 @@ export default function HustleHub() {
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
+                placeholder="Type a message... (try @osai to ask OS AI)"
                 className="flex-1 bg-transparent border-none outline-none px-3 py-2 text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
               />
               <button
