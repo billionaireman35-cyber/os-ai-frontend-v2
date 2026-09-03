@@ -874,10 +874,10 @@ function StandardWallet() {
                     setShowAssetPicker(true);
                   }
                 }}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all hover:bg-white/[0.035] active:scale-[0.985]"
+                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-white/[0.035] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
               >
                 <span
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
                   style={{
                     border: '1px solid rgba(139,92,246,0.75)',
                     boxShadow: '0 0 18px rgba(139,92,246,0.16)',
@@ -896,10 +896,10 @@ function StandardWallet() {
               {/* Receive */}
               <button
                 onClick={() => setShowReceiveModal(true)}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all hover:bg-white/[0.035] active:scale-[0.985]"
+                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-white/[0.035] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
               >
                 <span
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
                   style={{
                     border: '1px solid rgba(139,92,246,0.75)',
                     boxShadow: '0 0 18px rgba(139,92,246,0.16)',
@@ -918,10 +918,10 @@ function StandardWallet() {
               {/* Swap */}
               <button
                 onClick={() => setShowSwapModal(true)}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all hover:bg-white/[0.035] active:scale-[0.985]"
+                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-white/[0.035] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
               >
                 <span
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
                   style={{
                     border: '1px solid rgba(139,92,246,0.75)',
                     boxShadow: '0 0 18px rgba(139,92,246,0.16)',
@@ -940,10 +940,10 @@ function StandardWallet() {
               {/* Buy CLOSE */}
               <button
                 onClick={() => setShowBuyModal(true)}
-                className="group relative flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all hover:bg-[rgba(217,164,65,0.06)] active:scale-[0.985]"
+                className="group relative flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-[rgba(217,164,65,0.06)] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(217,164,65,0.35)]"
               >
                 <span
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
                   style={{
                     border: '1px solid rgba(139,92,246,0.75)',
                     boxShadow: '0 0 18px rgba(139,92,246,0.16)',
@@ -964,17 +964,17 @@ function StandardWallet() {
 
           {/* Overflow row - Sell, Refresh, History, Top Up Chat: same handlers, quieter treatment */}
           <div className="grid grid-cols-4 items-center rounded-2xl px-1 py-2 bg-white/[0.018] border border-white/[0.055]">
-            <button onClick={() => setShowSellModal(true)} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
-              <DollarSign size={14} className="text-[var(--accent-brass-dim)]" /> Sell
+            <button onClick={() => setShowSellModal(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+              <DollarSign size={14} className="text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:scale-110" /> Sell
             </button>
-            <button onClick={fetchBalances} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
-              <RefreshCw size={14} className={`text-[var(--accent-brass-dim)] ${loading ? 'animate-spin' : ''}`} /> Refresh
+            <button onClick={fetchBalances} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+              <RefreshCw size={14} className={`text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:rotate-12 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </button>
-            <button onClick={() => setShowHistory(true)} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
-              <History size={14} className="text-[var(--accent-brass-dim)]" /> History
+            <button onClick={() => setShowHistory(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+              <History size={14} className="text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:scale-110" /> History
             </button>
-            <button onClick={() => setShowChatTopupModal(true)} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
-              <MessageSquare size={14} className="text-[var(--accent-brass-dim)]" /> Top Up Chat
+            <button onClick={() => setShowChatTopupModal(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+              <MessageSquare size={14} className="text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:scale-110" /> Top Up Chat
             </button>
           </div>
         </>
@@ -989,7 +989,7 @@ function StandardWallet() {
             <button
               key={c}
               onClick={() => setChain(c)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-mono font-bold tracking-wider touch transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-mono font-bold tracking-wider touch transition-all duration-200 hover:-translate-y-px active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-brass)]/30 ${
                 chain === c
                   ? 'bg-[var(--accent-brass)] text-black'
                   : `bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)] ${has ? '' : 'opacity-45'}`
