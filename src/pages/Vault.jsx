@@ -13,6 +13,7 @@ import { SwapModal } from '../components/SwapModal';
 import { Modal } from '../components/ui/Modal';
 import { WalletAnalytics } from '../components/wallet/WalletAnalytics';
 import { ImportWalletModal } from '../components/wallet/ImportWalletModal';
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
 import { ToastContainer, useToast } from '../components/ui/Toast';
 import { Dropdown } from '../components/ui/Dropdown';
 
@@ -1692,6 +1693,35 @@ function WalletsTab() {
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const { open: openAppKit } = useAppKit();
+  const { address: connectedAddress, isConnected } = useAppKitAccount();
+  const [savedConnectedAddresses, setSavedConnectedAddresses] = useState([]);
+
+  // Once a wallet connects via AppKit, persist it to os_wallets (no key
+  // held - see POST /wallet/import/connected) so it shows up in the list
+  // like any other owned wallet. Guarded against re-saving the same
+  // address on every re-render/reconnect.
+  useEffect(() => {
+    if (!isConnected || !connectedAddress || !user) return;
+    if (savedConnectedAddresses.includes(connectedAddress.toLowerCase())) return;
+    api.post('/wallet/import/connected', { address: connectedAddress, label: 'Connected Wallet' })
+      .then(() => {
+        setSavedConnectedAddresses((prev) => [...prev, connectedAddress.toLowerCase()]);
+        addToast('Wallet connected!', 'success');
+        fetchImportedWallets();
+      })
+      .catch((e) => {
+        const msg = e.response?.data?.detail || '';
+        // Already-added is expected on reconnect after the first save -
+        // still mark it saved locally so we stop retrying, but don't
+        // show an error toast for what's actually a normal case.
+        if (msg.includes('already added')) {
+          setSavedConnectedAddresses((prev) => [...prev, connectedAddress.toLowerCase()]);
+        } else {
+          console.error('Failed to save connected wallet', e);
+        }
+      });
+  }, [isConnected, connectedAddress, user]);
 
   const copyActiveAddress = () => {
     if (!activeAddress) return;
@@ -1775,7 +1805,10 @@ function WalletsTab() {
 
       <div className="flex items-center justify-between">
         <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Your Wallets</p>
-        <button onClick={() => setShowImportModal(true)} className="text-xs font-medium text-[var(--accent-brass-bright)]">+ Import</button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => openAppKit()} className="text-xs font-medium text-[var(--accent-brass-bright)]">+ Connect</button>
+          <button onClick={() => setShowImportModal(true)} className="text-xs font-medium text-[var(--accent-brass-bright)]">+ Import</button>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -1789,7 +1822,12 @@ function WalletsTab() {
               : { background: 'rgba(255,255,255,0.05)', borderColor: 'var(--glass-border)' }}
           >
             <div className="min-w-0">
-              <p className="text-sm font-medium text-[var(--text-primary)] truncate">{w.label}{w.isPrimary ? ' (Primary)' : ''}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-[var(--text-primary)] truncate">{w.label}{w.isPrimary ? ' (Primary)' : ''}</p>
+                {w.wallet_type === 'connected' && (
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-white/10 text-[var(--text-muted)] shrink-0">Connected</span>
+                )}
+              </div>
               <p className="text-[11px] font-mono text-[var(--text-muted)]">{w.address?.slice(0, 8)}...{w.address?.slice(-6)}</p>
             </div>
             {activeAddress === w.address && (
