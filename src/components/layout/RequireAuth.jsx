@@ -1,10 +1,13 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { OsAiMark } from '../ui/OsAiMark';
+import { usePushSubscription } from '../../hooks/usePushSubscription';
 
 export function RequireAuth({ children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
+
+  usePushSubscription(user);
 
   if (loading) {
     return (
