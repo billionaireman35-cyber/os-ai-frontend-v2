@@ -441,14 +441,30 @@ export default function Chat() {
       // message; a steady interval below drains a few characters at a
       // time onto the screen, decoupling arrival speed from display
       // speed. Added 2026-09-02.
+      //
+      // Drain rate is adaptive, not fixed: a flat 3 chars/16ms (~187
+      // chars/sec) looked smooth for normal chunks, but a large burst
+      // (fast provider sending e.g. 2000+ chars at once) took 10+
+      // seconds to visually catch up even though the network had
+      // already delivered everything - reading as a stall once the
+      // stream itself went quiet. Scaling the per-tick amount by the
+      // current backlog keeps small chunks typing at the slow, smooth
+      // base pace while large backlogs drain fast enough to never fall
+      // far behind real arrival time. Fixed 2026-09-03.
       let pendingText = '';
-      const DRAIN_CHARS_PER_TICK = 3;
+      const DRAIN_BASE_CHARS_PER_TICK = 3;
       const DRAIN_INTERVAL_MS = 16;
+      const DRAIN_CATCHUP_DIVISOR = 20; // backlog / this = extra chars this tick once backlog is large
+      const DRAIN_CATCHUP_THRESHOLD = 200; // backlog (chars) before catch-up scaling kicks in
       drainTimer = setInterval(() => {
         if (!pendingText) return;
-        const take = pendingText.slice(0, DRAIN_CHARS_PER_TICK);
-        pendingText = pendingText.slice(DRAIN_CHARS_PER_TICK);
-        assistantMessage.content += take;
+        const backlog = pendingText.length;
+        const take = backlog > DRAIN_CATCHUP_THRESHOLD
+          ? Math.max(DRAIN_BASE_CHARS_PER_TICK, Math.ceil(backlog / DRAIN_CATCHUP_DIVISOR))
+          : DRAIN_BASE_CHARS_PER_TICK;
+        const chunk = pendingText.slice(0, take);
+        pendingText = pendingText.slice(take);
+        assistantMessage.content += chunk;
         pushUpdate();
       }, DRAIN_INTERVAL_MS);
       const waitForDrain = () => new Promise((resolve) => {
