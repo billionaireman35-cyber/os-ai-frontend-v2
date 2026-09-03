@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import { Modal } from '../components/ui/Modal';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { CodeBlock } from '../components/chat/CodeBlock';
 import {
   Plus, Users, MessageSquare, X, Send, Copy, CheckCircle, LogIn, UserPlus,
   Lock, Globe, Check, XCircle, Loader2, Search, UserMinus, LogOut,
@@ -563,7 +566,23 @@ export default function HustleHub() {
                             </div>
                           </div>
                         ) : (
-                          <p className="whitespace-pre-wrap break-words text-[var(--text-primary)]">{msg.content}</p>
+                          <div className="prose prose-sm prose-invert max-w-none break-words">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                code({ inline, className, children, ...props }) {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  const value = String(children).replace(/\n$/, '');
+                                  if (inline) {
+                                    return <code className={className} {...props}>{children}</code>;
+                                  }
+                                  return <CodeBlock language={match ? match[1] : undefined} value={value} />;
+                                },
+                              }}
+                            >
+                              {msg.content || ' '}
+                            </ReactMarkdown>
+                          </div>
                         )}
                       </div>
                       {!isEditing && (
