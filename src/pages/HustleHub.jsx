@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { api } from '../utils/api';
 import { Modal } from '../components/ui/Modal';
 import ReactMarkdown from 'react-markdown';
@@ -18,6 +19,7 @@ const WORKSPACE_JOIN_COST = 6000;
 
 export default function HustleHub() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [workspaces, setWorkspaces] = useState([]);
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -623,7 +625,7 @@ export default function HustleHub() {
                             </div>
                           </div>
                         ) : (
-                          <div className="prose prose-sm prose-invert max-w-none break-words">
+                          <div className={`prose prose-sm max-w-none break-words ${theme === 'dark' ? 'prose-invert' : ''}`}>
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
                               components={{
