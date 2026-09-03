@@ -692,7 +692,7 @@ function StandardWallet() {
       {/* OS VAULT — Premium Hero */}
       {user?.wallet_address ? (
         <div
-          className="relative overflow-hidden rounded-[28px] min-h-[300px]"
+          className="relative overflow-hidden rounded-[32px] min-h-[320px] shadow-[0_30px_90px_rgba(0,0,0,0.35)]"
           style={{
             background:
               'radial-gradient(circle at 78% 18%, rgba(124,58,237,0.20), transparent 34%), linear-gradient(135deg, #050506 0%, #09090d 55%, #050506 100%)',
@@ -749,12 +749,12 @@ function StandardWallet() {
             }}
           />
 
-          <div className="relative z-10 p-6 sm:p-8">
+          <div className="relative z-10 p-6 sm:p-9">
             {/* Hero header */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-10">
               <div>
                 <p
-                  className="text-[10px] uppercase font-medium text-violet-300/70"
+                  className="text-[10px] uppercase font-semibold text-violet-200/80"
                   style={{ letterSpacing: '4px' }}
                 >
                   OS VAULT
@@ -786,7 +786,7 @@ function StandardWallet() {
 
               <div className="font-display leading-none">
                 <span
-                  className="text-5xl sm:text-6xl font-bold tracking-[-3px]"
+                  className="text-5xl sm:text-7xl font-bold tracking-[-4px]"
                   style={{
                     color: 'var(--text-primary)',
                     textShadow: '0 0 30px rgba(255,255,255,0.06)',
@@ -851,7 +851,7 @@ function StandardWallet() {
         <>
           {/* OS VAULT — Primary Actions */}
           <div
-            className="relative overflow-hidden rounded-[22px]"
+            className="relative overflow-hidden rounded-[26px] border border-white/[0.07] shadow-[0_20px_60px_rgba(0,0,0,0.22)]"
             style={{
               background: 'linear-gradient(135deg, rgba(18,18,24,0.92), rgba(8,8,12,0.96))',
               border: '1px solid rgba(139,92,246,0.14)',
@@ -874,10 +874,10 @@ function StandardWallet() {
                     setShowAssetPicker(true);
                   }
                 }}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[92px] px-2 transition-colors hover:bg-violet-500/[0.05]"
+                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all hover:bg-white/[0.035] active:scale-[0.985]"
               >
                 <span
-                  className="flex h-11 w-11 items-center justify-center rounded-full"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45"
                   style={{
                     border: '1px solid rgba(139,92,246,0.75)',
                     boxShadow: '0 0 18px rgba(139,92,246,0.16)',
@@ -896,10 +896,10 @@ function StandardWallet() {
               {/* Receive */}
               <button
                 onClick={() => setShowReceiveModal(true)}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[92px] px-2 transition-colors hover:bg-violet-500/[0.05]"
+                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all hover:bg-white/[0.035] active:scale-[0.985]"
               >
                 <span
-                  className="flex h-11 w-11 items-center justify-center rounded-full"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45"
                   style={{
                     border: '1px solid rgba(139,92,246,0.75)',
                     boxShadow: '0 0 18px rgba(139,92,246,0.16)',
@@ -918,10 +918,10 @@ function StandardWallet() {
               {/* Swap */}
               <button
                 onClick={() => setShowSwapModal(true)}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[92px] px-2 transition-colors hover:bg-violet-500/[0.05]"
+                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all hover:bg-white/[0.035] active:scale-[0.985]"
               >
                 <span
-                  className="flex h-11 w-11 items-center justify-center rounded-full"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45"
                   style={{
                     border: '1px solid rgba(139,92,246,0.75)',
                     boxShadow: '0 0 18px rgba(139,92,246,0.16)',
@@ -940,10 +940,10 @@ function StandardWallet() {
               {/* Buy CLOSE */}
               <button
                 onClick={() => setShowBuyModal(true)}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[92px] px-2 transition-colors hover:bg-violet-500/[0.05]"
+                className="group relative flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all hover:bg-[rgba(217,164,65,0.06)] active:scale-[0.985]"
               >
                 <span
-                  className="flex h-11 w-11 items-center justify-center rounded-full"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45"
                   style={{
                     border: '1px solid rgba(139,92,246,0.75)',
                     boxShadow: '0 0 18px rgba(139,92,246,0.16)',
@@ -963,7 +963,7 @@ function StandardWallet() {
           </div>
 
           {/* Overflow row - Sell, Refresh, History, Top Up Chat: same handlers, quieter treatment */}
-          <div className="flex items-center justify-around rounded-2xl px-2 py-2.5 bg-white/[0.02] border border-[var(--glass-border)]">
+          <div className="grid grid-cols-4 items-center rounded-2xl px-1 py-2 bg-white/[0.018] border border-white/[0.055]">
             <button onClick={() => setShowSellModal(true)} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
               <DollarSign size={14} className="text-[var(--accent-brass-dim)]" /> Sell
             </button>
@@ -981,14 +981,15 @@ function StandardWallet() {
       )}
 
       {/* Chain Selector - dot shows whether the chain actually holds a balance */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap items-center">
+        <span className="mr-1 text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">Network</span>
         {chains.map((c) => {
           const has = c === 'all' || chainsWithBalance.has(c);
           return (
             <button
               key={c}
               onClick={() => setChain(c)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-mono font-bold touch transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-mono font-bold tracking-wider touch transition-all ${
                 chain === c
                   ? 'bg-[var(--accent-brass)] text-black'
                   : `bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)] ${has ? '' : 'opacity-45'}`
@@ -1021,11 +1022,19 @@ function StandardWallet() {
       )}
 
       {!loading && !error && (
-        <div className="space-y-2">
+        <div className="space-y-4">
+          <div className="flex items-end justify-between px-1">
+            <div>
+              <p className="text-[10px] uppercase tracking-[3px] text-violet-300/60 font-semibold">Portfolio</p>
+              <h3 className="mt-1 text-lg font-display font-semibold text-[var(--text-primary)]">Your Assets</h3>
+            </div>
+            <span className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">Live balance</span>
+          </div>
+
           {/* OS VAULT — Pinned CLOSE Asset */}
           {closeAsset && (chain === 'all' || closeAsset.chain === chain) && (
             <div
-              className="relative overflow-hidden rounded-[24px] p-5"
+              className="relative overflow-hidden rounded-[28px] p-5 sm:p-6 shadow-[0_22px_70px_rgba(0,0,0,0.28)]"
               style={{
                 background:
                   'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.13), transparent 42%), linear-gradient(135deg, rgba(20,19,25,0.96), rgba(8,8,12,0.98))',
@@ -1070,7 +1079,7 @@ function StandardWallet() {
                   <div className="flex items-center gap-3.5 min-w-0">
                     {/* CLOSE identity */}
                     <div
-                      className="relative w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                      className="relative w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-[0_10px_30px_rgba(217,164,65,0.15)]"
                       style={{
                         background:
                           'linear-gradient(145deg, var(--accent-brass-bright), var(--accent-brass-dim))',
@@ -1143,16 +1152,16 @@ function StandardWallet() {
             </div>
           )}
 
-          <div className="glass-panel rounded-xl px-1">
+          <div className="glass-panel rounded-[24px] px-1 overflow-hidden border border-white/[0.055]">
             {filtered.length === 0 ? (
-              !closeAsset && <p className="text-sm py-6 text-center text-[var(--text-muted)]">No assets on this chain yet.</p>
+              !closeAsset && <p className="text-sm py-6 text-center text-[var(--text-muted)]">No assets on this network yet.</p>
             ) : (
               filtered.map((a, i) => {
                 const up = (a.change24h ?? 0) >= 0;
                 return (
-                  <div key={i} className={`flex items-center justify-between px-4 py-3.5 ${i < filtered.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
+                  <div key={i} className={`flex items-center justify-between px-4 py-4 ${i < filtered.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
                     <div className="flex items-center gap-3">
-                      <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: chainColors[a.chain] || 'var(--text-muted)' }} />
+                      <span className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner" style={{ background: chainColors[a.chain] || 'var(--text-muted)' }} />
                       <div>
                         <p className="text-sm font-medium text-[var(--text-primary)]">{a.symbol}</p>
                         <p className="text-xs text-[var(--text-muted)]">{a.chain}</p>
