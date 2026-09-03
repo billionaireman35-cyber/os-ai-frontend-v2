@@ -36,6 +36,7 @@ export default function HustleHub() {
   const [copied, setCopied] = useState(false);
 
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [pendingRequestsExpanded, setPendingRequestsExpanded] = useState(false);
   const [canManageRequests, setCanManageRequests] = useState(false);
   const [requestActionError, setRequestActionError] = useState('');
   const [approvingUserId, setApprovingUserId] = useState(null);
@@ -64,6 +65,14 @@ export default function HustleHub() {
   const [editContent, setEditContent] = useState('');
 
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  // Tracks whether the user was already scrolled near the bottom right
+  // before this messages update landed - only auto-scroll in that case.
+  // Without this, reading up through history got yanked back down every
+  // ~2s poll cycle (or whenever a new/AI message arrived), since the
+  // effect below ran unconditionally on every messages change.
+  const wasNearBottomRef = useRef(true);
+  const NEAR_BOTTOM_THRESHOLD_PX = 120;
 
   const isOwner = selectedWorkspace && user && selectedWorkspace.owner_id === user.id;
 
@@ -156,8 +165,30 @@ export default function HustleHub() {
   }, [selectedWorkspace]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (wasNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
+
+  const handleMessagesScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    wasNearBottomRef.current = distanceFromBottom < NEAR_BOTTOM_THRESHOLD_PX;
+  };
+
+  // Automatically open the request panel when pending requests arrive.
+  useEffect(() => {
+    if (pendingRequests.length > 0) {
+      setPendingRequestsExpanded(true);
+    }
+  }, [pendingRequests.length]);
+
+  // Reset to "following the bottom" whenever the selected hub changes,
+  // so switching into a hub always starts scrolled to the latest message.
+  useEffect(() => {
+    wasNearBottomRef.current = true;
+  }, [selectedWorkspace?.id]);
 
   useEffect(() => {
     if (showDiscover) fetchDiscover();
@@ -489,47 +520,73 @@ export default function HustleHub() {
 
           {canManageRequests && (
             <div className="glass-card mx-4 mt-3 px-4 py-3">
-              <div className="flex items-center gap-2 mb-2">
-                <UserPlus size={16} className="text-[var(--accent-brass)]" />
-                <span className="text-sm font-bold text-[var(--text-primary)]">
-                  Pending Join Requests {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+              <button
+                type="button"
+                onClick={() => setPendingRequestsExpanded((prev) => !prev)}
+                className="w-full flex items-center justify-between text-left"
+                aria-expanded={pendingRequestsExpanded}
+              >
+                <div className="flex items-center gap-2">
+                  <UserPlus size={16} className="text-[var(--accent-brass)]" />
+                  <span className="text-sm font-bold text-[var(--text-primary)]">
+                    Pending Join Requests {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                  </span>
+                </div>
+
+                <span
+                  className={`text-[var(--text-muted)] text-sm transition-transform duration-200 ${
+                    pendingRequestsExpanded ? 'rotate-180' : ''
+                  }`}
+                  aria-hidden="true"
+                >
+                  ▾
                 </span>
-              </div>
-              <p className="text-xs text-[var(--text-muted)] mb-2">
-                Requesters now pay and submit their own transaction automatically. This manual approval is a fallback if that doesn't complete — paste their tx hash to verify and approve.
-              </p>
-              {requestActionError && <p className="text-xs text-[var(--danger)] mb-2">{requestActionError}</p>}
-              {pendingRequests.length === 0 ? (
-                <p className="text-xs text-[var(--text-muted)]">No pending requests.</p>
-              ) : (
-                <div className="space-y-2">
-                  {pendingRequests.map((req) => (
-                    <div key={req.user_id} className="bg-[var(--bg-tertiary)] rounded-lg px-3 py-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-[var(--text-primary)]">{req.user_name}</span>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => { setApprovingUserId(req.user_id); setApproveTxHash(''); }}
-                            className="flex items-center gap-1 bg-[var(--success)]/15 text-[var(--success)] hover:bg-[var(--success)]/25 px-3 py-1 rounded-lg text-xs font-bold transition"
-                          >
-                            <Check size={14} /> Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectRequest(req.user_id)}
-                            className="flex items-center gap-1 bg-[var(--danger)]/15 text-[var(--danger)] hover:bg-[var(--danger)]/25 px-3 py-1 rounded-lg text-xs font-bold transition"
-                          >
-                            <XCircle size={14} /> Reject
-                          </button>
+              </button>
+
+              {pendingRequestsExpanded && (
+                <div className="mt-3">
+                  <p className="text-xs text-[var(--text-muted)] mb-2">
+                    Requesters now pay and submit their own transaction automatically. This manual approval is a fallback if that doesn't complete — paste their tx hash to verify and approve.
+                  </p>
+
+                  {requestActionError && (
+                    <p className="text-xs text-[var(--danger)] mb-2">{requestActionError}</p>
+                  )}
+
+                  {pendingRequests.length === 0 ? (
+                    <p className="text-xs text-[var(--text-muted)]">No pending requests.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {pendingRequests.map((req) => (
+                        <div key={req.user_id} className="bg-[var(--bg-tertiary)] rounded-lg px-3 py-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-[var(--text-primary)]">{req.user_name}</span>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => { setApprovingUserId(req.user_id); setApproveTxHash(''); }}
+                                className="flex items-center gap-1 bg-[var(--success)]/15 text-[var(--success)] hover:bg-[var(--success)]/25 px-3 py-1 rounded-lg text-xs font-bold transition"
+                              >
+                                <Check size={14} /> Approve
+                              </button>
+
+                              <button
+                                onClick={() => handleRejectRequest(req.user_id)}
+                                className="flex items-center gap-1 bg-[var(--danger)]/15 text-[var(--danger)] hover:bg-[var(--danger)]/25 px-3 py-1 rounded-lg text-xs font-bold transition"
+                              >
+                                <XCircle size={14} /> Reject
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 ? (
               <div className="text-center text-[var(--text-muted)] py-10">No messages yet. Start the conversation!</div>
             ) : (
