@@ -777,11 +777,11 @@ function StandardWallet() {
             }}
           />
 
-          {/* Official OS Vault triangle */}
+          {/* Official OS Vault triangle — signature watermark */}
           <div
-            className="absolute -right-10 -top-12 w-[270px] h-[270px] pointer-events-none"
+            className="absolute -right-14 -top-16 w-[310px] h-[310px] pointer-events-none opacity-90"
             style={{
-              filter: 'drop-shadow(0 0 20px rgba(139,92,246,0.65)) drop-shadow(0 0 55px rgba(109,40,217,0.30))',
+              filter: 'drop-shadow(0 0 22px rgba(139,92,246,0.58)) drop-shadow(0 0 70px rgba(109,40,217,0.26))',
             }}
           >
             <svg
@@ -811,74 +811,128 @@ function StandardWallet() {
 
           {/* Subtle atmosphere */}
           <div
-            className="absolute right-20 top-20 w-40 h-40 rounded-full pointer-events-none"
+            className="absolute right-10 top-16 w-52 h-52 rounded-full pointer-events-none"
             style={{
-              background: 'rgba(124,58,237,0.10)',
-              filter: 'blur(55px)',
+              background: 'rgba(124,58,237,0.11)',
+              filter: 'blur(65px)',
+            }}
+          />
+
+          <div
+            className="absolute left-[42%] bottom-[-80px] w-72 h-40 rounded-full pointer-events-none"
+            style={{
+              background: 'rgba(196,181,253,0.035)',
+              filter: 'blur(60px)',
             }}
           />
 
           <div className="relative z-10 p-6 sm:p-9">
             {/* Hero header */}
-            <div className="flex items-center justify-between mb-10">
+            <div className="flex items-start justify-between mb-9 sm:mb-11">
               <div>
-                <p
-                  className="text-[10px] uppercase font-semibold text-violet-200/80"
-                  style={{ letterSpacing: '4px' }}
-                >
-                  OS VAULT
-                </p>
-                <p
-                  className="text-[9px] uppercase text-[var(--text-muted)] mt-1"
-                  style={{ letterSpacing: '2px' }}
-                >
-                  Secure · Non-custodial
-                </p>
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="w-2 h-2 rounded-full bg-emerald-400"
+                    style={{
+                      boxShadow: '0 0 12px rgba(52,211,153,0.65)',
+                    }}
+                  />
+                  <p
+                    className="text-[10px] uppercase font-semibold text-violet-100/90"
+                    style={{ letterSpacing: '4px' }}
+                  >
+                    OS VAULT
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 mt-2">
+                  <Lock size={11} className="text-[var(--text-muted)]" />
+                  <p
+                    className="text-[9px] uppercase text-[var(--text-muted)]"
+                    style={{ letterSpacing: '2px' }}
+                  >
+                    Secure · Non-custodial
+                  </p>
+                </div>
               </div>
 
-              <Dropdown
-                variant="compact"
-                value={currency}
-                onChange={setCurrency}
-                options={supportedCurrencies}
-              />
+              <div className="relative z-20">
+                <Dropdown
+                  variant="compact"
+                  value={currency}
+                  onChange={setCurrency}
+                  options={supportedCurrencies}
+                />
+              </div>
             </div>
 
             {/* Balance */}
-            <div className="relative max-w-[68%]">
-              <p
-                className="text-[11px] uppercase font-medium text-violet-300/80 mb-3"
-                style={{ letterSpacing: '4px' }}
-              >
-                Total Balance
-              </p>
+            <div className="relative max-w-[82%] sm:max-w-[72%]">
+              <div className="flex items-center gap-2 mb-3">
+                <p
+                  className="text-[10px] uppercase font-semibold text-violet-300/75"
+                  style={{ letterSpacing: '3px' }}
+                >
+                  Total Balance
+                </p>
+                <span className="w-1 h-1 rounded-full bg-white/20" />
+                <span className="text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
+                  Live
+                </span>
+              </div>
 
               <div className="font-display leading-none">
                 <span
                   className="text-5xl sm:text-7xl font-bold tracking-[-4px]"
                   style={{
                     color: 'var(--text-primary)',
-                    textShadow: '0 0 30px rgba(255,255,255,0.06)',
+                    textShadow: '0 0 34px rgba(255,255,255,0.07)',
                   }}
                 >
                   {currency} {totalUsd.toFixed(2)}
                 </span>
               </div>
 
-              {/* Wallet address */}
+              {/* Wallet address / identity */}
               <button
                 onClick={copyAddress}
-                className="mt-5 flex items-center gap-2 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                className="group mt-6 inline-flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.045] hover:border-white/[0.10] active:scale-[0.985] transition-all duration-200"
               >
                 <span>
                   {user.wallet_address.slice(0, 8)}...{user.wallet_address.slice(-6)}
                 </span>
+
                 {copied ? (
-                  <CheckCircle size={14} className="text-green-400" />
+                  <>
+                    <CheckCircle size={14} className="text-green-400" />
+                    <span className="text-[10px] font-sans text-green-400/80">
+                      Copied
+                    </span>
+                  </>
                 ) : (
-                  <Copy size={14} />
+                  <Copy
+                    size={14}
+                    className="group-hover:scale-110 transition-transform"
+                  />
                 )}
               </button>
+            </div>
+
+            {/* Hero footer */}
+            <div className="relative mt-8 pt-4 border-t border-white/[0.05] flex items-center justify-between max-w-[82%] sm:max-w-[72%]">
+              <div>
+                <p className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">
+                  Portfolio
+                </p>
+                <p className="text-[11px] text-[var(--text-secondary)] mt-1">
+                  Your assets, secured in one vault
+                </p>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
+                <ShieldCheck size={13} className="text-violet-300/70" />
+                Protected
+              </div>
             </div>
           </div>
         </div>
