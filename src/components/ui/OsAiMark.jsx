@@ -8,7 +8,7 @@ export function OsAiMark({ size = 64, animated = true }) {
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="OS AI"
-      style={{ filter: `drop-shadow(0 0 12px var(--accent-glow, transparent))` }}
+      style={{ filter: `drop-shadow(0 0 16px var(--accent-glow, transparent))` }}
     >
       <defs>
         <linearGradient id="osai-accent" x1="0" y1="0" x2="1" y2="1">
@@ -17,10 +17,10 @@ export function OsAiMark({ size = 64, animated = true }) {
         </linearGradient>
       </defs>
       <path
-        d="M 26 68 L 50 26 L 74 68 M 38 50 L 62 50"
+        d="M 50 18 L 82 78 L 18 78 Z"
         fill="none"
         stroke="url(#osai-accent)"
-        strokeWidth="7"
+        strokeWidth="8"
         strokeLinecap="round"
         strokeLinejoin="round"
         className={animated ? 'animate-pulse-slow' : ''}
