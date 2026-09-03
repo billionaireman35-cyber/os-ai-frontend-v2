@@ -41,6 +41,17 @@
   --border-color: rgba(255,255,255,0.08);
   --border-bright: rgba(255,255,255,0.16);
 
+  /* Redesign 2026-09-03: dark mode previously had no accent overrides
+     at all and silently inherited the light theme's orange values via
+     CSS cascade. New electric-violet accent, dark-mode-specific. */
+  --accent-indigo: #9B7BFF;
+  --accent-brass: #7C5CFF;
+  --accent-brass-bright: #B9A8FF;
+  --accent-brass-dim: #5B3FE0;
+  --accent-glow: rgba(124,92,255,0.35);
+  --danger: #FF6B6B;
+  --success: #4ADE80;
+
   --glass-bg: var(--bg-secondary);
   --glass-bg-raised: var(--bg-secondary);
   --glass-border: var(--border-color);
