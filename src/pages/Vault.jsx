@@ -317,13 +317,17 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
       <Modal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
-        title="Confirm Send"
-        message={`Enter your wallet password to send ${amount} ${asset.symbol}.`}
+        title="Confirm transfer"
+        message={`You're about to send ${amount} ${asset.symbol}. Enter your wallet password to authorize this transaction.`}
         inputType="password"
         inputPlaceholder="Enter password"
         onConfirm={handleSend}
-        confirmText="Send"
+        confirmText="Confirm & Sign"
         cancelText="Cancel"
+        variant="transaction"
+        icon={<ShieldCheck size={20} className="text-violet-300" />}
+        eyebrow="SECURE TRANSACTION"
+        securityText="Your password is used locally to authorize the transaction."
       />
     </>
   );

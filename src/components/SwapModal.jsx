@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, ArrowUpDown } from 'lucide-react';
+import { X, Loader2, ArrowUpDown, ShieldCheck } from 'lucide-react';
 import { api } from '../utils/api';
 import { Modal } from './ui/Modal';
 import { Dropdown } from './ui/Dropdown';
@@ -277,13 +277,17 @@ export function SwapModal({ isOpen, onClose, onSwap, userWalletAddress, assets, 
       <Modal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
-        title="Confirm Swap"
-        message={`Enter your wallet password to swap ${amount} ${fromToken} for ${toToken}.`}
+        title="Confirm swap"
+        message={`You're about to swap ${amount} ${fromToken} for ${toToken}. Enter your wallet password to authorize this transaction.`}
         inputType="password"
         inputPlaceholder="Enter password"
         onConfirm={handleSignAndExecute}
-        confirmText="Swap"
+        confirmText="Confirm & Sign"
         cancelText="Cancel"
+        variant="transaction"
+        icon={<ShieldCheck size={20} className="text-violet-300" />}
+        eyebrow="SECURE TRANSACTION"
+        securityText="Your password is used locally to authorize the transaction."
       />
     </>
   );
