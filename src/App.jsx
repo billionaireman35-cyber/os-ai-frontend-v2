@@ -19,6 +19,8 @@ import HustleHub from './pages/HustleHub';
 import Settings from './pages/Settings';
 import Leaderboard from './pages/Leaderboard';
 import { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import './config/appkit';
 
 function Shell() {
   const [expanded, setExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
@@ -56,8 +58,11 @@ function Shell() {
   );
 }
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <WalletProvider>
         <ThemeProvider>
@@ -79,6 +84,7 @@ function App() {
         </ThemeProvider>
       </WalletProvider>
     </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
