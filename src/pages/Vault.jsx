@@ -608,10 +608,6 @@ function StandardWallet() {
   const [showHistory, setShowHistory] = useState(false);
   const [showChatTopupModal, setShowChatTopupModal] = useState(false);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
-  const [showBurnModal, setShowBurnModal] = useState(false);
-  const [burnAmount, setBurnAmount] = useState('');
-  const [burning, setBurning] = useState(false);
-  const [showBurnPasswordModal, setShowBurnPasswordModal] = useState(false);
   const [showCreatePasswordModal, setShowCreatePasswordModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -661,33 +657,6 @@ function StandardWallet() {
     }
   };
 
-  const handleBurn = async (password) => {
-    if (!burnAmount || parseFloat(burnAmount) <= 0) {
-      addToast('Enter a valid amount', 'error');
-      return;
-    }
-    if (!password) {
-      addToast('Password required', 'error');
-      return;
-    }
-    setBurning(true);
-    try {
-      const res = await api.post('/wallet/burn', {
-        amount: Math.floor(parseFloat(burnAmount)),
-        password: password
-      });
-      addToast(`🔥 Burned ${burnAmount} CLOSE! Tx: ${res.data.tx_hash.slice(0, 12)}...`, 'success');
-      fetchBalances();
-      setShowBurnModal(false);
-      setBurnAmount('');
-      setShowBurnPasswordModal(false);
-    } catch (e) {
-      addToast(e.response?.data?.detail || 'Burn failed', 'error');
-      setShowBurnPasswordModal(false);
-    } finally {
-      setBurning(false);
-    }
-  };
 
   // Tiny inline sparkline, mirrors Pulse's visual language. No new deps -
   // just an SVG polyline built from the 7d price array WalletContext
@@ -720,68 +689,152 @@ function StandardWallet() {
     <div className="space-y-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      {/* Hero Card */}
+      {/* OS VAULT — Premium Hero */}
       {user?.wallet_address ? (
-        <div className="glass-panel relative overflow-hidden rounded-2xl p-6">
+        <div
+          className="relative overflow-hidden rounded-[28px] min-h-[300px]"
+          style={{
+            background:
+              'radial-gradient(circle at 78% 18%, rgba(124,58,237,0.20), transparent 34%), linear-gradient(135deg, #050506 0%, #09090d 55%, #050506 100%)',
+            border: '1px solid rgba(124,58,237,0.16)',
+          }}
+        >
+          {/* Violet edge accent */}
           <div
-            className="absolute inset-0 pointer-events-none opacity-60"
-            style={{ background: 'radial-gradient(circle at 25% 0%, rgba(249,115,22,0.16), transparent 65%)' }}
+            className="absolute left-0 top-7 bottom-7 w-1.5 rounded-r-full"
+            style={{
+              background: 'linear-gradient(180deg, #8b5cf6, #6d28d9)',
+              boxShadow: '0 0 18px rgba(139,92,246,0.85)',
+            }}
           />
-          <div className="relative flex items-center justify-between mb-2">
-            <p className="text-xs uppercase tracking-widest text-[var(--text-muted)]" style={{ letterSpacing: '2px' }}>Total Balance</p>
-            <Dropdown
-              variant="compact"
-              value={currency}
-              onChange={setCurrency}
-              options={supportedCurrencies}
-            />
-          </div>
 
-          <div className="relative flex items-baseline gap-2 font-display mb-4">
-            <span className="text-xl text-[var(--accent-brass)]">◈</span>
-            <span className="text-4xl font-bold text-[var(--text-primary)]">{currency} {totalUsd.toFixed(2)}</span>
-          </div>
-
-          {/* CLOSE strip - elevated, distinct from the total above it */}
-          {closeAsset && (
-            <div
-              className="relative flex items-center justify-between rounded-2xl px-3.5 py-3 mb-4"
-              style={{
-                background: 'linear-gradient(135deg, rgba(249,115,22,0.14), rgba(249,115,22,0.04))',
-                border: '1px solid rgba(249,115,22,0.32)',
-              }}
+          {/* Official OS Vault triangle */}
+          <div
+            className="absolute -right-10 -top-12 w-[270px] h-[270px] pointer-events-none"
+            style={{
+              filter: 'drop-shadow(0 0 20px rgba(139,92,246,0.65)) drop-shadow(0 0 55px rgba(109,40,217,0.30))',
+            }}
+          >
+            <svg
+              viewBox="0 0 100 100"
+              width="100%"
+              height="100%"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-label="OS Vault"
             >
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-[13px]"
-                  style={{ background: 'linear-gradient(135deg, var(--accent-brass-bright), var(--accent-brass-dim))', color: '#14120C' }}
-                >
-                  C
-                </div>
-                <div>
-                  <p className="font-display font-semibold text-sm leading-tight text-[var(--text-primary)]">CLOSE</p>
-                  <p className="text-[9px] font-mono uppercase tracking-wide text-[var(--accent-brass-bright)]">Native token</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-mono text-sm font-semibold text-[var(--accent-brass-bright)]">{closeAsset.balance.toFixed(0)}</p>
-                <p className="font-mono text-[10px] text-[var(--text-muted)]">${(closeAsset.usdValue || 0).toFixed(2)}</p>
-              </div>
-            </div>
-          )}
+              <path
+                d="M50 12 L90 84 L10 84 Z"
+                stroke="url(#vaultTriangleGradient)"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <defs>
+                <linearGradient id="vaultTriangleGradient" x1="20" y1="15" x2="80" y2="90" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#c4b5fd" />
+                  <stop offset="45%" stopColor="#8b5cf6" />
+                  <stop offset="100%" stopColor="#6d28d9" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
 
-          <div className="relative flex items-center justify-between pt-4 border-t border-dashed border-[var(--glass-border)]">
-            <span className="text-xs font-mono text-[var(--text-secondary)]">
-              {user.wallet_address.slice(0, 8)}...{user.wallet_address.slice(-6)}
-            </span>
-            <button onClick={copyAddress} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
-              {copied ? <CheckCircle size={15} className="text-green-400" /> : <Copy size={15} />}
-            </button>
+          {/* Subtle atmosphere */}
+          <div
+            className="absolute right-20 top-20 w-40 h-40 rounded-full pointer-events-none"
+            style={{
+              background: 'rgba(124,58,237,0.10)',
+              filter: 'blur(55px)',
+            }}
+          />
+
+          <div className="relative z-10 p-6 sm:p-8">
+            {/* Hero header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <p
+                  className="text-[10px] uppercase font-medium text-violet-300/70"
+                  style={{ letterSpacing: '4px' }}
+                >
+                  OS VAULT
+                </p>
+                <p
+                  className="text-[9px] uppercase text-[var(--text-muted)] mt-1"
+                  style={{ letterSpacing: '2px' }}
+                >
+                  Secure · Non-custodial
+                </p>
+              </div>
+
+              <Dropdown
+                variant="compact"
+                value={currency}
+                onChange={setCurrency}
+                options={supportedCurrencies}
+              />
+            </div>
+
+            {/* Balance */}
+            <div className="relative max-w-[68%]">
+              <p
+                className="text-[11px] uppercase font-medium text-violet-300/80 mb-3"
+                style={{ letterSpacing: '4px' }}
+              >
+                Total Balance
+              </p>
+
+              <div className="font-display leading-none">
+                <span
+                  className="text-5xl sm:text-6xl font-bold tracking-[-3px]"
+                  style={{
+                    color: 'var(--text-primary)',
+                    textShadow: '0 0 30px rgba(255,255,255,0.06)',
+                  }}
+                >
+                  {currency} {totalUsd.toFixed(2)}
+                </span>
+              </div>
+
+              {/* Wallet address */}
+              <button
+                onClick={copyAddress}
+                className="mt-5 flex items-center gap-2 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <span>
+                  {user.wallet_address.slice(0, 8)}...{user.wallet_address.slice(-6)}
+                </span>
+                {copied ? (
+                  <CheckCircle size={14} className="text-green-400" />
+                ) : (
+                  <Copy size={14} />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="glass-panel rounded-2xl p-6 text-center">
-          <p className="text-[var(--text-muted)]">No wallet found. Create one to start.</p>
+        <div className="glass-panel rounded-[28px] p-8 text-center">
+          <div
+            className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center"
+            style={{
+              border: '1px solid rgba(139,92,246,0.35)',
+              boxShadow: '0 0 25px rgba(139,92,246,0.18)',
+            }}
+          >
+            <svg viewBox="0 0 100 100" width="34" height="34" fill="none">
+              <path
+                d="M50 12 L90 84 L10 84 Z"
+                stroke="#8b5cf6"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <p className="text-[var(--text-muted)]">
+            No wallet found. Create one to start.
+          </p>
         </div>
       )}
 
@@ -796,25 +849,117 @@ function StandardWallet() {
         </button>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-2.5">
-            <button
-              onClick={() => { if (filtered.length === 0 && !closeAsset) { addToast('No assets to send.', 'warning'); return; } if (filtered.length + (closeAsset ? 1 : 0) === 1) { setSendAsset(closeAsset || filtered[0]); setShowSendModal(true); } else { setShowAssetPicker(true); } }}
-              className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)]"
-            >
-              <Send size={17} color="#20190B" /> <span className="text-xs font-medium text-[#20190B]">Send</span>
-            </button>
-            <button
-              onClick={() => setShowSwapModal(true)}
-              className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors"
-            >
-              <ArrowUpDown size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Swap</span>
-            </button>
-            <button
-              onClick={() => setShowBuyModal(true)}
-              className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] transition-colors"
-            >
-              <CreditCard size={17} className="text-[var(--accent-brass)]" /> <span className="text-xs font-medium text-[var(--text-secondary)]">Buy CLOSE</span>
-            </button>
+          {/* OS VAULT — Primary Actions */}
+          <div
+            className="relative overflow-hidden rounded-[22px]"
+            style={{
+              background: 'linear-gradient(135deg, rgba(18,18,24,0.92), rgba(8,8,12,0.96))',
+              border: '1px solid rgba(139,92,246,0.14)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+            }}
+          >
+            <div className="grid grid-cols-4 divide-x divide-[var(--glass-border)]">
+
+              {/* Send */}
+              <button
+                onClick={() => {
+                  if (filtered.length === 0 && !closeAsset) {
+                    addToast('No assets to send.', 'warning');
+                    return;
+                  }
+                  if (filtered.length + (closeAsset ? 1 : 0) === 1) {
+                    setSendAsset(closeAsset || filtered[0]);
+                    setShowSendModal(true);
+                  } else {
+                    setShowAssetPicker(true);
+                  }
+                }}
+                className="group flex flex-col items-center justify-center gap-2 min-h-[92px] px-2 transition-colors hover:bg-violet-500/[0.05]"
+              >
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-full"
+                  style={{
+                    border: '1px solid rgba(139,92,246,0.75)',
+                    boxShadow: '0 0 18px rgba(139,92,246,0.16)',
+                  }}
+                >
+                  <ArrowUpRight
+                    size={20}
+                    className="text-violet-400 transition-transform group-hover:-translate-y-0.5"
+                  />
+                </span>
+                <span className="text-[11px] font-medium text-[var(--text-primary)]">
+                  Send
+                </span>
+              </button>
+
+              {/* Receive */}
+              <button
+                onClick={() => setShowReceiveModal(true)}
+                className="group flex flex-col items-center justify-center gap-2 min-h-[92px] px-2 transition-colors hover:bg-violet-500/[0.05]"
+              >
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-full"
+                  style={{
+                    border: '1px solid rgba(139,92,246,0.75)',
+                    boxShadow: '0 0 18px rgba(139,92,246,0.16)',
+                  }}
+                >
+                  <ArrowDownRight
+                    size={20}
+                    className="text-violet-400 transition-transform group-hover:translate-y-0.5"
+                  />
+                </span>
+                <span className="text-[11px] font-medium text-[var(--text-primary)]">
+                  Receive
+                </span>
+              </button>
+
+              {/* Swap */}
+              <button
+                onClick={() => setShowSwapModal(true)}
+                className="group flex flex-col items-center justify-center gap-2 min-h-[92px] px-2 transition-colors hover:bg-violet-500/[0.05]"
+              >
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-full"
+                  style={{
+                    border: '1px solid rgba(139,92,246,0.75)',
+                    boxShadow: '0 0 18px rgba(139,92,246,0.16)',
+                  }}
+                >
+                  <ArrowUpDown
+                    size={20}
+                    className="text-violet-400 transition-transform group-hover:scale-105"
+                  />
+                </span>
+                <span className="text-[11px] font-medium text-[var(--text-primary)]">
+                  Swap
+                </span>
+              </button>
+
+              {/* Buy CLOSE */}
+              <button
+                onClick={() => setShowBuyModal(true)}
+                className="group flex flex-col items-center justify-center gap-2 min-h-[92px] px-2 transition-colors hover:bg-violet-500/[0.05]"
+              >
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-full"
+                  style={{
+                    border: '1px solid rgba(139,92,246,0.75)',
+                    boxShadow: '0 0 18px rgba(139,92,246,0.16)',
+                  }}
+                >
+                  <CreditCard
+                    size={20}
+                    className="text-violet-400 transition-transform group-hover:scale-105"
+                  />
+                </span>
+                <span className="text-[11px] font-medium text-[var(--text-primary)] whitespace-nowrap">
+                  Buy CLOSE
+                </span>
+              </button>
+
+            </div>
           </div>
 
           {/* Overflow row - Sell, Refresh, History, Top Up Chat: same handlers, quieter treatment */}
@@ -877,33 +1022,123 @@ function StandardWallet() {
 
       {!loading && !error && (
         <div className="space-y-2">
-          {/* CLOSE pinned row */}
+          {/* OS VAULT — Pinned CLOSE Asset */}
           {closeAsset && (chain === 'all' || closeAsset.chain === chain) && (
             <div
-              className="flex items-center justify-between px-4 py-3.5 rounded-2xl"
+              className="relative overflow-hidden rounded-[24px] p-5"
               style={{
-                background: 'linear-gradient(135deg, rgba(249,115,22,0.09), var(--glass-bg, rgba(21,19,14,0.55)))',
-                border: '1px solid rgba(249,115,22,0.32)',
+                background:
+                  'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.13), transparent 42%), linear-gradient(135deg, rgba(20,19,25,0.96), rgba(8,8,12,0.98))',
+                border: '1px solid rgba(139,92,246,0.18)',
+                boxShadow: '0 14px 45px rgba(0,0,0,0.20)',
               }}
             >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center font-mono font-bold text-[13px]"
-                  style={{ background: 'linear-gradient(135deg, var(--accent-brass-bright), var(--accent-brass-dim))', color: '#14120C' }}
-                >
-                  C
+              {/* subtle violet glow */}
+              <div
+                className="absolute -right-12 -top-12 w-32 h-32 rounded-full pointer-events-none"
+                style={{
+                  background: 'rgba(139,92,246,0.12)',
+                  filter: 'blur(35px)',
+                }}
+              />
+
+              <div className="relative z-10">
+                {/* Label */}
+                <div className="flex items-center justify-between mb-5">
+                  <p
+                    className="text-[9px] uppercase font-medium text-violet-300/70"
+                    style={{ letterSpacing: '3px' }}
+                  >
+                    Pinned Asset
+                  </p>
+
+                  <span
+                    className="px-2.5 py-1 rounded-full text-[8px] font-mono uppercase"
+                    style={{
+                      color: '#a78bfa',
+                      background: 'rgba(139,92,246,0.08)',
+                      border: '1px solid rgba(139,92,246,0.20)',
+                      letterSpacing: '1px',
+                    }}
+                  >
+                    {closeAsset.chain || 'Polygon'}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">CLOSE</p>
-                  <p className="text-[10px] font-mono uppercase tracking-wide text-[var(--accent-brass-bright)]">Native · Pinned</p>
+
+                {/* Asset */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    {/* CLOSE identity */}
+                    <div
+                      className="relative w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                      style={{
+                        background:
+                          'linear-gradient(145deg, var(--accent-brass-bright), var(--accent-brass-dim))',
+                        boxShadow:
+                          '0 0 24px rgba(217,164,65,0.20), inset 0 1px rgba(255,255,255,0.22)',
+                      }}
+                    >
+                      <span
+                        className="font-display font-black text-lg"
+                        style={{ color: '#14120C' }}
+                      >
+                        C
+                      </span>
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-base font-display font-semibold text-[var(--text-primary)]">
+                          CLOSE
+                        </p>
+                        <span className="text-[8px] uppercase tracking-wider text-[var(--accent-brass-bright)]">
+                          Native
+                        </span>
+                      </div>
+
+                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                        OS AI Token
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Balance */}
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-mono text-lg font-semibold text-[var(--text-primary)]">
+                      {closeAsset.balance.toFixed(4)}
+                    </p>
+                    <p className="font-mono text-[11px] text-[var(--text-muted)] mt-0.5">
+                      ${(closeAsset.usdValue || 0).toFixed(2)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right font-mono">
-                  <p className="text-sm text-[var(--text-primary)]">{closeAsset.balance.toFixed(4)}</p>
-                  <p className="text-xs text-[var(--text-muted)]">${(closeAsset.usdValue || 0).toFixed(2)}</p>
+
+                {/* Bottom metadata / action */}
+                <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{
+                        background: '#8b5cf6',
+                        boxShadow: '0 0 8px rgba(139,92,246,0.9)',
+                      }}
+                    />
+                    <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                      Available
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setSendAsset(closeAsset);
+                      setShowSendModal(true);
+                    }}
+                    className="flex items-center gap-1.5 text-[10px] font-medium text-violet-300 hover:text-violet-200 transition-colors"
+                  >
+                    Send CLOSE
+                    <ArrowUpRight size={13} />
+                  </button>
                 </div>
-                <button onClick={() => { setSendAsset(closeAsset); setShowSendModal(true); }} className="text-[var(--text-muted)] hover:text-[var(--accent-brass)] transition-colors"><Send size={15} /></button>
               </div>
             </div>
           )}
@@ -959,40 +1194,6 @@ function StandardWallet() {
           </div>
         </div>
       )}
-
-      <Modal
-        isOpen={showBurnModal}
-        onClose={() => setShowBurnModal(false)}
-        title="🔥 Burn CLOSE"
-        message="Burn your CLOSE tokens to reduce supply and earn rewards."
-        inputType="number"
-        inputPlaceholder="Enter amount to burn"
-        inputValue={burnAmount}
-        onInputChange={setBurnAmount}
-        onConfirm={() => {
-          console.log('Burn amount:', burnAmount, typeof burnAmount);
-          if (!burnAmount || parseFloat(burnAmount) <= 0) {
-            addToast('Please enter a valid amount greater than 0', 'error');
-            return;
-          }
-          setShowBurnPasswordModal(true);
-        }}
-        confirmText="Burn"
-        cancelText="Cancel"
-      />
-
-      <Modal
-        isOpen={showBurnPasswordModal}
-        onClose={() => { setShowBurnPasswordModal(false); setBurning(false); }}
-        title="Confirm Burn"
-        message={`Enter your wallet password to burn ${burnAmount || 0} CLOSE.`}
-        inputType="password"
-        inputPlaceholder="Enter password"
-        onConfirm={handleBurn}
-        confirmText={burning ? 'Burning...' : 'Burn'}
-        cancelText="Cancel"
-        confirmDisabled={burning}
-      />
 
       <Modal
         isOpen={showCreatePasswordModal}
