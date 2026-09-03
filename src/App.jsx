@@ -21,6 +21,7 @@ import Leaderboard from './pages/Leaderboard';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './config/appkit';
+import { AppKitThemeSync } from './components/AppKitThemeSync';
 
 function Shell() {
   const [expanded, setExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
@@ -66,6 +67,7 @@ function App() {
     <AuthProvider>
       <WalletProvider>
         <ThemeProvider>
+          <AppKitThemeSync />
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />

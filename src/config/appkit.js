@@ -24,4 +24,8 @@ createAppKit({
   features: {
     analytics: false,
   },
+  themeMode: 'dark',
+  themeVariables: {
+    '--w3m-accent': '#F97316',
+  },
 });

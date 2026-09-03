@@ -431,7 +431,7 @@ export default function HustleHub() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
+    <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)] max-w-6xl mx-auto w-full">
       <div className="border-b border-[var(--border-color)] p-4 flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">Hustle Hub</h1>
@@ -450,12 +450,12 @@ export default function HustleHub() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 p-4 border-b border-[var(--border-color)]">
+      <div className="flex items-center gap-2 p-4 border-b border-[var(--border-color)] overflow-x-auto">
         {workspaces.map((ws) => (
           <button
             key={ws.id}
             onClick={() => setSelectedWorkspace(ws)}
-            className={`px-4 py-2 rounded-full text-sm transition flex items-center gap-1 ${
+            className={`px-4 py-2 rounded-full text-sm transition flex items-center gap-1 shrink-0 whitespace-nowrap ${
               selectedWorkspace?.id === ws.id
                 ? 'bg-[var(--accent-brass)] text-white font-bold'
                 : 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] hover:border-[var(--border-bright)] text-[var(--text-primary)]'
@@ -465,7 +465,7 @@ export default function HustleHub() {
             {ws.name}
           </button>
         ))}
-        <div className="flex-1 min-w-[150px] flex flex-col gap-1">
+        <div className="flex-1 min-w-[220px] shrink-0 flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <input
               id="join-input"
