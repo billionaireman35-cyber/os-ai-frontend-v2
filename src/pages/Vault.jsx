@@ -146,8 +146,10 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
-        <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div className="glass-panel relative overflow-hidden rounded-[28px] w-full max-w-md p-5 sm:p-6 space-y-5 border border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.55)]">
+          <div className="pointer-events-none absolute -top-24 -right-20 w-48 h-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-20 w-48 h-48 rounded-full bg-[var(--accent-brass)]/[0.045] blur-3xl" />
           {sentResult ? (
             <>
               <div className="flex justify-between items-center">
@@ -195,20 +197,74 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
             </>
           ) : (
             <>
-              <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Send {asset.symbol}</h3>
-                <button onClick={handleClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+              <div className="relative flex justify-between items-start gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/[0.10] border border-violet-400/20">
+                      <ArrowUpRight size={17} className="text-violet-300" />
+                    </span>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                      Transfer
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">
+                    Send {asset.symbol}
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    Send securely from your OS Vault
+                  </p>
+                </div>
+                <button
+                  onClick={handleClose}
+                  className="btn-glass-icon w-9 h-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all hover:bg-white/[0.06] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30"
+                >
+                  <X size={18} />
+                </button>
               </div>
               <div>
-                <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Recipient</label>
-                <input type="text" value={to} onChange={(e) => setTo(e.target.value)} className="input-glass w-full mt-1" placeholder="0x..." />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] text-[var(--text-muted)] font-mono font-bold uppercase tracking-[0.16em]">Recipient</label>
+                  <span className="text-[10px] text-[var(--text-muted)]">Wallet address</span>
+                </div>
+                <input
+                  type="text"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  className="input-glass w-full !rounded-2xl !min-h-12 px-4 transition-all focus:border-violet-400/40 focus:ring-2 focus:ring-violet-400/10"
+                  placeholder="0x..."
+                />
               </div>
               <div>
-                <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount ({asset.symbol})</label>
-                <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="input-glass w-full mt-1" placeholder="0.0" />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] text-[var(--text-muted)] font-mono font-bold uppercase tracking-[0.16em]">Amount</label>
+                  <span className="text-xs font-mono font-semibold text-[var(--text-secondary)]">{asset.symbol}</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="input-glass w-full !rounded-2xl !min-h-14 px-4 pr-20 text-lg font-semibold transition-all focus:border-violet-400/40 focus:ring-2 focus:ring-violet-400/10"
+                    placeholder="0.00"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-[var(--text-muted)]">
+                    {asset.symbol}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-                <span>Chain: <span className="text-[var(--text-primary)] font-medium">{asset.chain}</span></span>
+              <div className="flex items-center justify-between rounded-2xl px-4 py-3 bg-white/[0.025] border border-white/[0.055]">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full shadow-[0_0_12px_rgba(255,255,255,0.12)]"
+                    style={{ background: chainColors[asset.chain] || 'var(--accent-brass)' }}
+                  />
+                  <div>
+                    <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)]">Network</p>
+                    <p className="text-sm font-semibold capitalize text-[var(--text-primary)]">{asset.chain}</p>
+                  </div>
+                </div>
+                <ShieldCheck size={17} className="text-[var(--accent-brass-dim)]" />
               </div>
               {wallets.length > 0 && (
                 <div>
@@ -238,11 +294,20 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
                 </p>
               )}
               {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
-              <div className="flex gap-2">
-                <button onClick={() => setShowPasswordModal(true)} disabled={loading || (insufficientGas && asset.symbol !== 'CLOSE')} className="btn-primary flex-1 justify-center">
-                  {loading ? <Loader2 size={20} className="animate-spin" /> : 'Send'}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setShowPasswordModal(true)}
+                  disabled={loading || (insufficientGas && asset.symbol !== 'CLOSE')}
+                  className="btn-primary flex-1 justify-center min-h-12 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50 disabled:hover:translate-y-0"
+                >
+                  {loading ? <Loader2 size={19} className="animate-spin" /> : <><ArrowUpRight size={18} /> Send</>}
                 </button>
-                <button onClick={handleClose} className="btn-secondary flex-1 justify-center">Cancel</button>
+                <button
+                  onClick={handleClose}
+                  className="btn-secondary flex-1 justify-center min-h-12 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.98]"
+                >
+                  Cancel
+                </button>
               </div>
             </>
           )}
@@ -2117,20 +2182,30 @@ function WalletsTab() {
       )}
 
       {showReceiveModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowReceiveModal(false)}>
-          <div className="glass-panel rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Receive</h3>
-              <button onClick={() => setShowReceiveModal(false)} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowReceiveModal(false)}>
+          <div className="glass-panel relative overflow-hidden rounded-[28px] w-full max-w-sm p-5 sm:p-6 space-y-5 border border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.55)]" onClick={(e) => e.stopPropagation()}>
+            <div className="pointer-events-none absolute -top-24 -right-20 w-48 h-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
+            <div className="relative flex justify-between items-start gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/[0.10] border border-violet-400/20">
+                    <ArrowDownRight size={17} className="text-violet-300" />
+                  </span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-[var(--text-muted)]">Receive</span>
+                </div>
+                <h3 className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">Your wallet address</h3>
+              </div>
+              <button onClick={() => setShowReceiveModal(false)} className="btn-glass-icon w-9 h-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all hover:bg-white/[0.06] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30"><X size={18} /></button>
             </div>
             <p className="text-xs text-[var(--text-muted)]">
               Send only Polygon-network assets to this address. Sending from another network may result in permanent loss of funds.
             </p>
-            <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
-              <p className="text-xs font-mono break-all text-[var(--text-primary)]">{activeAddress}</p>
+            <div className="relative rounded-2xl p-4 bg-white/[0.025] border border-white/[0.07]">
+              <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)] mb-2">Polygon address</p>
+              <p className="text-xs font-mono break-all leading-relaxed text-[var(--text-primary)]">{activeAddress}</p>
             </div>
-            <button onClick={copyActiveAddress} className="btn-primary w-full justify-center">
-              {copiedAddress ? <CheckCircle size={18} /> : <Copy size={18} />} {copiedAddress ? 'Copied' : 'Copy Address'}
+            <button onClick={copyActiveAddress} className="btn-primary w-full justify-center min-h-12 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.98]">
+              {copiedAddress ? <CheckCircle size={18} /> : <Copy size={18} />} {copiedAddress ? 'Address Copied' : 'Copy Address'}
             </button>
           </div>
         </div>
