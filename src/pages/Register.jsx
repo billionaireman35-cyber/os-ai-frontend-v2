@@ -2,25 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Copy, Check, ShieldAlert } from 'lucide-react';
+import { OsAiMark } from '../components/ui/OsAiMark';
 
-const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003/api';
 const GOOGLE_CLIENT_ID = '133012523516-vl47c0e3fn1vbop855g0pbdvhouh08or.apps.googleusercontent.com';
 
 export default function Register() {
   const navigate = useNavigate();
   const { loginWithGoogle } = useAuth();
   const googleButtonRef = useRef(null);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Set once registration succeeds - switches the whole page into the
-  // "save your recovery phrase" step instead of navigating away
-  // immediately. The phrase is only ever returned by the API this one
-  // time (see auth.py /register) - if the user leaves without seeing
-  // it, their account has no password-recovery path at all.
+  // Set once registration succeeds via Google - switches the whole page
+  // into the "save your recovery phrase" step instead of navigating away
+  // immediately, IF the backend returns one (Google accounts may not get
+  // a password-recovery phrase at all, since there's no password to
+  // recover - see the conditional render check below).
   const [recoveryPhrase, setRecoveryPhrase] = useState(null);
   const [pendingToken, setPendingToken] = useState(null);
   const [phraseConfirmed, setPhraseConfirmed] = useState(false);
@@ -34,8 +30,13 @@ export default function Register() {
       callback: async (response) => {
         setError('');
         try {
-          await loginWithGoogle(response.credential);
-          navigate('/');
+          const data = await loginWithGoogle(response.credential);
+          if (data?.recovery_phrase) {
+            setPendingToken(data.token);
+            setRecoveryPhrase(data.recovery_phrase);
+          } else {
+            navigate('/');
+          }
         } catch (err) {
           setError(err.response?.data?.detail || 'Google sign-up failed.');
         }
@@ -49,41 +50,6 @@ export default function Register() {
       text: 'signup_with',
     });
   }, [recoveryPhrase]);
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const response = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          fingerprint: 'web_' + Date.now(),
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.detail || 'Registration failed.');
-      }
-      // Hold the token and show the recovery phrase before actually
-      // logging the user in - this is the only time it's ever shown.
-      setPendingToken(data.token);
-      if (data.recovery_phrase) {
-        setRecoveryPhrase(data.recovery_phrase);
-      } else {
-        localStorage.setItem('token', data.token);
-        navigate('/chat');
-      }
-    } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const copyPhrase = () => {
     navigator.clipboard.writeText(recoveryPhrase);
@@ -161,66 +127,22 @@ export default function Register() {
     <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <p className="font-display font-bold text-3xl text-[var(--text-primary)]">OS AI</p>
-          <p className="text-sm text-[var(--text-muted)] font-mono mt-1">create your account</p>
+          <div className="flex justify-center mb-4">
+            <OsAiMark size={48} animated={false} />
+          </div>
+          <p className="text-2xl font-display font-bold text-[var(--text-primary)]">Welcome home.</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-2 leading-relaxed max-w-[300px] mx-auto">
+            OS AI is built for the curious — a quiet, capable companion for the questions you're chasing and the work you're building. Thoughtful by design, open about its limits, and made to feel like it's actually yours.
+          </p>
         </div>
 
-        <div ref={googleButtonRef} className="flex justify-center mb-4" />
+        {error && (
+          <p className="text-sm text-[var(--danger)] font-mono text-center mb-3">{error}</p>
+        )}
 
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-px bg-[var(--border-color)]" />
-          <span className="text-xs text-[var(--text-muted)] font-mono uppercase">or</span>
-          <div className="flex-1 h-px bg-[var(--border-color)]" />
-        </div>
+        <div ref={googleButtonRef} className="flex justify-center" />
 
-        <form onSubmit={handleRegister} className="glass-card p-6 space-y-4">
-          {error && (
-            <p className="text-sm text-[var(--danger)] font-mono">{error}</p>
-          )}
-          <div>
-            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="input-base mt-1"
-              placeholder="Your name"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-base mt-1"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-base mt-1"
-              placeholder="••••••••"
-              required
-              minLength={8}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full justify-center text-[16px] disabled:opacity-50"
-          >
-            {loading ? 'Creating account...' : 'Create account'}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-[var(--text-muted)] mt-5">
+        <p className="text-center text-sm text-[var(--text-muted)] mt-6">
           Already have an account?{' '}
           <Link to="/login" className="text-[var(--accent-indigo)] hover:text-[var(--accent-hover)] font-medium">
             Sign in

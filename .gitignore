@@ -9,3 +9,5 @@ dist
 .env
 .env
 .env.local
+.icon-export
+.patches

@@ -153,4 +153,10 @@ body {
 .animate-fade-in { animation: fadeIn 0.2s ease-out; }
 .animate-slide-up { animation: slideUp 0.15s ease-out; }
 .animate-pulse-slow { animation: pulse 1.5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-slow, .animate-fade-in, .animate-slide-up {
+    animation: none !important;
+  }
+}
 @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }

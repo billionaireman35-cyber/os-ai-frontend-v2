@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { OsAiMark } from '../ui/OsAiMark';
 
 export function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -8,7 +9,7 @@ export function RequireAuth({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center">
-        <p className="text-[var(--text-muted)] font-mono">Loading OS AI…</p>
+        <OsAiMark size={64} />
       </div>
     );
   }
