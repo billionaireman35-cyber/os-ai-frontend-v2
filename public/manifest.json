@@ -1,11 +1,14 @@
 {
+  "id": "/",
   "name": "OSAI",
   "short_name": "OSAI",
+  "description": "OS AI pairs a capable AI companion with blockchain-backed rewards — built for the curious across any career, from research to building your next venture.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0E1318",
   "theme_color": "#0E1318",
   "orientation": "portrait",
+  "categories": ["productivity"],
   "icons": [
     {
       "src": "icon-192.png",
