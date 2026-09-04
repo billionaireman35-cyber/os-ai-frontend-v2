@@ -374,11 +374,20 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
   };
 
   const handleVerify = async () => {
-    if (!txHash.trim()) { setError('Enter your transaction hash'); return; }
+    if (!txHash.trim()) {
+      setError('Enter your transaction hash');
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
     try {
-      const res = await api.post('/wallet/deposit/verify', { chain, tx_hash: txHash.trim() });
+      const res = await api.post('/wallet/deposit/verify', {
+        chain,
+        tx_hash: txHash.trim(),
+      });
+
       onDeposited?.(res.data);
       onClose();
     } catch (e) {
@@ -389,67 +398,227 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Buy CLOSE with Crypto</h3>
-          <button onClick={onClose} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
-        </div>
+    <div
+      className="fixed inset-0 bg-black/75 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="relative overflow-hidden rounded-[30px] w-full max-w-md border border-violet-400/[0.14] bg-[#08080d] shadow-[0_35px_120px_rgba(0,0,0,0.65)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Ambient lighting */}
+        <div
+          className="pointer-events-none absolute -top-32 -right-24 w-72 h-72 rounded-full"
+          style={{
+            background: 'rgba(139,92,246,0.12)',
+            filter: 'blur(70px)',
+          }}
+        />
+        <div
+          className="pointer-events-none absolute -bottom-32 -left-24 w-64 h-64 rounded-full"
+          style={{
+            background: 'rgba(217,164,65,0.055)',
+            filter: 'blur(70px)',
+          }}
+        />
 
-        <p className="text-sm text-[var(--text-secondary)]">
-          This converts crypto you send into CLOSE at the current rate. It is a purchase, not a deposit into your wallet - your CLOSE balance updates once the payment is verified on-chain.
-        </p>
+        <div className="relative p-5 sm:p-6 space-y-5">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(139,92,246,0.18), rgba(217,164,65,0.08))',
+                    borderColor: 'rgba(139,92,246,0.24)',
+                    boxShadow: '0 8px 28px rgba(124,58,237,0.14)',
+                  }}
+                >
+                  <Coins size={19} className="text-violet-300" />
+                </div>
 
-        <div>
-          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Chain</label>
-          <div className="flex gap-2 mt-1">
-            {Object.keys(MINIMUMS).map((c) => (
-              <button
-                key={c}
-                onClick={() => setChain(c)}
-                className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold transition-all ${
-                  chain === c
-                    ? 'bg-[var(--accent-brass)] text-black'
-                    : 'bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]'
-                }`}
-              >
-                {c.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-violet-200/75">
+                  OS VAULT · ACQUIRE
+                </span>
+              </div>
 
-        <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
-          <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Send Payment To</label>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xs font-mono break-all pr-2 text-[var(--text-primary)]">{DEPOSIT_ADDRESS}</span>
-            <button onClick={copyAddress} className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-              {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
+              <h3 className="text-2xl sm:text-[28px] font-display font-bold tracking-tight text-[var(--text-primary)]">
+                Buy CLOSE
+              </h3>
+
+              <p className="text-xs text-[var(--text-muted)] mt-1.5">
+                Acquire CLOSE using crypto from any supported network.
+              </p>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.06] transition-all duration-200"
+              aria-label="Close"
+            >
+              <X size={19} />
             </button>
           </div>
-          <p className="text-xs mt-2 text-[var(--accent-brass)]">
-            Minimum: ${MINIMUMS[chain]} on {chain}
-          </p>
-        </div>
 
-        <div>
-          <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Transaction Hash</label>
-          <input
-            type="text"
-            value={txHash}
-            onChange={(e) => setTxHash(e.target.value)}
-            className="input-glass w-full mt-1"
-            placeholder="0x..."
-          />
-        </div>
+          {/* Purchase explanation */}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/[0.10] border border-violet-400/[0.12]">
+                <ArrowDownRight size={14} className="text-violet-300" />
+              </div>
 
-        {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
+              <div>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">
+                  How it works
+                </p>
+                <p className="text-[11px] leading-5 text-[var(--text-muted)] mt-1">
+                  Send crypto to the OS Vault payment address, then submit the
+                  transaction hash. Your CLOSE is credited after the payment
+                  is verified on-chain.
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <div className="flex gap-2">
-          <button onClick={handleVerify} disabled={loading} className="btn-primary flex-1 justify-center">
-            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Verify & Credit'}
-          </button>
-          <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
+          {/* Network selector */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                Payment Network
+              </label>
+              <span className="text-[9px] uppercase tracking-[1.5px] text-emerald-300/70">
+                Supported
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {Object.keys(MINIMUMS).map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setChain(c)}
+                  className={`min-h-11 rounded-xl text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-200 active:scale-[0.98] ${
+                    chain === c
+                      ? 'bg-[var(--accent-brass)] text-black shadow-[0_8px_24px_rgba(217,164,65,0.16)]'
+                      : 'bg-white/[0.035] border border-white/[0.07] text-[var(--text-secondary)] hover:bg-white/[0.06] hover:border-white/[0.12]'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Payment destination */}
+          <div
+            className="relative overflow-hidden rounded-2xl p-4 border"
+            style={{
+              background:
+                'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.10), transparent 42%), linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))',
+              borderColor: 'rgba(139,92,246,0.16)',
+            }}
+          >
+            <div className="flex items-center justify-between mb-2.5">
+              <div>
+                <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-violet-200/65">
+                  Payment destination
+                </p>
+                <p className="text-xs font-semibold text-[var(--text-primary)] mt-1">
+                  {chain.toUpperCase()} Network
+                </p>
+              </div>
+
+              <button
+                onClick={copyAddress}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.07] transition-all duration-200 active:scale-[0.96]"
+                aria-label="Copy payment address"
+              >
+                {copied ? (
+                  <CheckCircle size={16} className="text-emerald-400" />
+                ) : (
+                  <Copy size={16} />
+                )}
+              </button>
+            </div>
+
+            <div className="rounded-xl bg-black/25 border border-white/[0.05] px-3 py-2.5">
+              <p className="text-[11px] font-mono leading-5 break-all text-[var(--text-primary)]">
+                {DEPOSIT_ADDRESS}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between mt-3">
+              <span className="text-[10px] text-[var(--text-muted)]">
+                Minimum purchase
+              </span>
+              <span className="text-[10px] font-semibold text-[var(--accent-brass)]">
+                ${MINIMUMS[chain]}
+              </span>
+            </div>
+          </div>
+
+          {/* Verification */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                Transaction Hash
+              </label>
+              <span className="text-[9px] uppercase tracking-[1.4px] text-[var(--text-muted)]">
+                On-chain proof
+              </span>
+            </div>
+
+            <input
+              type="text"
+              value={txHash}
+              onChange={(e) => setTxHash(e.target.value)}
+              className="input-glass w-full !min-h-13 rounded-2xl px-4 font-mono text-xs"
+              placeholder="Paste your transaction hash"
+            />
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="rounded-2xl border border-red-400/[0.14] bg-red-500/[0.05] px-4 py-3">
+              <p className="text-xs text-red-300">
+                {String(error)}
+              </p>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleVerify}
+              disabled={loading}
+              className="btn-primary flex-1 justify-center min-h-12 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.985] disabled:opacity-60"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={17} />
+                  Verify & Credit
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={onClose}
+              className="btn-secondary min-h-12 px-5 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.985]"
+            >
+              Cancel
+            </button>
+          </div>
+
+          {/* Trust footer */}
+          <div className="flex items-center justify-center gap-2 pt-1 text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
+            <ShieldCheck size={12} className="text-violet-300/65" />
+            Non-custodial · Verified on-chain
+          </div>
         </div>
       </div>
     </div>
