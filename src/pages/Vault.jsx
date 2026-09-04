@@ -203,16 +203,25 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/[0.10] border border-violet-400/20">
                       <ArrowUpRight size={17} className="text-violet-300" />
                     </span>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-                      Transfer
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-violet-200/80">
+                      OS VAULT · TRANSFER
                     </span>
                   </div>
-                  <h3 className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">
-                    Send {asset.symbol}
-                  </h3>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">
-                    Send securely from your OS Vault
-                  </p>
+                  <div className="flex items-center gap-2.5 mt-1">
+                    <span
+                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-500/[0.10] text-sm font-bold text-violet-200"
+                    >
+                      {asset.symbol?.slice(0, 1)}
+                    </span>
+                    <div>
+                      <h3 className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">
+                        Send {asset.symbol}
+                      </h3>
+                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                        Secure transfer from your non-custodial vault
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <button
                   onClick={handleClose}
@@ -237,7 +246,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-[10px] text-[var(--text-muted)] font-mono font-bold uppercase tracking-[0.16em]">Amount</label>
-                  <span className="text-xs font-mono font-semibold text-[var(--text-secondary)]">{asset.symbol}</span>
+                  <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">Available</span>
                 </div>
                 <div className="relative">
                   <input
@@ -248,12 +257,18 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
                     className="input-glass w-full !rounded-2xl !min-h-14 px-4 pr-20 text-lg font-semibold transition-all focus:border-violet-400/40 focus:ring-2 focus:ring-violet-400/10"
                     placeholder="0.00"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-[var(--text-muted)]">
-                    {asset.symbol}
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.035] px-2.5 py-1.5">
+                    <span className="text-xs font-mono font-bold text-[var(--text-secondary)]">{asset.symbol}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-2 px-1">
+                  <span className="text-[10px] text-[var(--text-muted)]">Available balance</span>
+                  <span className="text-[10px] font-mono font-semibold text-[var(--text-secondary)]">
+                    {Number(asset.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 6 })} {asset.symbol}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between rounded-2xl px-4 py-3 bg-white/[0.025] border border-white/[0.055]">
+              <div className="flex items-center justify-between rounded-2xl px-4 py-3.5 bg-white/[0.025] border border-white/[0.055] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]">
                 <div className="flex items-center gap-2.5">
                   <span
                     className="h-2.5 w-2.5 rounded-full shadow-[0_0_12px_rgba(255,255,255,0.12)]"
@@ -262,6 +277,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
                   <div>
                     <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)]">Network</p>
                     <p className="text-sm font-semibold capitalize text-[var(--text-primary)]">{asset.chain}</p>
+                    <p className="text-[9px] text-[var(--text-muted)] mt-0.5">Destination network</p>
                   </div>
                 </div>
                 <ShieldCheck size={17} className="text-[var(--accent-brass-dim)]" />
@@ -284,14 +300,20 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
                 </div>
               )}
               {insufficientGas && asset.symbol === 'CLOSE' && (
-                <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
-                  ⚡ Low POL balance - this send will use gasless (sponsored) delivery instead.
-                </p>
+                <div className="flex items-start gap-2.5 rounded-2xl border border-[var(--accent-brass)]/[0.14] bg-[var(--accent-brass)]/[0.045] px-3.5 py-3">
+                  <span className="mt-0.5 text-sm">⚡</span>
+                  <p className="text-[11px] leading-relaxed text-[var(--accent-brass)]">
+                    Low POL balance. This CLOSE transfer will use sponsored gasless delivery.
+                  </p>
+                </div>
               )}
               {insufficientGas && asset.symbol !== 'CLOSE' && (
-                <p className="text-sm font-mono" style={{ color: 'var(--accent-brass)' }}>
-                  ⚠️ Low POL balance ({polBalance.toFixed(4)} POL) - you need at least {MIN_GAS_POL} POL to cover gas for this transaction.
-                </p>
+                <div className="flex items-start gap-2.5 rounded-2xl border border-[var(--accent-brass)]/[0.14] bg-[var(--accent-brass)]/[0.045] px-3.5 py-3">
+                  <span className="mt-0.5 text-sm">⚠️</span>
+                  <p className="text-[11px] leading-relaxed text-[var(--accent-brass)]">
+                    Low POL balance ({polBalance.toFixed(4)} POL). At least {MIN_GAS_POL} POL is required to cover network gas.
+                  </p>
+                </div>
               )}
               {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
               <div className="flex gap-2 pt-1">
@@ -2429,26 +2451,44 @@ function WalletsTab() {
             <div className="pointer-events-none absolute -top-24 -right-20 w-48 h-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
             <div className="relative flex justify-between items-start gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/[0.10] border border-violet-400/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/[0.10] border border-violet-400/20 shadow-[0_0_24px_rgba(139,92,246,0.10)]">
                     <ArrowDownRight size={17} className="text-violet-300" />
                   </span>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-[var(--text-muted)]">Receive</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-violet-200/80">OS VAULT · RECEIVE</span>
                 </div>
-                <h3 className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">Your wallet address</h3>
+                <h3 className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">Receive assets</h3>
+                <p className="text-[11px] text-[var(--text-muted)] mt-1">Your secure Polygon wallet address</p>
               </div>
               <button onClick={() => setShowReceiveModal(false)} className="btn-glass-icon w-9 h-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all hover:bg-white/[0.06] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30"><X size={18} /></button>
             </div>
-            <p className="text-xs text-[var(--text-muted)]">
-              Send only Polygon-network assets to this address. Sending from another network may result in permanent loss of funds.
-            </p>
-            <div className="relative rounded-2xl p-4 bg-white/[0.025] border border-white/[0.07]">
-              <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)] mb-2">Polygon address</p>
-              <p className="text-xs font-mono break-all leading-relaxed text-[var(--text-primary)]">{activeAddress}</p>
+            <div className="flex items-start gap-2.5 rounded-2xl border border-amber-400/[0.12] bg-amber-400/[0.035] px-3.5 py-3">
+              <span className="mt-0.5 text-sm">⚠️</span>
+              <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
+                Send only <span className="font-semibold text-[var(--text-secondary)]">Polygon-network assets</span> to this address. Using another network may permanently lose funds.
+              </p>
             </div>
-            <button onClick={copyActiveAddress} className="btn-primary w-full justify-center min-h-12 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.98]">
-              {copiedAddress ? <CheckCircle size={18} /> : <Copy size={18} />} {copiedAddress ? 'Address Copied' : 'Copy Address'}
+            <div className="relative overflow-hidden rounded-[22px] p-4 sm:p-5 bg-gradient-to-br from-violet-500/[0.08] via-white/[0.025] to-transparent border border-violet-400/[0.14] shadow-[0_18px_55px_rgba(0,0,0,0.20)]">
+              <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-2xl pointer-events-none" />
+              <div className="relative flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-violet-400 shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
+                  <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-violet-200/75">Polygon Network</p>
+                </div>
+                <span className="text-[9px] uppercase tracking-[0.12em] text-[var(--text-muted)]">Wallet address</span>
+              </div>
+              <p className="relative text-[13px] sm:text-sm font-mono break-all leading-relaxed text-[var(--text-primary)]">
+                {activeAddress}
+              </p>
+            </div>
+            <button onClick={copyActiveAddress} className="btn-primary w-full justify-center min-h-13 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.98] shadow-[0_12px_35px_rgba(0,0,0,0.22)]">
+              {copiedAddress ? <CheckCircle size={18} /> : <Copy size={18} />}
+              {copiedAddress ? 'Address Copied' : 'Copy Wallet Address'}
             </button>
+            <div className="flex items-center justify-center gap-2 pt-1 text-[9px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              <ShieldCheck size={12} className="text-violet-300/70" />
+              Non-custodial · You control the keys
+            </div>
           </div>
         </div>
       )}
