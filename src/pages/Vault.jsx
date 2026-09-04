@@ -1101,7 +1101,7 @@ function StandardWallet() {
           className="relative overflow-hidden rounded-[32px] min-h-[320px] shadow-[0_30px_90px_rgba(0,0,0,0.35)]"
           style={{
             background:
-              'radial-gradient(circle at 78% 18%, rgba(124,58,237,0.20), transparent 34%), linear-gradient(135deg, #050506 0%, #09090d 55%, #050506 100%)',
+              'radial-gradient(circle at 78% 18%, rgba(124,58,237,0.20), transparent 34%), var(--glass-bg)',
             border: '1px solid rgba(124,58,237,0.16)',
           }}
         >
@@ -1313,7 +1313,7 @@ function StandardWallet() {
           <div
             className="relative overflow-hidden rounded-[26px] border border-[var(--glass-border)] shadow-[0_20px_60px_rgba(0,0,0,0.22)]"
             style={{
-              background: 'linear-gradient(135deg, rgba(18,18,24,0.92), rgba(8,8,12,0.96))',
+              background: 'var(--glass-bg)',
               border: '1px solid rgba(139,92,246,0.14)',
               boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
             }}
@@ -1497,7 +1497,7 @@ function StandardWallet() {
               className="group relative overflow-hidden rounded-[30px] p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.30)] transition-all duration-300 hover:-translate-y-[1px]"
               style={{
                 background:
-                  'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.16), transparent 38%), radial-gradient(circle at 0% 100%, rgba(217,164,65,0.06), transparent 34%), linear-gradient(135deg, rgba(21,20,27,0.98), rgba(7,7,11,0.99))',
+                  'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.16), transparent 38%), radial-gradient(circle at 0% 100%, rgba(217,164,65,0.06), transparent 34%), var(--glass-bg)',
                 border: '1px solid rgba(139,92,246,0.20)',
               }}
             >
