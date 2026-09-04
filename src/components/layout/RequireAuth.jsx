@@ -12,7 +12,7 @@ export function RequireAuth({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center">
-        <OsAiMark size={64} />
+        
       </div>
     );
   }

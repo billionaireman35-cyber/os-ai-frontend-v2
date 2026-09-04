@@ -319,8 +319,8 @@ export function WalletAnalytics() {
               <p className="text-[8.5px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
                 CLOSE
               </p>
-              <p className="text-lg font-display font-bold text-[var(--accent-brass-bright)] mt-1 truncate">
-                {closeAsset ? Number(closeAsset.balance || 0).toLocaleString() : '0'}
+              <p className="text-[13px] font-display font-bold text-[var(--accent-brass-bright)] mt-1 leading-tight break-words" title={closeAsset ? Number(closeAsset.balance || 0).toLocaleString() : '0'}>
+                {closeAsset ? Number(closeAsset.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '0'}
               </p>
             </div>
           </div>

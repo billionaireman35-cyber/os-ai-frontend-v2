@@ -6,7 +6,7 @@ import { api } from '../utils/api';
 import { Modal } from '../components/ui/Modal';
 import { Dropdown } from '../components/ui/Dropdown';
 import {
-  Moon, Sun, LogOut, User, Wallet, Copy, CheckCircle,
+  Moon, Sun, Monitor, LogOut, User, Wallet, Copy, CheckCircle,
   Bell, Lock, Eye, Globe, Server, MessageSquare, Languages, Info, FileText,
   ChevronRight, ArrowLeft, Save, RefreshCw, AlertTriangle, Camera, Plus,
   Coins, Crown,
@@ -50,13 +50,16 @@ export default function Settings() {
   const navigate = useNavigate();
   const { user, setUser, logout, updateName } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themePreference, setTheme } = useTheme();
   const [settings, setSettings] = useState(loadSettings);
   const [section, setSection] = useState(null);
   const [copied, setCopied] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [editingName, setEditingName] = useState(false);
   const [profilePic, setProfilePic] = useState(user?.profile_picture || null);
+  const [profileUploading, setProfileUploading] = useState(false);
+  const [profileUploadError, setProfileUploadError] = useState('');
+  const [profileUploadSuccess, setProfileUploadSuccess] = useState('');
   const fileInputRef = useRef(null);
   const [topUpLoading, setTopUpLoading] = useState(false);
 
@@ -113,22 +116,82 @@ export default function Settings() {
   };
 
   const handleProfilePicUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
+
+    // Allow selecting the same image again after an upload/error.
+    if (e.target) e.target.value = '';
+
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = reader.result;
-      try {
-        await api.post('/auth/profile-picture', { picture: base64 });
-        const userRes = await api.get('/auth/me');
-        if (setUser) setUser(userRes.data);
-        setProfilePic(base64);
-        alert('Profile picture updated!');
-      } catch (err) {
-        alert('Failed to upload: ' + err.message);
-      }
-    };
-    reader.readAsDataURL(file);
+
+    setProfileUploadError('');
+    setProfileUploadSuccess('');
+
+    if (!file.type.startsWith('image/')) {
+      setProfileUploadError('Please choose an image file.');
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      setProfileUploadError('That image is too large. Please choose one under 8 MB.');
+      return;
+    }
+
+    setProfileUploading(true);
+
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          const image = new Image();
+
+          image.onload = () => {
+            const maxSize = 1200;
+            const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(image.width * scale));
+            canvas.height = Math.max(1, Math.round(image.height * scale));
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              reject(new Error('Could not process this image.'));
+              return;
+            }
+
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+            // JPEG keeps the database payload much smaller than a raw camera photo.
+            resolve(canvas.toDataURL('image/jpeg', 0.82));
+          };
+
+          image.onerror = () => reject(new Error('Could not read this image.'));
+          image.src = reader.result;
+        };
+
+        reader.onerror = () => reject(new Error('Could not read this file.'));
+        reader.readAsDataURL(file);
+      });
+
+      await api.post('/auth/profile-picture', { picture: base64 });
+
+      const userRes = await api.get('/auth/me');
+      const updatedUser = userRes.data;
+
+      if (setUser) setUser(updatedUser);
+
+      setProfilePic(updatedUser?.profile_picture || base64);
+      setProfileUploadSuccess('Profile photo updated successfully.');
+    } catch (err) {
+      console.error('Failed to upload profile picture', err);
+      setProfileUploadError(
+        err.response?.data?.detail ||
+        err.message ||
+        'Could not update your profile photo.'
+      );
+    } finally {
+      setProfileUploading(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -228,13 +291,25 @@ export default function Settings() {
     <div className="p-4 space-y-2">
       <div className="relative rounded-2xl p-5 mb-2 overflow-hidden bg-gradient-to-br from-[var(--accent-brass)]/15 to-[var(--accent-brass)]/[0.02] border border-[var(--accent-brass)]/30">
         <div className="flex items-center gap-3.5">
-          <div className="w-14 h-14 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-2xl font-bold text-[var(--accent-indigo)] overflow-hidden shrink-0">
-            {profilePic ? (
-              <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              user?.name?.charAt(0).toUpperCase() || 'G'
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={profileUploading}
+            className="relative w-16 h-16 rounded-full shrink-0 p-[2px] bg-gradient-to-br from-[var(--accent-brass)] to-[var(--accent-indigo)] shadow-lg disabled:opacity-70 transition-transform hover:scale-[1.03]"
+            aria-label="Change profile photo"
+          >
+            <span className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[var(--bg-tertiary)] text-2xl font-bold text-[var(--accent-brass)]">
+              {profilePic ? (
+                <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                user?.name?.charAt(0).toUpperCase() || 'G'
+              )}
+            </span>
+
+            <span className="absolute -right-0.5 -bottom-0.5 w-6 h-6 rounded-full bg-[var(--accent-brass)] text-black flex items-center justify-center shadow-md border-2 border-[var(--bg-secondary)]">
+              <Camera size={12} />
+            </span>
+          </button>
           <div className="min-w-0">
             <p className="text-lg font-bold text-[var(--text-primary)] truncate">{user?.name || 'Guest'}</p>
             <p className="text-xs text-[var(--text-muted)] truncate">{user?.email}</p>
@@ -243,7 +318,7 @@ export default function Settings() {
             </span>
           </div>
         </div>
-        <div className="mt-4 bg-white/[0.04] rounded-xl px-4 py-3">
+        <div className="mt-4 bg-[var(--surface-hover)] rounded-xl px-4 py-3">
           <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
             <Coins size={11} /> CLOSE Balance
           </p>
@@ -257,7 +332,7 @@ export default function Settings() {
         <button
           key={key}
           onClick={() => setSection(key)}
-          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[var(--surface-hover)] hover:bg-[var(--surface-active)] transition-colors"
         >
           <div className="flex items-center gap-3">
             <Icon size={19} className="text-[var(--accent-brass)]" />
@@ -271,7 +346,7 @@ export default function Settings() {
         <button
           key={key}
           onClick={() => goTo(path)}
-          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[var(--surface-hover)] hover:bg-[var(--surface-active)] transition-colors"
         >
           <div className="flex items-center gap-3">
             <Icon size={19} className="text-[var(--accent-brass)]" />
@@ -283,12 +358,68 @@ export default function Settings() {
 
       <div className="h-px bg-[var(--glass-border)] my-2 mx-1" />
 
-      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03]">
-        <div className="flex items-center gap-3">
-          {theme === 'dark' ? <Moon size={19} className="text-[var(--accent-brass)]" /> : <Sun size={19} className="text-[var(--accent-brass)]" />}
-          <span className="text-[var(--text-primary)] text-sm">Theme</span>
+      <div className="glass-card p-4">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--accent-brass)]/10 text-[var(--accent-brass)] shrink-0">
+            {themePreference === 'system' ? (
+              <Monitor size={19} />
+            ) : theme === 'dark' ? (
+              <Moon size={19} />
+            ) : (
+              <Sun size={19} />
+            )}
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              Appearance
+            </p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              Choose how OS AI looks on your device.
+            </p>
+          </div>
         </div>
-        <Toggle on={theme === 'dark'} onClick={toggleTheme} />
+
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { value: 'system', label: 'System', icon: Monitor },
+            { value: 'light', label: 'Light', icon: Sun },
+            { value: 'dark', label: 'Dark', icon: Moon },
+          ].map(({ value, label, icon: Icon }) => {
+            const active = themePreference === value;
+
+            return (
+              <button
+                key={value}
+                onClick={() => setTheme(value)}
+                className={`relative flex flex-col items-center justify-center gap-2 min-h-[76px] rounded-xl border transition-all ${
+                  active
+                    ? 'border-[var(--accent-brass)] bg-[var(--accent-brass)]/10 text-[var(--accent-brass)]'
+                    : 'border-[var(--glass-border)] bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:border-[var(--border-bright)] hover:text-[var(--text-primary)]'
+                }`}
+                aria-pressed={active}
+              >
+                <Icon size={18} />
+                <span className="text-xs font-semibold">{label}</span>
+
+                {active && (
+                  <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[var(--accent-brass)]" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {themePreference === 'system' && (
+          <div className="mt-3 px-3 py-2.5 rounded-xl bg-[var(--surface-hover)] border border-[var(--glass-border)]">
+            <p className="text-xs text-[var(--text-secondary)]">
+              Following your device:
+              <span className="font-semibold text-[var(--text-primary)] ml-1">
+                {theme === 'dark' ? 'Dark' : 'Light'}
+              </span>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Founder-only top‑up button */}
@@ -327,65 +458,134 @@ export default function Settings() {
   // ── Profile Sub‑page ──
   const renderProfile = () => (
     <div className="p-4 space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full bg-[var(--accent-indigo)]/20 flex items-center justify-center text-2xl font-bold text-[var(--accent-indigo)] overflow-hidden">
-            {profilePic ? (
-              <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              user?.name?.charAt(0).toUpperCase() || 'G'
-            )}
-          </div>
+      <div className="relative overflow-hidden rounded-3xl border border-[var(--border-color)] bg-gradient-to-br from-[var(--accent-brass)]/10 via-[var(--bg-secondary)] to-[var(--accent-indigo)]/10 p-5">
+        <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-[var(--accent-brass)]/10 blur-3xl pointer-events-none" />
+
+        <div className="relative flex flex-col items-center text-center">
           <button
-            onClick={() => fileInputRef.current.click()}
-            className="absolute bottom-0 right-0 bg-[var(--accent-brass)] p-1 rounded-full shadow-lg hover:bg-[#c4a030] transition"
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={profileUploading}
+            className="group relative w-28 h-28 rounded-full p-[3px] bg-gradient-to-br from-[var(--accent-brass)] via-[var(--accent-brass-bright)] to-[var(--accent-indigo)] shadow-xl disabled:opacity-70"
+            aria-label="Change profile photo"
           >
-            <Camera size={16} className="text-black" />
+            <span className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[var(--bg-tertiary)] text-4xl font-bold text-[var(--accent-brass)]">
+              {profilePic ? (
+                <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                user?.name?.charAt(0).toUpperCase() || 'G'
+              )}
+            </span>
+
+            <span className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/35 transition-colors flex items-center justify-center">
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity w-10 h-10 rounded-full bg-white/90 text-black flex items-center justify-center">
+                <Camera size={19} />
+              </span>
+            </span>
+
+            {profileUploading && (
+              <span className="absolute inset-0 rounded-full bg-black/55 flex items-center justify-center">
+                <span className="w-7 h-7 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              </span>
+            )}
           </button>
+
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={handleProfilePicUpload}
             className="hidden"
           />
-        </div>
-        <div>
-          {editingName ? (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input-glass"
-                autoFocus
-                onBlur={handleUpdateName}
-                onKeyDown={(e) => e.key === 'Enter' && handleUpdateName()}
-              />
-              <button onClick={handleUpdateName} className="btn-primary text-sm">Save</button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <p className="text-xl font-bold text-[var(--text-primary)]">{user?.name || 'Guest'}</p>
-              <button onClick={() => setEditingName(true)} className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]">Edit</button>
+
+          <p className="mt-4 text-lg font-bold text-[var(--text-primary)]">
+            {user?.name || 'Guest'}
+          </p>
+          <p className="text-sm text-[var(--text-muted)] mt-0.5">
+            {user?.email}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={profileUploading}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--accent-brass)] text-black text-sm font-semibold shadow-md hover:opacity-90 disabled:opacity-60 transition"
+          >
+            <Camera size={16} />
+            {profileUploading ? 'Uploading…' : profilePic ? 'Change photo' : 'Add a photo'}
+          </button>
+
+          <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+            JPG, PNG, WEBP or GIF · up to 8 MB
+          </p>
+
+          {profileUploadSuccess && (
+            <div className="mt-3 w-full rounded-xl border border-[var(--success)]/25 bg-[var(--success)]/10 px-3 py-2 text-xs text-[var(--success)]">
+              {profileUploadSuccess}
             </div>
           )}
-          <p className="text-sm text-[var(--text-muted)]">{user?.email}</p>
+
+          {profileUploadError && (
+            <div className="mt-3 w-full rounded-xl border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-3 py-2 text-xs text-[var(--danger)]">
+              {profileUploadError}
+            </div>
+          )}
         </div>
+      </div>
+
+      <div className="glass-card p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Profile details</p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Keep your OS AI identity up to date.</p>
+          </div>
+          <User size={18} className="text-[var(--accent-brass)]" />
+        </div>
+
+        {editingName ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input-glass flex-1"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleUpdateName()}
+            />
+            <button onClick={handleUpdateName} className="btn-primary text-sm">
+              Save
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[var(--surface-hover)]">
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Display name</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)] truncate mt-0.5">
+                {user?.name || 'Guest'}
+              </p>
+            </div>
+            <button
+              onClick={() => setEditingName(true)}
+              className="text-sm font-semibold text-[var(--accent-brass)] hover:opacity-80 shrink-0"
+            >
+              Edit
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 
   const renderNotifications = () => (
     <div className="p-4 space-y-3">
-      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03]">
+      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--surface-hover)]">
         <span className="text-[var(--text-primary)] text-sm">Chat notifications</span>
         <Toggle
           on={settings.notifications.chat}
           onClick={() => updateSettings({ notifications: { ...settings.notifications, chat: !settings.notifications.chat } })}
         />
       </div>
-      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03]">
+      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--surface-hover)]">
         <span className="text-[var(--text-primary)] text-sm">Transaction notifications</span>
         <Toggle
           on={settings.notifications.transactions}
@@ -425,7 +625,7 @@ export default function Settings() {
 
   const renderPrivacy = () => (
     <div className="p-4 space-y-3">
-      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03]">
+      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--surface-hover)]">
         <span className="text-[var(--text-primary)] text-sm">Online status</span>
         <Toggle
           on={settings.privacy.onlineStatus}

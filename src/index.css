@@ -2,53 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── OS Vault theme ── */
+/* ── OS AI / OS Vault theme system ── */
+
 :root {
-  --bg-primary: #FAF9F6;
-  --bg-secondary: #F2F0EA;
-  --bg-tertiary: #EAE7DF;
-  --bg-raised-2: #E3DFD5;
-  --text-primary: #1F1E1C;
-  --text-secondary: #5E5A52;
-  --text-muted: #8C8779;
-  --border-color: rgba(31,30,28,0.10);
-  --border-bright: rgba(31,30,28,0.20);
+  color-scheme: light;
+
+  /* Premium warm-white foundation */
+  --bg-primary: #F7F7F4;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F1F1ED;
+  --bg-raised-2: #E8E8E3;
+
+  --text-primary: #171715;
+  --text-secondary: #5F5F59;
+  --text-muted: #8A8A82;
+
+  --border-color: rgba(23,23,21,0.09);
+  --border-bright: rgba(23,23,21,0.16);
+
+  /* OS AI light-mode accent */
   --accent-indigo: #F97316;
   --accent-brass: #F97316;
   --accent-brass-bright: #FB923C;
   --accent-brass-dim: #EA580C;
+  --accent-glow: rgba(249,115,22,0.18);
+
   --danger: #C1554A;
   --success: #4B8062;
+
   --font-display: 'Chakra Petch', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
+  /* Shared surfaces */
   --glass-bg: var(--bg-secondary);
   --glass-bg-raised: var(--bg-secondary);
   --glass-border: var(--border-color);
   --glass-border-hover: var(--border-bright);
-  --glass-shadow: 0 1px 3px rgba(0,0,0,0.06);
+
+  --surface-hover: rgba(23,23,21,0.045);
+  --surface-active: rgba(23,23,21,0.075);
+  --overlay-bg: rgba(15,15,13,0.28);
+
+  --glass-shadow:
+    0 1px 2px rgba(23,23,21,0.04),
+    0 8px 30px rgba(23,23,21,0.045);
+
   --glass-blur: 0px;
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
+
   --bg-primary: #000000;
   --bg-secondary: #0A0A0A;
   --bg-tertiary: #141412;
   --bg-raised-2: #1C1C19;
+
   --text-primary: #F5F5F0;
   --text-secondary: #B5B0A4;
   --text-muted: #79756A;
+
   --border-color: rgba(255,255,255,0.08);
   --border-bright: rgba(255,255,255,0.16);
 
-  /* Redesign 2026-09-03: dark mode previously had no accent overrides
-     at all and silently inherited the light theme's orange values via
-     CSS cascade. New electric-violet accent, dark-mode-specific. */
+  /* Electric violet dark-mode accent */
   --accent-indigo: #9B7BFF;
   --accent-brass: #7C5CFF;
   --accent-brass-bright: #B9A8FF;
   --accent-brass-dim: #5B3FE0;
   --accent-glow: rgba(124,92,255,0.35);
+
   --danger: #FF6B6B;
   --success: #4ADE80;
 
@@ -56,11 +79,39 @@
   --glass-bg-raised: var(--bg-secondary);
   --glass-border: var(--border-color);
   --glass-border-hover: var(--border-bright);
-  --glass-shadow: 0 1px 3px rgba(0,0,0,0.5);
+
+  --surface-hover: rgba(255,255,255,0.045);
+  --surface-active: rgba(255,255,255,0.075);
+  --overlay-bg: rgba(0,0,0,0.55);
+
+  --glass-shadow:
+    0 1px 3px rgba(0,0,0,0.5),
+    0 12px 35px rgba(0,0,0,0.25);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--bg-primary);
+}
+
+html {
+  background: var(--bg-primary);
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {
+  margin: 0;
   font-family: var(--font-display);
+  background: var(--bg-primary);
 }
 
 .glass-card {

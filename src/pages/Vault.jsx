@@ -146,8 +146,8 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in">
-        <div className="glass-panel relative overflow-hidden rounded-[28px] w-full max-w-md p-5 sm:p-6 space-y-5 border border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.55)]">
+      <div className="fixed inset-0 bg-[var(--bg-primary)]/70 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div className="glass-panel relative overflow-hidden rounded-[28px] w-full max-w-md p-5 sm:p-6 space-y-5 border border-[var(--border-color)] shadow-[0_30px_100px_rgba(0,0,0,0.55)]">
           <div className="pointer-events-none absolute -top-24 -right-20 w-48 h-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 -left-20 w-48 h-48 rounded-full bg-[var(--accent-brass)]/[0.045] blur-3xl" />
           {sentResult ? (
@@ -162,7 +162,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
                 {amount} {asset.symbol} is on its way to {to.slice(0, 8)}...{to.slice(-6)}.
               </p>
 
-              <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+              <div className="rounded-xl p-3 bg-[var(--surface-hover)] border border-[var(--glass-border)]">
                 <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Transaction Hash</label>
                 <div className="flex items-center justify-between mt-1 gap-2">
                   <span className="text-xs font-mono break-all text-[var(--text-primary)]">{sentResult.txHash}</span>
@@ -179,7 +179,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
               </div>
 
               {sentResult.feeTxHash && (
-                <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+                <div className="rounded-xl p-3 bg-[var(--surface-hover)] border border-[var(--glass-border)]">
                   <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Sponsorship Fee Transaction</label>
                   <div className="flex items-center justify-between mt-1 gap-2">
                     <span className="text-xs font-mono break-all text-[var(--text-secondary)]">{sentResult.feeTxHash}</span>
@@ -225,7 +225,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
                 </div>
                 <button
                   onClick={handleClose}
-                  className="btn-glass-icon w-9 h-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all hover:bg-white/[0.06] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30"
+                  className="btn-glass-icon w-9 h-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all hover:bg-[var(--surface-active)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30"
                 >
                   <X size={18} />
                 </button>
@@ -257,7 +257,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
                     className="input-glass w-full !rounded-2xl !min-h-14 px-4 pr-20 text-lg font-semibold transition-all focus:border-violet-400/40 focus:ring-2 focus:ring-violet-400/10"
                     placeholder="0.00"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.035] px-2.5 py-1.5">
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-active)] px-2.5 py-1.5">
                     <span className="text-xs font-mono font-bold text-[var(--text-secondary)]">{asset.symbol}</span>
                   </div>
                 </div>
@@ -268,7 +268,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between rounded-2xl px-4 py-3.5 bg-white/[0.025] border border-white/[0.055] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]">
+              <div className="flex items-center justify-between rounded-2xl px-4 py-3.5 bg-[var(--surface-hover)] border border-[var(--glass-border)] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]">
                 <div className="flex items-center gap-2.5">
                   <span
                     className="h-2.5 w-2.5 rounded-full shadow-[0_0_12px_rgba(255,255,255,0.12)]"
@@ -399,11 +399,11 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/75 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in"
+      className="fixed inset-0 bg-[var(--bg-primary)]/75 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="relative overflow-hidden rounded-[30px] w-full max-w-md border border-violet-400/[0.14] bg-[#08080d] shadow-[0_35px_120px_rgba(0,0,0,0.65)]"
+        className="relative overflow-hidden rounded-[30px] w-full max-w-md border border-violet-400/[0.14] bg-[var(--glass-bg)] shadow-[0_35px_120px_rgba(0,0,0,0.65)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient lighting */}
@@ -454,7 +454,7 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
 
             <button
               onClick={onClose}
-              className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.06] transition-all duration-200"
+              className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-active)] transition-all duration-200"
               aria-label="Close"
             >
               <X size={19} />
@@ -462,7 +462,7 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
           </div>
 
           {/* Purchase explanation */}
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-hover)] p-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/[0.10] border border-violet-400/[0.12]">
                 <ArrowDownRight size={14} className="text-violet-300" />
@@ -500,7 +500,7 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
                   className={`min-h-11 rounded-xl text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-200 active:scale-[0.98] ${
                     chain === c
                       ? 'bg-[var(--accent-brass)] text-black shadow-[0_8px_24px_rgba(217,164,65,0.16)]'
-                      : 'bg-white/[0.035] border border-white/[0.07] text-[var(--text-secondary)] hover:bg-white/[0.06] hover:border-white/[0.12]'
+                      : 'bg-[var(--surface-active)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--surface-active)] hover:border-[var(--glass-border-hover)]'
                   }`}
                 >
                   {c}
@@ -530,7 +530,7 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
 
               <button
                 onClick={copyAddress}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.07] transition-all duration-200 active:scale-[0.96]"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--glass-border)] bg-[var(--surface-active)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.07] transition-all duration-200 active:scale-[0.96]"
                 aria-label="Copy payment address"
               >
                 {copied ? (
@@ -541,7 +541,7 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
               </button>
             </div>
 
-            <div className="rounded-xl bg-black/25 border border-white/[0.05] px-3 py-2.5">
+            <div className="rounded-xl bg-[var(--bg-primary)]/25 border border-[var(--glass-border)] px-3 py-2.5">
               <p className="text-[11px] font-mono leading-5 break-all text-[var(--text-primary)]">
                 {DEPOSIT_ADDRESS}
               </p>
@@ -657,7 +657,7 @@ function ChatTopupModal({ isOpen, onClose, onToppedUp }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Top Up Chat Balance</h3>
@@ -668,7 +668,7 @@ function ChatTopupModal({ isOpen, onClose, onToppedUp }) {
           Send CLOSE (Polygon) to the address below from your own wallet, then paste the transaction hash to credit your chat balance 1:1.
         </p>
 
-        <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+        <div className="rounded-xl p-3 bg-[var(--surface-hover)] border border-[var(--glass-border)]">
           <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Chat Treasury Address (Polygon)</label>
           <div className="flex items-center justify-between mt-1">
             <span className="text-xs font-mono break-all pr-2 text-[var(--text-primary)]">{CHAT_TREASURY_ADDRESS}</span>
@@ -737,7 +737,7 @@ function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Withdraw</h3>
@@ -756,7 +756,7 @@ function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
                 className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold transition-all ${
                   chain === c
                     ? 'bg-[var(--accent-brass)] text-black'
-                    : 'bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]'
+                    : 'bg-[var(--surface-hover)] border border-[var(--glass-border)] text-[var(--text-secondary)]'
                 }`}
               >
                 {c.toUpperCase()}
@@ -869,16 +869,16 @@ function TransactionHistory({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-[var(--bg-primary)]/75 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in">
       <div
-        className="relative overflow-hidden w-full max-w-xl max-h-[86vh] flex flex-col rounded-[28px] border border-white/[0.08] bg-[#09090d]/[0.98] shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+        className="relative overflow-hidden w-full max-w-xl max-h-[86vh] flex flex-col rounded-[28px] border border-[var(--border-color)] bg-[var(--glass-bg)] shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
       >
         <div
           className="absolute -right-24 -top-24 w-64 h-64 rounded-full pointer-events-none"
           style={{ background: 'rgba(124,58,237,0.10)', filter: 'blur(70px)' }}
         />
 
-        <div className="relative z-10 px-4 sm:px-7 pt-5 sm:pt-6 pb-4 sm:pb-5 border-b border-white/[0.06]">
+        <div className="relative z-10 px-4 sm:px-7 pt-5 sm:pt-6 pb-4 sm:pb-5 border-b border-[var(--border-color)]">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -897,7 +897,7 @@ function TransactionHistory({ isOpen, onClose }) {
 
             <button
               onClick={onClose}
-              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border border-white/[0.07] bg-white/[0.025] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.06] active:scale-[0.96] transition-all duration-200"
+              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border border-[var(--glass-border)] bg-[var(--surface-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-active)] active:scale-[0.96] transition-all duration-200"
               aria-label="Close activity"
             >
               <X size={18} />
@@ -916,7 +916,7 @@ function TransactionHistory({ isOpen, onClose }) {
             </div>
           ) : items.length === 0 ? (
             <div className="py-16 text-center">
-              <div className="mx-auto w-14 h-14 rounded-2xl border border-white/[0.07] bg-white/[0.025] flex items-center justify-center">
+              <div className="mx-auto w-14 h-14 rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-hover)] flex items-center justify-center">
                 <History size={20} className="text-violet-300/70" />
               </div>
               <p className="text-sm font-medium text-[var(--text-primary)] mt-4">No activity yet</p>
@@ -935,7 +935,7 @@ function TransactionHistory({ isOpen, onClose }) {
                 return (
                   <div
                     key={i}
-                    className="group flex items-center gap-3 rounded-2xl px-3.5 py-3.5 border border-white/[0.045] bg-white/[0.018] hover:bg-white/[0.035] hover:border-white/[0.08] transition-all duration-200"
+                    className="group flex items-center gap-3 rounded-2xl px-3.5 py-3.5 border border-[var(--glass-border)] bg-[var(--surface-hover)] hover:bg-[var(--surface-active)] hover:border-[var(--border-color)] transition-all duration-200"
                   >
                     <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ${tone.shell} ${tone.icon}`}>
                       {getIcon(tx)}
@@ -947,7 +947,7 @@ function TransactionHistory({ isOpen, onClose }) {
                           {label}
                         </p>
                         {tx.status && (
-                          <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[8px] uppercase tracking-[1px] border border-white/[0.06] text-[var(--text-muted)]">
+                          <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[8px] uppercase tracking-[1px] border border-[var(--border-color)] text-[var(--text-muted)]">
                             {status}
                           </span>
                         )}
@@ -974,7 +974,7 @@ function TransactionHistory({ isOpen, onClose }) {
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label="View transaction"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border border-white/[0.05] hover:text-[var(--accent-brass-bright)] hover:bg-white/[0.04] transition-all"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border border-[var(--glass-border)] hover:text-[var(--accent-brass-bright)] hover:bg-[var(--surface-hover)] transition-all"
                         >
                           <ExternalLink size={13} />
                         </a>
@@ -987,7 +987,7 @@ function TransactionHistory({ isOpen, onClose }) {
           )}
         </div>
 
-        <div className="relative z-10 px-5 sm:px-7 py-3.5 border-t border-white/[0.06] flex items-center justify-between">
+        <div className="relative z-10 px-5 sm:px-7 py-3.5 border-t border-[var(--border-color)] flex items-center justify-between">
           <span className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">
             Secure activity
           </span>
@@ -1212,7 +1212,7 @@ function StandardWallet() {
                 >
                   Total Balance
                 </p>
-                <span className="w-1 h-1 rounded-full bg-white/20" />
+                <span className="w-1 h-1 rounded-full bg-[var(--surface-active)]" />
                 <span className="text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
                   Live
                 </span>
@@ -1233,7 +1233,7 @@ function StandardWallet() {
               {/* Wallet address / identity */}
               <button
                 onClick={copyAddress}
-                className="group mt-6 inline-flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.045] hover:border-white/[0.10] active:scale-[0.985] transition-all duration-200"
+                className="group mt-6 inline-flex items-center gap-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-hover)] px-3 py-2 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.045] hover:border-[var(--border-color)] active:scale-[0.985] transition-all duration-200"
               >
                 <span>
                   {user.wallet_address.slice(0, 8)}...{user.wallet_address.slice(-6)}
@@ -1256,7 +1256,7 @@ function StandardWallet() {
             </div>
 
             {/* Hero footer */}
-            <div className="relative mt-7 sm:mt-8 pt-4 border-t border-white/[0.05] flex items-center justify-between max-w-[calc(100%-1rem)] sm:max-w-[72%]">
+            <div className="relative mt-7 sm:mt-8 pt-4 border-t border-[var(--glass-border)] flex items-center justify-between max-w-[calc(100%-1rem)] sm:max-w-[72%]">
               <div>
                 <p className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">
                   Portfolio
@@ -1311,7 +1311,7 @@ function StandardWallet() {
         <>
           {/* OS VAULT — Primary Actions */}
           <div
-            className="relative overflow-hidden rounded-[26px] border border-white/[0.07] shadow-[0_20px_60px_rgba(0,0,0,0.22)]"
+            className="relative overflow-hidden rounded-[26px] border border-[var(--glass-border)] shadow-[0_20px_60px_rgba(0,0,0,0.22)]"
             style={{
               background: 'linear-gradient(135deg, rgba(18,18,24,0.92), rgba(8,8,12,0.96))',
               border: '1px solid rgba(139,92,246,0.14)',
@@ -1334,7 +1334,7 @@ function StandardWallet() {
                     setShowAssetPicker(true);
                   }
                 }}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-white/[0.035] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
+                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-[var(--surface-active)] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
               >
                 <span
                   className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
@@ -1356,7 +1356,7 @@ function StandardWallet() {
               {/* Receive */}
               <button
                 onClick={() => setShowReceiveModal(true)}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-white/[0.035] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
+                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-[var(--surface-active)] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
               >
                 <span
                   className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
@@ -1378,7 +1378,7 @@ function StandardWallet() {
               {/* Swap */}
               <button
                 onClick={() => setShowSwapModal(true)}
-                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-white/[0.035] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
+                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-[var(--surface-active)] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
               >
                 <span
                   className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
@@ -1423,17 +1423,17 @@ function StandardWallet() {
           </div>
 
           {/* Overflow row - Sell, Refresh, History, Top Up Chat: same handlers, quieter treatment */}
-          <div className="grid grid-cols-4 items-center rounded-2xl px-1 py-2 bg-white/[0.018] border border-white/[0.055]">
-            <button onClick={() => setShowSellModal(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+          <div className="grid grid-cols-4 items-center rounded-2xl px-1 py-2 bg-[var(--surface-hover)] border border-[var(--glass-border)]">
+            <button onClick={() => setShowSellModal(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-active)] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
               <DollarSign size={14} className="text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:scale-110" /> Sell
             </button>
-            <button onClick={fetchBalances} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+            <button onClick={fetchBalances} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-active)] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
               <RefreshCw size={14} className={`text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:rotate-12 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </button>
-            <button onClick={() => setShowHistory(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+            <button onClick={() => setShowHistory(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-active)] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
               <History size={14} className="text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:scale-110" /> History
             </button>
-            <button onClick={() => setShowChatTopupModal(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+            <button onClick={() => setShowChatTopupModal(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-active)] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
               <MessageSquare size={14} className="text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:scale-110" /> Top Up Chat
             </button>
           </div>
@@ -1452,7 +1452,7 @@ function StandardWallet() {
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-mono font-bold tracking-wider touch transition-all duration-200 hover:-translate-y-px active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-brass)]/30 ${
                 chain === c
                   ? 'bg-[var(--accent-brass)] text-black'
-                  : `bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)] ${has ? '' : 'opacity-45'}`
+                  : `bg-[var(--surface-hover)] border border-[var(--glass-border)] text-[var(--text-secondary)] ${has ? '' : 'opacity-45'}`
               }`}
             >
               {c !== 'all' && (
@@ -1470,7 +1470,7 @@ function StandardWallet() {
       {/* Asset List */}
       {loading && (
         <div className="space-y-0.5">
-          {[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-lg bg-white/5" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-lg bg-[var(--surface-hover)]" />)}
         </div>
       )}
 
@@ -1575,7 +1575,7 @@ function StandardWallet() {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between gap-3">
+                <div className="mt-6 pt-4 border-t border-[var(--border-color)] flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <span
                       className="w-1.5 h-1.5 rounded-full bg-emerald-400"
@@ -1602,8 +1602,8 @@ function StandardWallet() {
           )}
 
           {/* Other Assets */}
-          <div className="overflow-hidden rounded-[26px] border border-white/[0.06] bg-white/[0.018] shadow-[0_18px_55px_rgba(0,0,0,0.18)]">
-            <div className="px-4 sm:px-5 py-3 border-b border-white/[0.05] flex items-center justify-between">
+          <div className="overflow-hidden rounded-[26px] border border-[var(--border-color)] bg-[var(--surface-hover)] shadow-[0_18px_55px_rgba(0,0,0,0.18)]">
+            <div className="px-4 sm:px-5 py-3 border-b border-[var(--glass-border)] flex items-center justify-between">
               <p className="text-[9px] uppercase tracking-[2px] font-semibold text-[var(--text-muted)]">
                 Other Assets
               </p>
@@ -1626,8 +1626,8 @@ function StandardWallet() {
                 return (
                   <div
                     key={i}
-                    className={`group flex items-center justify-between gap-2.5 px-3.5 sm:px-5 py-4 hover:bg-white/[0.025] transition-colors ${
-                      i < filtered.length - 1 ? 'border-b border-white/[0.045]' : ''
+                    className={`group flex items-center justify-between gap-2.5 px-3.5 sm:px-5 py-4 hover:bg-[var(--surface-hover)] transition-colors ${
+                      i < filtered.length - 1 ? 'border-b border-[var(--glass-border)]' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -1668,7 +1668,7 @@ function StandardWallet() {
                           setShowSendModal(true);
                         }}
                         aria-label={`Send ${a.symbol}`}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border border-transparent hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-[var(--accent-brass)] active:scale-[0.95] transition-all"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border border-transparent hover:border-[var(--glass-border)] hover:bg-[var(--surface-hover)] hover:text-[var(--accent-brass)] active:scale-[0.95] transition-all"
                       >
                         <Send size={14} />
                       </button>
@@ -1688,12 +1688,12 @@ function StandardWallet() {
       <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />
       <ChatTopupModal isOpen={showChatTopupModal} onClose={() => setShowChatTopupModal(false)} onToppedUp={(result) => { addToast(`Credited ${result.amount} CLOSE to your chat balance`, 'success'); }} />
       {showAssetPicker && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
+        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
           <div className="glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-display font-bold mb-2 text-[var(--text-primary)]">Send which asset?</h3>
             {(closeAsset ? [closeAsset, ...filtered] : filtered).map((a, i) => (
               <button key={i} onClick={() => { setSendAsset(a); setShowAssetPicker(false); setShowSendModal(true); }}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]">
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-[var(--surface-hover)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]">
                 <span className="text-[var(--text-primary)]">{a.symbol}</span>
                 <span className="text-xs font-mono text-[var(--text-muted)]">{a.balance.toFixed(4)}</span>
               </button>
@@ -1861,14 +1861,14 @@ function Staking() {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-white/[0.07] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
+        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-[var(--glass-border)] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[9.5px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">Total Staked</p>
             <Coins size={15} className="text-[var(--accent-brass-bright)]" />
           </div>
           <p className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">{totalStaked.toLocaleString()} <span className="text-sm font-medium text-[var(--text-muted)]">CLOSE</span></p>
         </div>
-        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-white/[0.07] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
+        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-[var(--glass-border)] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[9.5px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">Pending Yield</p>
             <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,199,89,0.6)]" />
@@ -1879,7 +1879,7 @@ function Staking() {
 
       {loading && (
         <div className="space-y-2">
-          {[1, 2].map((i) => <div key={i} className="h-28 animate-pulse rounded-2xl bg-white/5" />)}
+          {[1, 2].map((i) => <div key={i} className="h-28 animate-pulse rounded-2xl bg-[var(--surface-hover)]" />)}
         </div>
       )}
 
@@ -1901,7 +1901,7 @@ function Staking() {
                 return (
                   <div
                     key={p.id}
-                    className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-white/[0.07] transition-all duration-200 hover:border-white/[0.12] hover:-translate-y-px"
+                    className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-[var(--glass-border)] transition-all duration-200 hover:border-[var(--glass-border-hover)] hover:-translate-y-px"
                     style={early ? { borderColor: 'rgba(216,154,58,0.35)' } : undefined}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -1930,7 +1930,7 @@ function Staking() {
                           className={`flex-1 text-center py-2.5 rounded-xl text-xs font-semibold transition ${
                             canClaim
                               ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B]'
-                              : 'bg-white/[0.03] text-[var(--text-muted)]'
+                              : 'bg-[var(--surface-hover)] text-[var(--text-muted)]'
                           }`}
                         >
                           {isLoadingClaim ? <Loader2 size={14} className="animate-spin mx-auto" /> : canClaim ? 'Claim Yield' : 'Nothing to claim'}
@@ -1938,7 +1938,7 @@ function Staking() {
                         <button
                           onClick={() => setShowUnstakeConfirm(p)}
                           disabled={isLoadingUnstake}
-                          className="flex-1 text-center py-2.5 rounded-xl text-xs font-semibold bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]"
+                          className="flex-1 text-center py-2.5 rounded-xl text-xs font-semibold bg-[var(--surface-hover)] border border-[var(--glass-border)] text-[var(--text-secondary)]"
                         >
                           {isLoadingUnstake ? <Loader2 size={14} className="animate-spin mx-auto" /> : early ? 'Unstake early' : 'Unstake'}
                         </button>
@@ -1967,7 +1967,7 @@ function Staking() {
       )}
 
       {showNewStake && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={resetNewStake}>
+        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={resetNewStake}>
           <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center">
               <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Stake</h3>
@@ -2027,7 +2027,7 @@ function Staking() {
                 <p className="text-sm text-[var(--text-secondary)]">
                   Send exactly {stakeAmount} CLOSE from your own wallet to the address below.
                 </p>
-                <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+                <div className="rounded-xl p-3 bg-[var(--surface-hover)] border border-[var(--glass-border)]">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono break-all pr-2 text-[var(--text-primary)]">{treasuryAddress}</span>
                     <button onClick={copyTreasury} className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
@@ -2085,7 +2085,7 @@ function Staking() {
       )}
 
       {showUnstakeConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowUnstakeConfirm(null)}>
+        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowUnstakeConfirm(null)}>
           <div className="glass-panel rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Confirm Unstake</h3>
             <p className="text-sm text-[var(--text-secondary)]">
@@ -2235,7 +2235,7 @@ function Governance() {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       {params && (
-        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 space-y-2 border border-white/[0.07] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
+        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 space-y-2 border border-[var(--glass-border)] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/[0.09] border border-violet-400/[0.14]">
               <Vote size={14} className="text-violet-300" />
@@ -2250,7 +2250,7 @@ function Governance() {
 
       {loading && (
         <div className="space-y-2">
-          {[1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-white/5" />)}
+          {[1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-[var(--surface-hover)]" />)}
         </div>
       )}
 
@@ -2268,7 +2268,7 @@ function Governance() {
                 <button
                   key={p.id}
                   onClick={() => openProposal(p)}
-                  className="w-full text-left glass-panel rounded-[22px] p-5 transition-all duration-200 border border-white/[0.07] hover:border-white/[0.14] hover:-translate-y-px hover:bg-white/[0.035]"
+                  className="w-full text-left glass-panel rounded-[22px] p-5 transition-all duration-200 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] hover:-translate-y-px hover:bg-[var(--surface-active)]"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="min-w-0 flex-1">
@@ -2298,7 +2298,7 @@ function Governance() {
       )}
 
       {showNewProposal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowNewProposal(false)}>
+        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowNewProposal(false)}>
           <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center">
               <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Proposal</h3>
@@ -2323,7 +2323,7 @@ function Governance() {
       )}
 
       {selectedProposal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setSelectedProposal(null)}>
+        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setSelectedProposal(null)}>
           <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center">
               <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">{selectedProposal.title}</h3>
@@ -2369,8 +2369,8 @@ function Governance() {
                 <p className="text-xs text-center text-[var(--text-muted)]">Your voting weight: {votingPower.weight.toLocaleString()} CLOSE</p>
                 <div className="flex gap-2">
                   <button onClick={() => castVote('for')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--success)] text-black">For</button>
-                  <button onClick={() => castVote('against')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--danger)] text-white">Against</button>
-                  <button onClick={() => castVote('abstain')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]">Abstain</button>
+                  <button onClick={() => castVote('against')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--danger)] text-[var(--text-primary)]">Against</button>
+                  <button onClick={() => castVote('abstain')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--surface-hover)] border border-[var(--glass-border)] text-[var(--text-secondary)]">Abstain</button>
                 </div>
               </div>
             )}
@@ -2386,7 +2386,7 @@ function Governance() {
                 />
                 <div className="flex gap-2">
                   <button onClick={() => submitFounderDecision('approved')} disabled={submittingDecision} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--success)] text-black">Approve</button>
-                  <button onClick={() => submitFounderDecision('rejected')} disabled={submittingDecision} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--danger)] text-white">Reject</button>
+                  <button onClick={() => submitFounderDecision('rejected')} disabled={submittingDecision} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--danger)] text-[var(--text-primary)]">Reject</button>
                 </div>
               </div>
             )}
@@ -2540,7 +2540,7 @@ function WalletsTab() {
           <button
             key={w.address}
             onClick={() => setSelectedAddress(w.isPrimary ? null : w.address)}
-            className="w-full flex items-center justify-between px-4 py-3.5 rounded-[18px] border transition-all duration-200 text-left hover:bg-white/[0.035]"
+            className="w-full flex items-center justify-between px-4 py-3.5 rounded-[18px] border transition-all duration-200 text-left hover:bg-[var(--surface-active)]"
             style={activeAddress === w.address
               ? { background: 'rgba(249,115,22,0.10)', borderColor: 'var(--accent-brass)' }
               : { background: 'rgba(255,255,255,0.05)', borderColor: 'var(--glass-border)' }}
@@ -2549,7 +2549,7 @@ function WalletsTab() {
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-medium text-[var(--text-primary)] truncate">{w.label}{w.isPrimary ? ' (Primary)' : ''}</p>
                 {w.wallet_type === 'connected' && (
-                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-white/10 text-[var(--text-muted)] shrink-0">Connected</span>
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-[var(--surface-active)] text-[var(--text-muted)] shrink-0">Connected</span>
                 )}
               </div>
               <p className="text-[11px] font-mono text-[var(--text-muted)]">{w.address?.slice(0, 8)}...{w.address?.slice(-6)}</p>
@@ -2563,7 +2563,7 @@ function WalletsTab() {
 
       {activeWallet && (
         <>
-          <div className="relative overflow-hidden glass-panel rounded-[26px] p-5 sm:p-6 border border-white/[0.07] shadow-[0_18px_60px_rgba(0,0,0,0.16)]">
+          <div className="relative overflow-hidden glass-panel rounded-[26px] p-5 sm:p-6 border border-[var(--glass-border)] shadow-[0_18px_60px_rgba(0,0,0,0.08)]">
             <p className="text-xs uppercase tracking-widest text-[var(--text-muted)] mb-2" style={{ letterSpacing: '2px' }}>
               {activeWallet.label} Balance
             </p>
@@ -2595,11 +2595,11 @@ function WalletsTab() {
               <History size={12} /> Transaction History
             </p>
             {historyLoading ? (
-              <div className="h-14 animate-pulse rounded-lg bg-white/5" />
+              <div className="h-14 animate-pulse rounded-lg bg-[var(--surface-hover)]" />
             ) : history.length === 0 ? (
               <p className="text-sm text-[var(--text-muted)] py-4 text-center">No transactions for this wallet yet.</p>
             ) : (
-              <div className="glass-panel rounded-[20px] px-1 border border-white/[0.07] overflow-hidden">
+              <div className="glass-panel rounded-[20px] px-1 border border-[var(--glass-border)] overflow-hidden">
                 {history.map((tx, i) => (
                   <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < history.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
                     <div>
@@ -2616,12 +2616,12 @@ function WalletsTab() {
       )}
 
       {showAssetPicker && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
+        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
           <div className="glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-display font-bold mb-2 text-[var(--text-primary)]">Send which asset?</h3>
             {walletAssets.map((a, i) => (
               <button key={i} onClick={() => { setSendAsset(a); setShowAssetPicker(false); setShowSendModal(true); }}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]">
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-[var(--surface-hover)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]">
                 <span className="text-[var(--text-primary)]">{a.symbol}</span>
                 <span className="text-xs font-mono text-[var(--text-muted)]">{a.balance.toFixed(4)}</span>
               </button>
@@ -2631,8 +2631,8 @@ function WalletsTab() {
       )}
 
       {showReceiveModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowReceiveModal(false)}>
-          <div className="glass-panel relative overflow-hidden rounded-[28px] w-full max-w-sm p-4.5 sm:p-6 space-y-5 border border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.55)]" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-[var(--bg-primary)]/70 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowReceiveModal(false)}>
+          <div className="glass-panel relative overflow-hidden rounded-[28px] w-full max-w-sm p-4.5 sm:p-6 space-y-5 border border-[var(--border-color)] shadow-[0_30px_100px_rgba(0,0,0,0.55)]" onClick={(e) => e.stopPropagation()}>
             <div className="pointer-events-none absolute -top-24 -right-20 w-48 h-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
             <div className="relative flex justify-between items-start gap-4">
               <div>
@@ -2645,7 +2645,7 @@ function WalletsTab() {
                 <h3 className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">Receive assets</h3>
                 <p className="text-[11px] text-[var(--text-muted)] mt-1">Your secure Polygon wallet address</p>
               </div>
-              <button onClick={() => setShowReceiveModal(false)} className="btn-glass-icon w-9 h-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all hover:bg-white/[0.06] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30"><X size={18} /></button>
+              <button onClick={() => setShowReceiveModal(false)} className="btn-glass-icon w-9 h-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all hover:bg-[var(--surface-active)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30"><X size={18} /></button>
             </div>
             <div className="flex items-start gap-2.5 rounded-2xl border border-amber-400/[0.12] bg-amber-400/[0.035] px-3.5 py-3">
               <span className="mt-0.5 text-sm">⚠️</span>
@@ -2708,7 +2708,7 @@ export default function Vault() {
   const [tab, setTab] = useState(initialTab);
   return (
     <div className="p-4 tablet:p-6 space-y-6 max-w-6xl mx-auto w-full">
-      <div className="relative overflow-hidden rounded-[28px] border border-white/[0.07] bg-gradient-to-br from-white/[0.055] via-white/[0.025] to-transparent p-5 sm:p-7 shadow-[0_20px_70px_rgba(0,0,0,0.18)]">
+      <div className="relative overflow-hidden rounded-[28px] border border-[var(--glass-border)] bg-[var(--bg-secondary)] p-5 sm:p-7 shadow-[0_20px_70px_rgba(0,0,0,0.08)]">
         <div className="pointer-events-none absolute -top-24 -right-20 h-64 w-64 rounded-full bg-amber-400/[0.06] blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-violet-500/[0.045] blur-3xl" />
 
@@ -2730,7 +2730,7 @@ export default function Vault() {
             </p>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.035] px-3 py-2">
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-[var(--surface-hover)] px-3 py-2">
             <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,199,89,0.65)]" />
             <span className="text-[9px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)]">
               Non-custodial
@@ -2738,13 +2738,13 @@ export default function Vault() {
           </div>
         </div>
       </div>
-      <div className="glass-panel flex gap-1.5 p-1.5 rounded-[22px] overflow-x-auto max-w-full border border-white/[0.07] shadow-[0_12px_45px_rgba(0,0,0,0.12)]">
-        <button onClick={() => setTab('standard')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap ${tab === 'standard' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
-        <button onClick={() => setTab('analytics')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'analytics' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
-        <button onClick={() => setTab('safe')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'safe' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
-        <button onClick={() => setTab('staking')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'staking' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><Coins size={16} /> Staking</button>
-        <button onClick={() => setTab('governance')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'governance' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><Vote size={16} /> Governance</button>
-        <button onClick={() => setTab('wallets')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'wallets' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><Wallet size={16} /> Wallets</button>
+      <div className="glass-panel flex gap-1.5 p-1.5 rounded-[22px] overflow-x-auto max-w-full border border-[var(--glass-border)] shadow-[0_12px_45px_rgba(0,0,0,0.08)]">
+        <button onClick={() => setTab('standard')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap ${tab === 'standard' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
+        <button onClick={() => setTab('analytics')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'analytics' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
+        <button onClick={() => setTab('safe')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'safe' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
+        <button onClick={() => setTab('staking')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'staking' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'}`}><Coins size={16} /> Staking</button>
+        <button onClick={() => setTab('governance')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'governance' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'}`}><Vote size={16} /> Governance</button>
+        <button onClick={() => setTab('wallets')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'wallets' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'}`}><Wallet size={16} /> Wallets</button>
       </div>
       {tab === 'standard' && <StandardWallet />}
       {tab === 'analytics' && <WalletAnalytics />}
