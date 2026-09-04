@@ -673,8 +673,8 @@ export default function Chat() {
           )}
         </div>
       )}
-      <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-        <div className="max-w-3xl mx-auto w-full space-y-7 sm:space-y-8">
+      <div className="flex-1 overflow-y-auto px-3 py-6 sm:px-6 sm:py-8 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        <div className="max-w-3xl mx-auto w-full space-y-6 sm:space-y-8">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 py-12">
             <div className="relative mb-7">
@@ -984,7 +984,7 @@ export default function Chat() {
       )}
 
       <div className="p-4">
-        <form onSubmit={sendMessage} className="relative glass-bar rounded-[28px] max-w-3xl mx-auto shadow-2xl border border-[var(--border-color)]/70 backdrop-blur-2xl overflow-hidden transition-all duration-200 focus-within:border-[var(--accent-brass)]/40 focus-within:shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
+        <form onSubmit={sendMessage} className="relative glass-bar rounded-[24px] sm:rounded-[28px] max-w-3xl mx-auto shadow-2xl border border-[var(--border-color)]/70 backdrop-blur-2xl overflow-hidden transition-all duration-200 focus-within:border-[var(--accent-brass)]/40 focus-within:shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
           {attachedImage && (
             <div className="px-4 pt-3">
               <div className="relative inline-block">
