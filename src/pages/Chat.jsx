@@ -674,7 +674,7 @@ export default function Chat() {
         </div>
       )}
       <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-        <div className="max-w-3xl mx-auto w-full space-y-6">
+        <div className="max-w-3xl mx-auto w-full space-y-7 sm:space-y-8">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 py-12">
             <div className="relative mb-7">
@@ -735,7 +735,7 @@ export default function Chat() {
                       className="opacity-30 group-hover:opacity-80 group-hover:-translate-y-0.5 transition-all"
                     />
                   </div>
-                  <p className="mt-1.5 text-xs text-[var(--text-muted)] leading-relaxed">
+                  <p className="mt-1.5 text-[11px] text-[var(--text-muted)] leading-relaxed">
                     {item.text}
                   </p>
                 </button>
@@ -760,7 +760,7 @@ export default function Chat() {
             >
               <div className={`max-w-[80%] relative ${isUser ? 'order-2' : 'order-1'}`}>
                 {!isUser && !isSystem && (
-                  <div className="flex items-center gap-2 mb-1 text-xs text-[var(--text-muted)]">
+                  <div className="flex items-center gap-2 mb-1 text-[11px] text-[var(--text-muted)]">
                     <span className="font-medium text-[var(--accent-brass-bright)]">OS AI</span>
                     <span>{formatTime(timestamp)}</span>
                     {msg.model && <span className="text-[var(--text-muted)] opacity-60">• {msg.model}</span>}
@@ -791,7 +791,7 @@ export default function Chat() {
                       </button>
                       <button
                         onClick={() => copyDocumentName(docInfo.filename)}
-                        className="btn-glass-icon w-8 h-8 shrink-0"
+                        className="btn-glass-icon hover:bg-[var(--bg-tertiary)]/70 transition-colors w-8 h-8 shrink-0"
                         aria-label="Copy filename"
                         title="Copy filename"
                       >
@@ -799,7 +799,7 @@ export default function Chat() {
                       </button>
                       <button
                         onClick={() => shareDocument(docInfo.documentId, docInfo.filename)}
-                        className="btn-glass-icon w-8 h-8 shrink-0"
+                        className="btn-glass-icon hover:bg-[var(--bg-tertiary)]/70 transition-colors w-8 h-8 shrink-0"
                         aria-label="Share document"
                         title="Share"
                       >
@@ -859,7 +859,7 @@ export default function Chat() {
                       {emoji} {users.length}
                     </button>
                   ))}
-                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                     {REACTION_EMOJIS.map(emoji => (
                       <button
                         key={emoji}
@@ -892,7 +892,7 @@ export default function Chat() {
                     <>
                       <button
                         onClick={() => setReportingMessageId(msgId)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-muted)] hover:text-red-400 p-1 rounded"
+                        className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-[var(--text-muted)] hover:text-red-400 p-1 rounded"
                         aria-label="Report this response"
                         title="Report this response"
                       >
@@ -1058,7 +1058,7 @@ export default function Chat() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                className="btn-glass-icon hover:bg-[var(--bg-tertiary)]/70 transition-colors w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 aria-label="Attach file"
                 title="Attach file"
               >
@@ -1067,7 +1067,7 @@ export default function Chat() {
               <button
                 type="button"
                 onClick={handleMicClick}
-                className={`btn-glass-icon w-9 h-9 ${
+                className={`btn-glass-icon hover:bg-[var(--bg-tertiary)]/70 transition-colors w-9 h-9 ${
                   isListening
                     ? 'text-[var(--danger)] border-[var(--danger)]/40 animate-pulse-slow'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
