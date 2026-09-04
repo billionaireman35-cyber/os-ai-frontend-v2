@@ -726,7 +726,7 @@ export default function Chat() {
                   }}
                   className="group text-left rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/45 hover:bg-[var(--bg-secondary)]/75 hover:border-[var(--accent-brass)]/30 backdrop-blur-xl p-4 transition-all duration-200"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between px-1 pt-2">
                     <span className="text-sm font-medium text-[var(--text-primary)]">
                       {item.title}
                     </span>
@@ -984,7 +984,7 @@ export default function Chat() {
       )}
 
       <div className="p-4">
-        <form onSubmit={sendMessage} className="glass-bar rounded-[26px] max-w-3xl mx-auto shadow-2xl border border-[var(--border-color)]/70 backdrop-blur-2xl">
+        <form onSubmit={sendMessage} className="relative glass-bar rounded-[28px] max-w-3xl mx-auto shadow-2xl border border-[var(--border-color)]/70 backdrop-blur-2xl overflow-hidden transition-all duration-200 focus-within:border-[var(--accent-brass)]/40 focus-within:shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
           {attachedImage && (
             <div className="px-4 pt-3">
               <div className="relative inline-block">
@@ -1032,7 +1032,7 @@ export default function Chat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onPaste={handlePaste}
-            placeholder="Message OS AI..."
+            placeholder="Ask OS AI anything..."
             rows={1}
             className="w-full bg-transparent border-none outline-none px-4 pt-3 pb-2 text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)] resize-none"
             style={{ minHeight: '2.5rem', maxHeight: '10rem' }}
