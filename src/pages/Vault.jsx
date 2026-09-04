@@ -878,7 +878,7 @@ function TransactionHistory({ isOpen, onClose }) {
           style={{ background: 'rgba(124,58,237,0.10)', filter: 'blur(70px)' }}
         />
 
-        <div className="relative z-10 px-5 sm:px-7 pt-6 pb-5 border-b border-white/[0.06]">
+        <div className="relative z-10 px-4 sm:px-7 pt-5 sm:pt-6 pb-4 sm:pb-5 border-b border-white/[0.06]">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -905,7 +905,7 @@ function TransactionHistory({ isOpen, onClose }) {
           </div>
         </div>
 
-        <div className="relative z-10 overflow-y-auto flex-1 px-4 sm:px-6 py-4">
+        <div className="relative z-10 overflow-y-auto flex-1 px-3.5 sm:px-6 py-4">
           {loading ? (
             <div className="py-16 text-center">
               <div className="mx-auto w-10 h-10 rounded-2xl border border-violet-400/20 bg-violet-400/[0.06] flex items-center justify-center">
@@ -1163,9 +1163,9 @@ function StandardWallet() {
             }}
           />
 
-          <div className="relative z-10 p-6 sm:p-9">
+          <div className="relative z-10 p-5 sm:p-9">
             {/* Hero header */}
-            <div className="flex items-start justify-between mb-9 sm:mb-11">
+            <div className="flex items-start justify-between mb-8 sm:mb-11">
               <div>
                 <div className="flex items-center gap-2.5">
                   <div
@@ -1204,7 +1204,7 @@ function StandardWallet() {
             </div>
 
             {/* Balance */}
-            <div className="relative max-w-[82%] sm:max-w-[72%]">
+            <div className="relative max-w-[calc(100%-1rem)] sm:max-w-[72%]">
               <div className="flex items-center gap-2 mb-3">
                 <p
                   className="text-[10px] uppercase font-semibold text-violet-300/75"
@@ -1220,7 +1220,7 @@ function StandardWallet() {
 
               <div className="font-display leading-none">
                 <span
-                  className="text-5xl sm:text-7xl font-bold tracking-[-4px]"
+                  className="text-[2.7rem] sm:text-7xl font-bold tracking-[-3px] sm:tracking-[-4px]"
                   style={{
                     color: 'var(--text-primary)',
                     textShadow: '0 0 34px rgba(255,255,255,0.07)',
@@ -1256,7 +1256,7 @@ function StandardWallet() {
             </div>
 
             {/* Hero footer */}
-            <div className="relative mt-8 pt-4 border-t border-white/[0.05] flex items-center justify-between max-w-[82%] sm:max-w-[72%]">
+            <div className="relative mt-7 sm:mt-8 pt-4 border-t border-white/[0.05] flex items-center justify-between max-w-[calc(100%-1rem)] sm:max-w-[72%]">
               <div>
                 <p className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">
                   Portfolio
@@ -1494,7 +1494,7 @@ function StandardWallet() {
           {/* OS VAULT — Flagship CLOSE Asset */}
           {closeAsset && (chain === 'all' || closeAsset.chain === chain) && (
             <div
-              className="group relative overflow-hidden rounded-[30px] p-5 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.30)] transition-all duration-300 hover:-translate-y-[1px]"
+              className="group relative overflow-hidden rounded-[30px] p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.30)] transition-all duration-300 hover:-translate-y-[1px]"
               style={{
                 background:
                   'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.16), transparent 38%), radial-gradient(circle at 0% 100%, rgba(217,164,65,0.06), transparent 34%), linear-gradient(135deg, rgba(21,20,27,0.98), rgba(7,7,11,0.99))',
@@ -1537,7 +1537,7 @@ function StandardWallet() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div
-                      className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-[1.03]"
+                      className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-[18px] sm:rounded-[20px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-[1.03]"
                       style={{
                         background:
                           'linear-gradient(145deg, var(--accent-brass-bright), var(--accent-brass-dim))',
@@ -1566,7 +1566,7 @@ function StandardWallet() {
                   </div>
 
                   <div className="text-right flex-shrink-0">
-                    <p className="font-mono text-xl sm:text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+                    <p className="font-mono text-lg sm:text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
                       {closeAsset.balance.toFixed(4)}
                     </p>
                     <p className="font-mono text-[11px] text-[var(--text-muted)] mt-1">
@@ -1626,7 +1626,7 @@ function StandardWallet() {
                 return (
                   <div
                     key={i}
-                    className={`group flex items-center justify-between gap-3 px-4 sm:px-5 py-4 hover:bg-white/[0.025] transition-colors ${
+                    className={`group flex items-center justify-between gap-2.5 px-3.5 sm:px-5 py-4 hover:bg-white/[0.025] transition-colors ${
                       i < filtered.length - 1 ? 'border-b border-white/[0.045]' : ''
                     }`}
                   >
@@ -2616,7 +2616,7 @@ function WalletsTab() {
 
       {showReceiveModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowReceiveModal(false)}>
-          <div className="glass-panel relative overflow-hidden rounded-[28px] w-full max-w-sm p-5 sm:p-6 space-y-5 border border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.55)]" onClick={(e) => e.stopPropagation()}>
+          <div className="glass-panel relative overflow-hidden rounded-[28px] w-full max-w-sm p-4.5 sm:p-6 space-y-5 border border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.55)]" onClick={(e) => e.stopPropagation()}>
             <div className="pointer-events-none absolute -top-24 -right-20 w-48 h-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
             <div className="relative flex justify-between items-start gap-4">
               <div>
