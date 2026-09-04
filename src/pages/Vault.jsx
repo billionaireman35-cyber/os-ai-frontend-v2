@@ -2,9 +2,9 @@ import toast from "react-hot-toast";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  ShieldCheck, Send, ArrowUpDown, Lock, X, CreditCard, DollarSign,
-  BarChart, Wallet, RefreshCw, Loader2, Copy, CheckCircle,
-  ArrowUpRight, ArrowDownRight, Flame, Coins, History, ExternalLink, MessageSquare, Vote
+  ShieldCheck, Send, ArrowUpDown, Lock, Unlock, Clock3, Sparkles, X, CreditCard, DollarSign,
+  BarChart, Wallet, RefreshCw, Loader2, Copy, Check, CheckCircle, Info, Plus,
+  ArrowUpRight, ArrowDownRight, ArrowRight, Flame, Coins, History, ExternalLink, MessageSquare, Vote
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { useAuth } from '../context/AuthContext';
@@ -1737,7 +1737,7 @@ function SafeWallet() {
 function Staking() {
   const { assets, fetchBalances } = useWallet();
   const { user } = useAuth();
-  const { addToast } = useToast();
+  const { toasts, addToast, removeToast } = useToast();
 
   const [terms, setTerms] = useState(null);
   const [treasuryAddress, setTreasuryAddress] = useState(null);
@@ -1753,6 +1753,7 @@ function Staking() {
   const [submittingStake, setSubmittingStake] = useState(false);
 
   const [showSendFromVault, setShowSendFromVault] = useState(false);
+
   const [actionLoading, setActionLoading] = useState({});
   const [showUnstakeConfirm, setShowUnstakeConfirm] = useState(null);
 
@@ -1760,7 +1761,6 @@ function Staking() {
 
   const loadData = () => {
     setLoading(true);
-
     Promise.all([
       api.get('/staking/terms'),
       api.get('/staking/positions'),
@@ -1770,45 +1770,24 @@ function Staking() {
         setTreasuryAddress(termsRes.data.treasury_address);
         setPositions(positionsRes.data.positions || []);
       })
-      .catch((e) => {
-        addToast(
-          extractErrorMessage(e, 'Failed to load staking data'),
-          'error'
-        );
-      })
+      .catch((e) => addToast(extractErrorMessage(e, 'Failed to load staking data'), 'error'))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    if (user) loadData();
-  }, [user]);
+  useEffect(() => { if (user) loadData(); }, [user]);
 
-  const activePositions = positions.filter(p => p.status === 'active');
-
-  const totalStaked = activePositions.reduce(
-    (sum, p) => sum + Number(p.amount || 0),
-    0
-  );
-
-  const totalPendingYield = activePositions.reduce(
-    (sum, p) => sum + Number(p.pending_yield || 0),
-    0
-  );
-
-  const averageApy = totalStaked
-    ? activePositions.reduce(
-        (sum, p) => sum + Number(p.amount || 0) * Number(p.apy || 0),
-        0
-      ) / totalStaked
-    : 0;
+  const totalStaked = positions
+    .filter(p => p.status === 'active')
+    .reduce((sum, p) => sum + p.amount, 0);
+  const totalPendingYield = positions
+    .filter(p => p.status === 'active')
+    .reduce((sum, p) => sum + p.pending_yield, 0);
 
   const copyTreasury = () => {
     if (!treasuryAddress) return;
-
     navigator.clipboard.writeText(treasuryAddress);
     setCopied(true);
     addToast('Address copied!', 'info', 2000);
-
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -1821,29 +1800,20 @@ function Staking() {
   };
 
   const submitStake = async () => {
-    if (!stakeTxHash.trim()) {
-      addToast('Enter the transaction hash', 'error');
-      return;
-    }
-
+    if (!stakeTxHash.trim()) { addToast('Enter the transaction hash', 'error'); return; }
     setSubmittingStake(true);
-
     try {
       await api.post('/staking/stake', {
         amount: Math.floor(parseFloat(stakeAmount)),
         term: selectedTerm,
         tx_hash: stakeTxHash.trim(),
       });
-
       addToast('Stake opened!', 'success');
       resetNewStake();
       loadData();
       fetchBalances();
     } catch (e) {
-      addToast(
-        extractErrorMessage(e, 'Failed to verify stake'),
-        'error'
-      );
+      addToast(extractErrorMessage(e, 'Failed to verify stake'), 'error');
     } finally {
       setSubmittingStake(false);
     }
@@ -1851,863 +1821,282 @@ function Staking() {
 
   const claimYield = async (stakeId) => {
     setActionLoading(prev => ({ ...prev, [stakeId]: 'claim' }));
-
     try {
-      const res = await api.post('/staking/claim', {
-        stake_id: stakeId,
-      });
-
-      addToast(
-        `Claimed ${res.data.claimed} CLOSE! Tx: ${res.data.tx_hash?.slice(0, 12)}...`,
-        'success'
-      );
-
+      const res = await api.post('/staking/claim', { stake_id: stakeId });
+      addToast(`Claimed ${res.data.claimed} CLOSE! Tx: ${res.data.tx_hash?.slice(0, 12)}...`, 'success');
       loadData();
       fetchBalances();
     } catch (e) {
-      addToast(
-        extractErrorMessage(e, 'Claim failed'),
-        'error'
-      );
+      addToast(extractErrorMessage(e, 'Claim failed'), 'error');
     } finally {
-      setActionLoading(prev => ({
-        ...prev,
-        [stakeId]: null,
-      }));
+      setActionLoading(prev => ({ ...prev, [stakeId]: null }));
     }
   };
 
   const doUnstake = async (stakeId) => {
     setActionLoading(prev => ({ ...prev, [stakeId]: 'unstake' }));
-
     try {
-      const res = await api.post('/staking/unstake', {
-        stake_id: stakeId,
-      });
-
-      const forfeitMsg =
-        Number(res.data.forfeited_yield || 0) > 0
-          ? ` (forfeited ${res.data.forfeited_yield} CLOSE yield)`
-          : '';
-
-      addToast(
-        `Unstaked ${res.data.returned} CLOSE${forfeitMsg}. Tx: ${res.data.tx_hash?.slice(0, 12)}...`,
-        'success'
-      );
-
+      const res = await api.post('/staking/unstake', { stake_id: stakeId });
+      const forfeitMsg = res.data.forfeited_yield > 0 ? ` (forfeited ${res.data.forfeited_yield} CLOSE yield)` : '';
+      addToast(`Unstaked ${res.data.returned} CLOSE${forfeitMsg}. Tx: ${res.data.tx_hash?.slice(0, 12)}...`, 'success');
       setShowUnstakeConfirm(null);
       loadData();
       fetchBalances();
     } catch (e) {
-      addToast(
-        extractErrorMessage(e, 'Unstake failed'),
-        'error'
-      );
+      addToast(extractErrorMessage(e, 'Unstake failed'), 'error');
     } finally {
-      setActionLoading(prev => ({
-        ...prev,
-        [stakeId]: null,
-      }));
+      setActionLoading(prev => ({ ...prev, [stakeId]: null }));
     }
   };
 
   const isEarly = (position) => {
-    if (!position.unlock_at || position.status !== 'active') {
-      return false;
-    }
-
+    if (!position.unlock_at || position.status !== 'active') return false;
     return new Date(position.unlock_at) > new Date();
   };
 
-  const termLabel = (term) =>
-    term === 'flexible'
-      ? 'Flexible'
-      : term === '30d'
-        ? '30 day lock'
-        : term === '90d'
-          ? '90 day lock'
-          : term === '180d'
-            ? '180 day lock'
-            : term;
-
-  const termMeta = {
-    flexible: {
-      label: 'Flexible',
-      description: 'Access your stake without a fixed lock.',
-      accent: 'rgba(139,92,246,0.22)',
-      icon: Unlock,
-    },
-    '30d': {
-      label: '30 Days',
-      description: 'A short commitment for greater staking rewards.',
-      accent: 'rgba(232,200,119,0.18)',
-      icon: Clock3,
-    },
-    '90d': {
-      label: '90 Days',
-      description: 'A balanced lock for stronger reward potential.',
-      accent: 'rgba(139,92,246,0.24)',
-      icon: ShieldCheck,
-    },
-    '180d': {
-      label: '180 Days',
-      description: 'The longest lock with the highest listed APY.',
-      accent: 'rgba(232,200,119,0.22)',
-      icon: Sparkles,
-    },
-  };
-
-  const availableClose = Number(closeAsset?.balance || 0);
+  const termLabel = (term) => term === 'flexible' ? 'Flexible' : term === '30d' ? '30 day lock' : term === '90d' ? '90 day lock' : term === '180d' ? '180 day lock' : term;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      {/* STAKING HERO */}
-      <section
-        className="relative overflow-hidden rounded-[32px] min-h-[280px] p-5 sm:p-8"
-        style={{
-          background:
-            'radial-gradient(circle at 88% 8%, rgba(124,58,237,0.22), transparent 34%), radial-gradient(circle at 65% 100%, rgba(232,200,119,0.055), transparent 34%), linear-gradient(135deg, #050506 0%, #0b0b10 58%, #050506 100%)',
-          border: '1px solid rgba(139,92,246,0.15)',
-          boxShadow: '0 30px 90px rgba(0,0,0,0.32)',
-        }}
-      >
-        <div
-          className="absolute -right-20 -top-24 w-72 h-72 rounded-full pointer-events-none"
-          style={{
-            background: 'rgba(124,58,237,0.09)',
-            filter: 'blur(55px)',
-          }}
-        />
-
-        <div className="absolute right-5 top-5 w-28 h-28 pointer-events-none opacity-30">
-          <svg
-            viewBox="0 0 100 100"
-            width="100%"
-            height="100%"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M50 12 L90 84 L10 84 Z"
-              stroke="#8b5cf6"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="glass-panel rounded-2xl p-4">
+          <p className="text-[9.5px] font-mono uppercase tracking-wide text-[var(--text-muted)] mb-1.5">Total Staked</p>
+          <p className="text-xl font-display font-bold text-[var(--text-primary)]">{totalStaked.toLocaleString()}</p>
         </div>
-
-        <div className="relative z-10">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-2 h-2 rounded-full bg-emerald-400"
-                  style={{
-                    boxShadow:
-                      '0 0 12px rgba(52,211,153,0.7)',
-                  }}
-                />
-
-                <p
-                  className="text-[9px] uppercase font-semibold text-violet-100/85"
-                  style={{ letterSpacing: '3px' }}
-                >
-                  OS VAULT · STAKING
-                </p>
-              </div>
-
-              <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-[-1.5px] text-[var(--text-primary)] mt-4">
-                Put your CLOSE to work.
-              </h2>
-
-              <p className="text-sm text-[var(--text-secondary)] max-w-xl mt-2 leading-relaxed">
-                Choose a staking term, lock your CLOSE when required, and track
-                your position directly from OS Vault.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-8">
-            <div className="rounded-2xl bg-white/[0.035] border border-white/[0.05] p-3.5">
-              <p className="text-[8px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                Total staked
-              </p>
-
-              <p className="text-xl font-display font-bold text-[var(--text-primary)] mt-1 truncate">
-                {loading ? '—' : totalStaked.toLocaleString()}
-              </p>
-
-              <p className="text-[9px] text-[var(--text-muted)] mt-0.5">
-                CLOSE
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/[0.035] border border-white/[0.05] p-3.5">
-              <p className="text-[8px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                Pending
-              </p>
-
-              <p className="text-xl font-display font-bold text-[var(--accent-brass-bright)] mt-1 truncate">
-                {loading ? '—' : totalPendingYield.toLocaleString()}
-              </p>
-
-              <p className="text-[9px] text-[var(--text-muted)] mt-0.5">
-                CLOSE yield
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/[0.035] border border-white/[0.05] p-3.5">
-              <p className="text-[8px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                Active
-              </p>
-
-              <p className="text-xl font-display font-bold text-[var(--text-primary)] mt-1">
-                {loading ? '—' : activePositions.length}
-              </p>
-
-              <p className="text-[9px] text-[var(--text-muted)] mt-0.5">
-                positions
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/[0.035] border border-white/[0.05] p-3.5">
-              <p className="text-[8px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                Avg. APY
-              </p>
-
-              <p className="text-xl font-display font-bold text-violet-200 mt-1">
-                {loading ? '—' : `${averageApy.toFixed(1)}%`}
-              </p>
-
-              <p className="text-[9px] text-[var(--text-muted)] mt-0.5">
-                active weighted
-              </p>
-            </div>
-          </div>
+        <div className="glass-panel rounded-2xl p-4">
+          <p className="text-[9.5px] font-mono uppercase tracking-wide text-[var(--text-muted)] mb-1.5">Pending Yield</p>
+          <p className="text-xl font-display font-bold text-[var(--accent-brass-bright)]">{totalPendingYield.toFixed(2)}</p>
         </div>
-      </section>
+      </div>
 
-      {/* STAKING OPTIONS */}
-      <section>
-        <div className="flex items-end justify-between mb-2.5 px-1">
-          <div>
-            <p className="text-[9px] uppercase tracking-[2.5px] text-violet-300/70">
-              Choose your term
-            </p>
-
-            <h3 className="text-lg font-display font-bold text-[var(--text-primary)] mt-0.5">
-              Staking options
-            </h3>
-          </div>
-
-          <p className="hidden sm:block text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-            Powered by OS Vault
-          </p>
+      {loading && (
+        <div className="space-y-2">
+          {[1, 2].map((i) => <div key={i} className="h-28 animate-pulse rounded-2xl bg-white/5" />)}
         </div>
+      )}
 
-        {loading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {[1, 2, 3, 4].map((item) => (
-              <div
-                key={item}
-                className="h-44 rounded-[24px] bg-white/[0.025] animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {Object.entries(terms || {}).map(([term, data]) => {
-              const meta = termMeta[term] || termMeta.flexible;
-              const Icon = meta.icon;
+      {!loading && (
+        <>
+          <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Your Positions</p>
 
-              return (
-                <button
-                  key={term}
-                  onClick={() => {
-                    setSelectedTerm(term);
-                    setStakeStep(1);
-                    setShowNewStake(true);
-                  }}
-                  className="group relative overflow-hidden text-left rounded-[24px] p-4 sm:p-5 border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045] hover:border-violet-400/[0.20] active:scale-[0.99] transition-all duration-200"
-                >
-                  <div
-                    className="absolute -right-8 -top-8 w-28 h-28 rounded-full pointer-events-none"
-                    style={{
-                      background: meta.accent,
-                      filter: 'blur(30px)',
-                    }}
-                  />
-
-                  <div className="relative">
-                    <div className="flex items-start justify-between">
-                      <div className="w-9 h-9 rounded-xl bg-violet-500/[0.09] border border-violet-400/[0.10] flex items-center justify-center">
-                        <Icon size={16} className="text-violet-300" />
-                      </div>
-
-                      <span className="text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                        {data.lock_days === 0 ? 'No lock' : `${data.lock_days}d`}
-                      </span>
-                    </div>
-
-                    <p className="text-sm font-semibold text-[var(--text-primary)] mt-5">
-                      {meta.label}
-                    </p>
-
-                    <p className="text-[10px] leading-relaxed text-[var(--text-muted)] mt-1.5 min-h-[32px]">
-                      {meta.description}
-                    </p>
-
-                    <div className="flex items-end justify-between mt-5">
-                      <div>
-                        <p className="text-[8px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                          Listed APY
-                        </p>
-
-                        <p className="text-2xl font-display font-bold text-[var(--accent-brass-bright)] mt-0.5">
-                          {data.apy}%
-                        </p>
-                      </div>
-
-                      <ArrowUpRight
-                        size={16}
-                        className="text-[var(--text-muted)] group-hover:text-violet-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"
-                      />
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* ACTIVE POSITIONS */}
-      <section>
-        <div className="flex items-end justify-between mb-2.5 px-1">
-          <div>
-            <p className="text-[9px] uppercase tracking-[2.5px] text-violet-300/70">
-              Your positions
-            </p>
-
-            <h3 className="text-lg font-display font-bold text-[var(--text-primary)] mt-0.5">
-              Active staking
-            </h3>
-          </div>
-
-          {!loading && activePositions.length > 0 && (
-            <span className="text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-              {activePositions.length} active
-            </span>
-          )}
-        </div>
-
-        <div className="glass-panel rounded-[26px] p-3.5 sm:p-5">
-          {loading ? (
-            <div className="space-y-2.5">
-              {[1, 2].map((item) => (
-                <div
-                  key={item}
-                  className="h-28 rounded-2xl bg-white/[0.025] animate-pulse"
-                />
-              ))}
-            </div>
-          ) : activePositions.length === 0 ? (
-            <div className="py-10 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-violet-500/[0.08] border border-violet-400/[0.10] flex items-center justify-center mx-auto">
-                <Coins size={20} className="text-violet-300/80" />
-              </div>
-
-              <p className="text-sm font-semibold text-[var(--text-primary)] mt-4">
-                Nothing staked yet
-              </p>
-
-              <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
-                Choose a staking option above to create your first CLOSE
-                position.
-              </p>
-
-              <button
-                onClick={() => setShowNewStake(true)}
-                className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold bg-violet-500/15 border border-violet-400/20 text-violet-200 hover:bg-violet-500/20 transition-all"
-              >
-                <Plus size={14} />
-                Start staking
-              </button>
+          {positions.length === 0 ? (
+            <div className="glass-panel rounded-2xl p-8 text-center">
+              <p className="text-sm text-[var(--text-muted)]">No stakes yet. Open one to start earning yield.</p>
             </div>
           ) : (
             <div className="space-y-2.5">
-              {activePositions.map((position) => {
-                const early = isEarly(position);
-                const action = actionLoading[position.id];
-
+              {positions.map((p) => {
+                const early = isEarly(p);
+                const canClaim = p.status === 'active' && p.pending_yield > 0;
+                const isLoadingClaim = actionLoading[p.id] === 'claim';
+                const isLoadingUnstake = actionLoading[p.id] === 'unstake';
                 return (
                   <div
-                    key={position.id}
-                    className="relative overflow-hidden rounded-[22px] border border-white/[0.06] bg-white/[0.025] p-4 sm:p-5"
+                    key={p.id}
+                    className="glass-panel rounded-2xl p-4"
+                    style={early ? { borderColor: 'rgba(216,154,58,0.35)' } : undefined}
                   >
-                    <div
-                      className="absolute right-0 top-0 w-40 h-32 pointer-events-none"
-                      style={{
-                        background:
-                          'radial-gradient(circle at top right, rgba(139,92,246,0.10), transparent 70%)',
-                      }}
-                    />
-
-                    <div className="relative">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-violet-500/[0.08] border border-violet-400/[0.10] flex items-center justify-center">
-                            <Coins size={17} className="text-violet-300" />
-                          </div>
-
-                          <div>
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">
-                              {Number(position.amount || 0).toLocaleString()} CLOSE
-                            </p>
-
-                            <p className="text-[9px] uppercase tracking-[1.4px] text-[var(--text-muted)] mt-1">
-                              {termLabel(position.term)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-[8px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                            APY
-                          </p>
-
-                          <p className="text-lg font-display font-bold text-[var(--accent-brass-bright)] mt-0.5">
-                            {position.apy}%
-                          </p>
-                        </div>
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-display font-bold text-lg text-[var(--text-primary)]">{p.amount.toLocaleString()} CLOSE</p>
+                        <p className="text-[10px] font-mono uppercase text-[var(--accent-brass-bright)] mt-0.5">{termLabel(p.term)}</p>
                       </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
-                        <div>
-                          <p className="text-[8px] uppercase tracking-[1.3px] text-[var(--text-muted)]">
-                            Pending
-                          </p>
-
-                          <p className="text-xs font-mono text-[var(--text-primary)] mt-1">
-                            {Number(position.pending_yield || 0).toFixed(4)} CLOSE
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-[8px] uppercase tracking-[1.3px] text-[var(--text-muted)]">
-                            Claimed
-                          </p>
-
-                          <p className="text-xs font-mono text-[var(--text-primary)] mt-1">
-                            {Number(position.yield_claimed || 0).toFixed(4)}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-[8px] uppercase tracking-[1.3px] text-[var(--text-muted)]">
-                            Unlock
-                          </p>
-
-                          <p className="text-xs text-[var(--text-secondary)] mt-1">
-                            {position.unlock_at
-                              ? new Date(position.unlock_at).toLocaleDateString()
-                              : 'Flexible'}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-[8px] uppercase tracking-[1.3px] text-[var(--text-muted)]">
-                            Status
-                          </p>
-
-                          <p className="text-xs text-emerald-300 mt-1">
-                            Active
-                          </p>
-                        </div>
+                      <div className="text-right">
+                        <p className="font-mono text-sm font-semibold text-[var(--success)]">{p.apy}% APY</p>
+                        <p className="text-[9px] font-mono text-[var(--text-muted)]">
+                          {p.status !== 'active' ? p.status : p.unlock_at ? `unlocks ${new Date(p.unlock_at).toLocaleDateString()}` : 'no lock'}
+                        </p>
                       </div>
-
-                      <div className="flex flex-col sm:flex-row gap-2 mt-5">
-                        <button
-                          onClick={() => claimYield(position.id)}
-                          disabled={
-                            action === 'claim' ||
-                            Number(position.pending_yield || 0) < 1
-                          }
-                          className="flex-1 min-h-10 rounded-xl bg-violet-500/[0.12] border border-violet-400/[0.14] text-xs font-semibold text-violet-200 hover:bg-violet-500/[0.18] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                        >
-                          {action === 'claim'
-                            ? 'Claiming…'
-                            : 'Claim yield'}
-                        </button>
-
-                        <button
-                          onClick={() => setShowUnstakeConfirm(position)}
-                          disabled={action === 'unstake'}
-                          className="flex-1 min-h-10 rounded-xl bg-white/[0.03] border border-white/[0.07] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/[0.055] disabled:opacity-40 transition-all"
-                        >
-                          {early ? 'Unstake early' : 'Unstake'}
-                        </button>
-                      </div>
-
-                      {early && (
-                        <div className="flex items-center gap-2 mt-3 text-[9px] text-amber-200/65">
-                          <Info size={12} />
-                          Early unstaking forfeits unclaimed yield on this locked position.
-                        </div>
-                      )}
                     </div>
+
+                    <div className="flex items-center justify-between text-[11.5px] text-[var(--text-secondary)] py-2.5 border-t border-b border-dashed border-[var(--glass-border)] mb-3">
+                      <span>Pending yield</span>
+                      <span className="font-mono font-semibold text-[var(--accent-brass-bright)]">{p.pending_yield.toFixed(2)} CLOSE</span>
+                    </div>
+
+                    {p.status === 'active' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => claimYield(p.id)}
+                          disabled={!canClaim || isLoadingClaim}
+                          className={`flex-1 text-center py-2.5 rounded-xl text-xs font-semibold transition ${
+                            canClaim
+                              ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B]'
+                              : 'bg-white/[0.03] text-[var(--text-muted)]'
+                          }`}
+                        >
+                          {isLoadingClaim ? <Loader2 size={14} className="animate-spin mx-auto" /> : canClaim ? 'Claim Yield' : 'Nothing to claim'}
+                        </button>
+                        <button
+                          onClick={() => setShowUnstakeConfirm(p)}
+                          disabled={isLoadingUnstake}
+                          className="flex-1 text-center py-2.5 rounded-xl text-xs font-semibold bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]"
+                        >
+                          {isLoadingUnstake ? <Loader2 size={14} className="animate-spin mx-auto" /> : early ? 'Unstake early' : 'Unstake'}
+                        </button>
+                      </div>
+                    )}
+
+                    {early && p.status === 'active' && (
+                      <div className="flex items-center gap-1.5 mt-2 text-[9.5px] font-mono" style={{ color: '#d89a3a' }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#d89a3a' }} />
+                        Unstaking now forfeits your pending yield
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
-        </div>
-      </section>
-
-      {/* TREASURY / TRUST FOOTER */}
-      <section className="glass-panel rounded-[24px] p-4 sm:p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/[0.07] border border-emerald-400/[0.10] flex items-center justify-center shrink-0">
-              <ShieldCheck size={16} className="text-emerald-300/80" />
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold text-[var(--text-primary)]">
-                Staking treasury
-              </p>
-
-              <p className="text-[10px] text-[var(--text-muted)] mt-1">
-                Verify the destination before sending CLOSE.
-              </p>
-
-              {treasuryAddress && (
-                <p className="font-mono text-[9px] text-[var(--text-muted)] mt-2 break-all">
-                  {treasuryAddress}
-                </p>
-              )}
-            </div>
-          </div>
 
           <button
-            onClick={copyTreasury}
-            disabled={!treasuryAddress}
-            className="inline-flex items-center justify-center gap-2 min-h-9 px-3 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[10px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/[0.05] disabled:opacity-40 transition-all"
+            onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowNewStake(true); }}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B]"
           >
-            {copied ? <Check size={13} /> : <Copy size={13} />}
-            {copied ? 'Copied' : 'Copy address'}
+            + New Stake
           </button>
-        </div>
+        </>
+      )}
 
-        <div className="flex items-center justify-center gap-2 pt-4 mt-4 border-t border-white/[0.05] text-[8px] uppercase tracking-[2px] text-[var(--text-muted)]">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/70" />
-          On-chain staking · Non-custodial wallet
-        </div>
-      </section>
+      {showNewStake && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={resetNewStake}>
+          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Stake</h3>
+              <button onClick={resetNewStake} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+            </div>
 
-      {/* NEW STAKE MODAL */}
-      <Modal
-        isOpen={showNewStake}
-        onClose={resetNewStake}
-        title="Stake CLOSE"
-        message=""
-        variant="transaction"
-        icon={<Coins size={20} className="text-violet-300" />}
-        eyebrow="OS VAULT · STAKING"
-        securityText="Stake payments are verified on Polygon before your position is created."
-      >
-        <div className="space-y-4">
+            <div className="flex gap-1.5">
+              {[1, 2, 3].map(s => (
+                <div key={s} className="flex-1 h-1 rounded-full" style={{ background: s <= stakeStep ? 'var(--accent-brass)' : 'var(--glass-border)' }} />
+              ))}
+            </div>
 
-          {/* STEP INDICATOR */}
-          <div className="flex items-center gap-2">
-            {[1, 2, 3].map((step) => (
-              <React.Fragment key={step}>
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border ${
-                    stakeStep === step
-                      ? 'bg-violet-500/20 border-violet-400/30 text-violet-200'
-                      : stakeStep > step
-                        ? 'bg-emerald-500/10 border-emerald-400/20 text-emerald-300'
-                        : 'bg-white/[0.025] border-white/[0.07] text-[var(--text-muted)]'
-                  }`}
+            {stakeStep === 1 && (
+              <>
+                <p className="text-sm text-[var(--text-secondary)]">Choose how much to stake and for how long.</p>
+                <div>
+                  <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount (CLOSE)</label>
+                  <input type="text" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} className="input-glass w-full mt-1" placeholder="0" />
+                  {closeAsset && (
+                    <p className="text-xs text-[var(--text-muted)] mt-1">Available: {closeAsset.balance.toFixed(0)} CLOSE</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide mb-2 block">Lock Term</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {terms && Object.entries(terms).map(([key, info]) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedTerm(key)}
+                        className="rounded-xl p-3 text-center border transition"
+                        style={selectedTerm === key
+                          ? { borderColor: 'var(--accent-brass)', background: 'rgba(249,115,22,0.08)' }
+                          : { borderColor: 'var(--glass-border)' }}
+                      >
+                        <p className="text-xs font-semibold text-[var(--text-primary)]">{termLabel(key)}</p>
+                        <p className="font-mono text-base font-bold text-[var(--accent-brass-bright)] mt-0.5">{info.apy}%</p>
+                        <p className="text-[8.5px] font-mono text-[var(--text-muted)]">APY</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!stakeAmount || parseFloat(stakeAmount) <= 0) { addToast('Enter a valid amount', 'error'); return; }
+                    if (!selectedTerm) { addToast('Choose a lock term', 'error'); return; }
+                    setStakeStep(2);
+                  }}
+                  className="btn-primary w-full justify-center"
                 >
-                  {stakeStep > step ? <Check size={12} /> : step}
-                </div>
+                  Continue →
+                </button>
+              </>
+            )}
 
-                {step < 3 && (
-                  <div className="flex-1 h-px bg-white/[0.06]" />
-                )}
-              </React.Fragment>
-            ))}
+            {stakeStep === 2 && (
+              <>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Send exactly {stakeAmount} CLOSE from your own wallet to the address below.
+                </p>
+                <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono break-all pr-2 text-[var(--text-primary)]">{treasuryAddress}</span>
+                    <button onClick={copyTreasury} className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                      {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-2 leading-relaxed">
+                    This is the CLOSE staking treasury. Only send from a wallet you control — staking credits the account whose wallet sent the transaction.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowSendFromVault(true)}
+                  className="btn-primary w-full justify-center"
+                >
+                  Send {stakeAmount} CLOSE from OS Vaults →
+                </button>
+                <button onClick={() => setStakeStep(3)} className="w-full text-center text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                  or send manually, then continue
+                </button>
+              </>
+            )}
+
+            {stakeStep === 3 && (
+              <>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Paste the transaction hash from your send — we'll verify it on-chain and open your position.
+                </p>
+                <div>
+                  <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Transaction Hash</label>
+                  <input type="text" value={stakeTxHash} onChange={(e) => setStakeTxHash(e.target.value)} className="input-glass w-full mt-1" placeholder="0x..." />
+                </div>
+                <button onClick={submitStake} disabled={submittingStake} className="btn-primary w-full justify-center">
+                  {submittingStake ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Verify and Open Stake'}
+                </button>
+              </>
+            )}
           </div>
-
-          {stakeStep === 1 && (
-            <>
-              <div>
-                <p className="text-[9px] uppercase tracking-[1.7px] text-[var(--text-muted)]">
-                  Step 1
-                </p>
-
-                <p className="text-base font-display font-bold text-[var(--text-primary)] mt-1">
-                  Choose a staking term
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                {Object.entries(terms || {}).map(([term, data]) => (
-                  <button
-                    key={term}
-                    onClick={() => setSelectedTerm(term)}
-                    className={`text-left rounded-2xl p-3.5 border transition-all ${
-                      selectedTerm === term
-                        ? 'bg-violet-500/[0.10] border-violet-400/[0.25]'
-                        : 'bg-white/[0.025] border-white/[0.06] hover:bg-white/[0.045]'
-                    }`}
-                  >
-                    <p className="text-xs font-semibold text-[var(--text-primary)]">
-                      {termMeta[term]?.label || term}
-                    </p>
-
-                    <p className="text-xl font-display font-bold text-[var(--accent-brass-bright)] mt-1">
-                      {data.apy}%
-                    </p>
-
-                    <p className="text-[9px] text-[var(--text-muted)] mt-1">
-                      {data.lock_days === 0
-                        ? 'Flexible'
-                        : `${data.lock_days} day lock`}
-                    </p>
-                  </button>
-                ))}
-              </div>
-
-              <div>
-                <label className="text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                  Amount
-                </label>
-
-                <div className="relative mt-2">
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={stakeAmount}
-                    onChange={(e) => setStakeAmount(e.target.value)}
-                    placeholder="Enter CLOSE amount"
-                    className="w-full rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3 pr-20 text-sm text-[var(--text-primary)] outline-none focus:border-violet-400/30"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setStakeAmount(
-                        Math.floor(availableClose).toString()
-                      )
-                    }
-                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg text-[9px] font-semibold text-violet-200 bg-violet-500/[0.10] border border-violet-400/[0.12]"
-                  >
-                    MAX
-                  </button>
-                </div>
-
-                <p className="text-[9px] text-[var(--text-muted)] mt-1.5">
-                  Available: {availableClose.toLocaleString()} CLOSE
-                </p>
-              </div>
-
-              <button
-                onClick={() => {
-                  const amount = Number(stakeAmount);
-
-                  if (!selectedTerm) {
-                    addToast('Choose a staking term', 'error');
-                    return;
-                  }
-
-                  if (!Number.isFinite(amount) || amount < 1) {
-                    addToast('Enter at least 1 CLOSE', 'error');
-                    return;
-                  }
-
-                  setStakeStep(2);
-                }}
-                className="w-full min-h-11 rounded-xl bg-violet-500/15 border border-violet-400/20 text-xs font-semibold text-violet-100 hover:bg-violet-500/20 transition-all"
-              >
-                Continue
-                <ArrowRight size={14} className="inline ml-2" />
-              </button>
-            </>
-          )}
-
-          {stakeStep === 2 && (
-            <>
-              <div>
-                <p className="text-[9px] uppercase tracking-[1.7px] text-[var(--text-muted)]">
-                  Step 2
-                </p>
-
-                <p className="text-base font-display font-bold text-[var(--text-primary)] mt-1">
-                  Send your CLOSE
-                </p>
-
-                <p className="text-[10px] text-[var(--text-muted)] mt-1 leading-relaxed">
-                  Send exactly the amount shown below to the staking treasury.
-                  Your transaction will be verified on Polygon.
-                </p>
-              </div>
-
-              <div className="rounded-2xl bg-violet-500/[0.06] border border-violet-400/[0.10] p-4">
-                <p className="text-[8px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                  Amount
-                </p>
-
-                <p className="text-2xl font-display font-bold text-[var(--text-primary)] mt-1">
-                  {Number(stakeAmount || 0).toLocaleString()} CLOSE
-                </p>
-
-                <p className="text-[9px] text-[var(--text-muted)] mt-1">
-                  {termMeta[selectedTerm]?.label || selectedTerm} ·{' '}
-                  {terms?.[selectedTerm]?.apy || 0}% APY
-                </p>
-              </div>
-
-              <div className="rounded-2xl bg-white/[0.025] border border-white/[0.06] p-3.5">
-                <p className="text-[8px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                  Staking treasury
-                </p>
-
-                <p className="font-mono text-[9px] text-[var(--text-secondary)] mt-2 break-all">
-                  {treasuryAddress || 'Loading…'}
-                </p>
-              </div>
-
-              <button
-                onClick={() => setShowSendFromVault(true)}
-                disabled={!treasuryAddress}
-                className="w-full min-h-11 rounded-xl bg-violet-500/15 border border-violet-400/20 text-xs font-semibold text-violet-100 hover:bg-violet-500/20 disabled:opacity-40 transition-all"
-              >
-                Send CLOSE from Vault
-                <ArrowUpRight size={14} className="inline ml-2" />
-              </button>
-
-              <button
-                onClick={() => setStakeStep(3)}
-                className="w-full min-h-10 rounded-xl bg-white/[0.025] border border-white/[0.06] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-              >
-                I already sent it
-              </button>
-
-              <button
-                onClick={() => setStakeStep(1)}
-                className="w-full text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-              >
-                Back
-              </button>
-            </>
-          )}
-
-          {stakeStep === 3 && (
-            <>
-              <div>
-                <p className="text-[9px] uppercase tracking-[1.7px] text-[var(--text-muted)]">
-                  Step 3
-                </p>
-
-                <p className="text-base font-display font-bold text-[var(--text-primary)] mt-1">
-                  Verify your transaction
-                </p>
-
-                <p className="text-[10px] text-[var(--text-muted)] mt-1">
-                  Paste the Polygon transaction hash used for this stake.
-                </p>
-              </div>
-
-              <div>
-                <label className="text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
-                  Transaction hash
-                </label>
-
-                <textarea
-                  value={stakeTxHash}
-                  onChange={(e) => setStakeTxHash(e.target.value)}
-                  placeholder="0x..."
-                  rows={3}
-                  className="w-full mt-2 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3 text-xs font-mono text-[var(--text-primary)] outline-none focus:border-violet-400/30 resize-none"
-                />
-              </div>
-
-              <div className="rounded-xl bg-amber-500/[0.05] border border-amber-400/[0.10] p-3 text-[9px] leading-relaxed text-amber-100/65">
-                Make sure the transaction was sent from your connected wallet
-                to the staking treasury for exactly the selected CLOSE amount.
-              </div>
-
-              <button
-                onClick={submitStake}
-                disabled={submittingStake}
-                className="w-full min-h-11 rounded-xl bg-[var(--accent-brass)] text-black text-xs font-bold hover:brightness-110 disabled:opacity-50 transition-all"
-              >
-                {submittingStake ? 'Verifying stake…' : 'Verify & open stake'}
-              </button>
-
-              <button
-                onClick={() => setStakeStep(2)}
-                disabled={submittingStake}
-                className="w-full text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-              >
-                Back
-              </button>
-            </>
-          )}
         </div>
-      </Modal>
+      )}
 
-      {/* SEND FROM VAULT */}
-      {showSendFromVault && (
+      {showSendFromVault && closeAsset && (
         <SendModal
           isOpen={showSendFromVault}
           onClose={() => setShowSendFromVault(false)}
-          asset={closeAsset}
+          asset={{ ...closeAsset, _prefillTo: treasuryAddress, _prefillAmount: stakeAmount }}
           assets={assets}
           refreshBalances={fetchBalances}
-          wallets={[]}
-          defaultWalletAddress={user?.wallet_address || ''}
-          onSent={() => {
+          onSent={(txHash) => {
             setShowSendFromVault(false);
+            setStakeTxHash(txHash);
             setStakeStep(3);
+            addToast('Sent! Paste the tx hash to confirm your stake.', 'success');
           }}
         />
       )}
 
-      {/* UNSTAKE CONFIRMATION */}
-      <Modal
-        isOpen={!!showUnstakeConfirm}
-        onClose={() => setShowUnstakeConfirm(null)}
-        title="Unstake CLOSE?"
-        message={
-          showUnstakeConfirm
-            ? isEarly(showUnstakeConfirm)
-              ? `You're about to unstake ${Number(showUnstakeConfirm.amount || 0).toLocaleString()} CLOSE before its unlock date. Any unclaimed yield on this locked position will be forfeited.`
-              : `You're about to unstake ${Number(showUnstakeConfirm.amount || 0).toLocaleString()} CLOSE and return the principal to your wallet.`
-            : ''
-        }
-        confirmText={
-          actionLoading[showUnstakeConfirm?.id] === 'unstake'
-            ? 'Unstaking…'
-            : 'Confirm unstake'
-        }
-        cancelText="Keep staking"
-        onConfirm={() => {
-          if (showUnstakeConfirm) {
-            doUnstake(showUnstakeConfirm.id);
-          }
-        }}
-        variant="transaction"
-        icon={<ShieldCheck size={20} className="text-violet-300" />}
-        eyebrow="SECURE STAKING ACTION"
-        securityText="The unstake request is processed through the OS Vault staking treasury."
-      />
+      {showUnstakeConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowUnstakeConfirm(null)}>
+          <div className="glass-panel rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Confirm Unstake</h3>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Return {showUnstakeConfirm.amount.toLocaleString()} CLOSE principal to your wallet.
+            </p>
+            {isEarly(showUnstakeConfirm) && (
+              <p className="text-sm font-mono p-3 rounded-xl" style={{ color: '#d89a3a', background: 'rgba(216,154,58,0.08)', border: '1px solid rgba(216,154,58,0.25)' }}>
+                ⚠️ This stake hasn't unlocked yet. Unstaking now forfeits your {showUnstakeConfirm.pending_yield.toFixed(2)} CLOSE pending yield.
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => doUnstake(showUnstakeConfirm.id)} className="btn-primary flex-1 justify-center">Confirm Unstake</button>
+              <button onClick={() => setShowUnstakeConfirm(null)} className="btn-secondary flex-1 justify-center">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
