@@ -695,7 +695,7 @@ function ChatTopupModal({ isOpen, onClose, onToppedUp }) {
         {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
 
         <div className="flex gap-2">
-          <button onClick={handleVerify} disabled={loading} className="btn-primary flex-1 justify-center">
+          <button onClick={handleVerify} disabled={loading} className="btn-primary min-h-12 rounded-2xl justify-center">
             {loading ? <Loader2 size={20} className="animate-spin" /> : 'Verify & Credit'}
           </button>
           <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
@@ -786,7 +786,7 @@ function WithdrawModal({ isOpen, onClose, assets, onRequested }) {
         </div>
         {error && <p className="text-sm text-[var(--danger)] font-mono">{String(error)}</p>}
         <div className="flex gap-2">
-          <button onClick={handleSubmit} disabled={loading} className="btn-primary flex-1 justify-center">
+          <button onClick={handleSubmit} disabled={loading} className="btn-primary min-h-12 rounded-2xl justify-center">
             {loading ? <Loader2 size={20} className="animate-spin" /> : 'Request Withdrawal'}
           </button>
           <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
@@ -1860,14 +1860,20 @@ function Staking() {
     <div className="space-y-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      <div className="grid grid-cols-2 gap-2.5">
-        <div className="glass-panel rounded-2xl p-4">
-          <p className="text-[9.5px] font-mono uppercase tracking-wide text-[var(--text-muted)] mb-1.5">Total Staked</p>
-          <p className="text-xl font-display font-bold text-[var(--text-primary)]">{totalStaked.toLocaleString()}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-white/[0.07] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[9.5px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">Total Staked</p>
+            <Coins size={15} className="text-[var(--accent-brass-bright)]" />
+          </div>
+          <p className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">{totalStaked.toLocaleString()} <span className="text-sm font-medium text-[var(--text-muted)]">CLOSE</span></p>
         </div>
-        <div className="glass-panel rounded-2xl p-4">
-          <p className="text-[9.5px] font-mono uppercase tracking-wide text-[var(--text-muted)] mb-1.5">Pending Yield</p>
-          <p className="text-xl font-display font-bold text-[var(--accent-brass-bright)]">{totalPendingYield.toFixed(2)}</p>
+        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-white/[0.07] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[9.5px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">Pending Yield</p>
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,199,89,0.6)]" />
+          </div>
+          <p className="text-2xl font-display font-bold tracking-tight text-[var(--accent-brass-bright)]">{totalPendingYield.toFixed(2)} <span className="text-sm font-medium text-[var(--text-muted)]">CLOSE</span></p>
         </div>
       </div>
 
@@ -1895,12 +1901,12 @@ function Staking() {
                 return (
                   <div
                     key={p.id}
-                    className="glass-panel rounded-2xl p-4"
+                    className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-white/[0.07] transition-all duration-200 hover:border-white/[0.12] hover:-translate-y-px"
                     style={early ? { borderColor: 'rgba(216,154,58,0.35)' } : undefined}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-display font-bold text-lg text-[var(--text-primary)]">{p.amount.toLocaleString()} CLOSE</p>
+                        <p className="font-display font-bold text-xl tracking-tight text-[var(--text-primary)]">{p.amount.toLocaleString()} <span className="text-sm text-[var(--text-muted)]">CLOSE</span></p>
                         <p className="text-[10px] font-mono uppercase text-[var(--accent-brass-bright)] mt-0.5">{termLabel(p.term)}</p>
                       </div>
                       <div className="text-right">
@@ -1953,7 +1959,7 @@ function Staking() {
 
           <button
             onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowNewStake(true); }}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B]"
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-[20px] font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_12px_35px_rgba(216,154,58,0.16)] transition-all duration-200 hover:-translate-y-px active:scale-[0.99]"
           >
             + New Stake
           </button>
@@ -2090,8 +2096,8 @@ function Staking() {
                 ⚠️ This stake hasn't unlocked yet. Unstaking now forfeits your {showUnstakeConfirm.pending_yield.toFixed(2)} CLOSE pending yield.
               </p>
             )}
-            <div className="flex gap-2">
-              <button onClick={() => doUnstake(showUnstakeConfirm.id)} className="btn-primary flex-1 justify-center">Confirm Unstake</button>
+            <div className="grid grid-cols-3 gap-2.5">
+              <button onClick={() => doUnstake(showUnstakeConfirm.id)} className="btn-primary min-h-12 rounded-2xl justify-center">Confirm Unstake</button>
               <button onClick={() => setShowUnstakeConfirm(null)} className="btn-secondary flex-1 justify-center">Cancel</button>
             </div>
           </div>
@@ -2229,8 +2235,13 @@ function Governance() {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       {params && (
-        <div className="glass-panel rounded-2xl p-4 space-y-1.5">
-          <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Requirements</p>
+        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 space-y-2 border border-white/[0.07] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/[0.09] border border-violet-400/[0.14]">
+              <Vote size={14} className="text-violet-300" />
+            </span>
+            <p className="text-xs font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">Governance Requirements</p>
+          </div>
           <p className="text-sm text-[var(--text-secondary)]">
             {params.min_staked_to_propose.toLocaleString()} CLOSE staked to propose · {params.voting_period_days}-day voting period · {params.quorum_percent}% quorum
           </p>
@@ -2257,15 +2268,17 @@ function Governance() {
                 <button
                   key={p.id}
                   onClick={() => openProposal(p)}
-                  className="w-full text-left glass-panel rounded-2xl p-4 transition hover:border-[var(--glass-border-hover)]"
+                  className="w-full text-left glass-panel rounded-[22px] p-5 transition-all duration-200 border border-white/[0.07] hover:border-white/[0.14] hover:-translate-y-px hover:bg-white/[0.035]"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <p className="font-display font-bold text-base text-[var(--text-primary)] pr-3">{p.title}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display font-bold text-lg leading-tight text-[var(--text-primary)] pr-3">{p.title}</p>
+                    </div>
                     <span className="text-[10px] font-mono uppercase whitespace-nowrap px-2 py-1 rounded-full" style={{ color: statusColor(p.effective_status), background: 'rgba(255,255,255,0.05)' }}>
                       {statusLabel(p.effective_status)}
                     </span>
                   </div>
-                  <p className="text-xs text-[var(--text-muted)] line-clamp-2">{p.description}</p>
+                  <p className="text-sm leading-relaxed text-[var(--text-muted)] line-clamp-2 mt-1">{p.description}</p>
                   <div className="flex items-center gap-3 mt-3 text-[10px] font-mono text-[var(--text-muted)]">
                     <span>{p.voter_count} voters</span>
                     <span>{p.vote_totals.for.toLocaleString()} for · {p.vote_totals.against.toLocaleString()} against</span>
@@ -2277,7 +2290,7 @@ function Governance() {
 
           <button
             onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowNewProposal(true); }}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B]"
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-[20px] font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_12px_35px_rgba(216,154,58,0.16)] transition-all duration-200 hover:-translate-y-px active:scale-[0.99]"
           >
             + New Proposal
           </button>
@@ -2511,8 +2524,11 @@ function WalletsTab() {
     <div className="space-y-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Your Wallets</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-lg font-display font-bold text-[var(--text-primary)]">Your Wallets</p>
+          <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)] mt-0.5">Manage your connected assets</p>
+        </div>
         <div className="flex items-center gap-3">
           <button onClick={() => openAppKit()} className="text-xs font-medium text-[var(--accent-brass-bright)]">+ Connect</button>
           <button onClick={() => setShowImportModal(true)} className="text-xs font-medium text-[var(--accent-brass-bright)]">+ Import</button>
@@ -2524,7 +2540,7 @@ function WalletsTab() {
           <button
             key={w.address}
             onClick={() => setSelectedAddress(w.isPrimary ? null : w.address)}
-            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-colors text-left"
+            className="w-full flex items-center justify-between px-4 py-3.5 rounded-[18px] border transition-all duration-200 text-left hover:bg-white/[0.035]"
             style={activeAddress === w.address
               ? { background: 'rgba(249,115,22,0.10)', borderColor: 'var(--accent-brass)' }
               : { background: 'rgba(255,255,255,0.05)', borderColor: 'var(--glass-border)' }}
@@ -2547,28 +2563,28 @@ function WalletsTab() {
 
       {activeWallet && (
         <>
-          <div className="glass-panel rounded-2xl p-5">
+          <div className="relative overflow-hidden glass-panel rounded-[26px] p-5 sm:p-6 border border-white/[0.07] shadow-[0_18px_60px_rgba(0,0,0,0.16)]">
             <p className="text-xs uppercase tracking-widest text-[var(--text-muted)] mb-2" style={{ letterSpacing: '2px' }}>
               {activeWallet.label} Balance
             </p>
-            <div className="text-3xl font-display font-bold text-[var(--text-primary)] mb-4">
+            <div className="text-4xl sm:text-5xl font-display font-bold tracking-tight text-[var(--text-primary)] mb-5">
               {balanceLoading ? '...' : `$${walletTotalUsd.toFixed(2)}`}
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2.5">
               <button
                 onClick={() => {
                   if (walletAssets.length === 0) { addToast('No assets to send from this wallet.', 'warning'); return; }
                   if (walletAssets.length === 1) { setSendAsset(walletAssets[0]); setShowSendModal(true); }
                   else { setShowAssetPicker(true); }
                 }}
-                className="btn-primary flex-1 justify-center"
+                className="btn-primary min-h-12 rounded-2xl justify-center"
               >
                 <Send size={16} /> Send
               </button>
-              <button onClick={() => setShowReceiveModal(true)} className="btn-secondary flex-1 justify-center">
+              <button onClick={() => setShowReceiveModal(true)} className="btn-secondary min-h-12 rounded-2xl justify-center">
                 <ArrowDownRight size={16} /> Receive
               </button>
-              <button onClick={() => setShowSwapModal(true)} className="btn-secondary flex-1 justify-center">
+              <button onClick={() => setShowSwapModal(true)} className="btn-secondary min-h-12 rounded-2xl justify-center">
                 <ArrowUpDown size={16} /> Swap
               </button>
             </div>
@@ -2583,7 +2599,7 @@ function WalletsTab() {
             ) : history.length === 0 ? (
               <p className="text-sm text-[var(--text-muted)] py-4 text-center">No transactions for this wallet yet.</p>
             ) : (
-              <div className="glass-panel rounded-xl px-1">
+              <div className="glass-panel rounded-[20px] px-1 border border-white/[0.07] overflow-hidden">
                 {history.map((tx, i) => (
                   <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < history.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
                     <div>
@@ -2692,17 +2708,43 @@ export default function Vault() {
   const [tab, setTab] = useState(initialTab);
   return (
     <div className="p-4 tablet:p-6 space-y-6 max-w-6xl mx-auto w-full">
-      <h1 className="text-3xl font-display font-bold text-[var(--text-primary)] flex items-center gap-2">
-        <Wallet size={28} className="text-[var(--accent-brass)]" /> OS Vaults
-      </h1>
-      <p className="text-sm text-[var(--text-muted)]">Multi-chain non-custodial asset hub</p>
-      <div className="glass-panel flex gap-1 p-1 rounded-2xl overflow-x-auto max-w-full">
-        <button onClick={() => setTab('standard')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap ${tab === 'standard' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
-        <button onClick={() => setTab('analytics')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'analytics' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
-        <button onClick={() => setTab('safe')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'safe' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
-        <button onClick={() => setTab('staking')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'staking' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Coins size={16} /> Staking</button>
-        <button onClick={() => setTab('governance')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'governance' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Vote size={16} /> Governance</button>
-        <button onClick={() => setTab('wallets')} className={`px-5 py-2 rounded-xl text-sm font-bold touch transition-all shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'wallets' ? 'bg-[var(--accent-brass)] text-black' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}><Wallet size={16} /> Wallets</button>
+      <div className="relative overflow-hidden rounded-[28px] border border-white/[0.07] bg-gradient-to-br from-white/[0.055] via-white/[0.025] to-transparent p-5 sm:p-7 shadow-[0_20px_70px_rgba(0,0,0,0.18)]">
+        <div className="pointer-events-none absolute -top-24 -right-20 h-64 w-64 rounded-full bg-amber-400/[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-violet-500/[0.045] blur-3xl" />
+
+        <div className="relative flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5 mb-2">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-400/[0.08] border border-amber-300/[0.14]">
+                <Wallet size={20} className="text-[var(--accent-brass-bright)]" />
+              </span>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-[var(--accent-brass-bright)]/80">
+                OS ECOSYSTEM
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-display font-bold tracking-tight text-[var(--text-primary)]">
+              OS Vaults
+            </h1>
+            <p className="text-sm text-[var(--text-muted)] mt-1.5 max-w-xl">
+              Your home for assets, staking, governance and multi-chain wallets.
+            </p>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.035] px-3 py-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,199,89,0.65)]" />
+            <span className="text-[9px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              Non-custodial
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="glass-panel flex gap-1.5 p-1.5 rounded-[22px] overflow-x-auto max-w-full border border-white/[0.07] shadow-[0_12px_45px_rgba(0,0,0,0.12)]">
+        <button onClick={() => setTab('standard')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap ${tab === 'standard' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
+        <button onClick={() => setTab('analytics')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'analytics' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
+        <button onClick={() => setTab('safe')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'safe' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
+        <button onClick={() => setTab('staking')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'staking' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><Coins size={16} /> Staking</button>
+        <button onClick={() => setTab('governance')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'governance' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><Vote size={16} /> Governance</button>
+        <button onClick={() => setTab('wallets')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'wallets' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]'}`}><Wallet size={16} /> Wallets</button>
       </div>
       {tab === 'standard' && <StandardWallet />}
       {tab === 'analytics' && <WalletAnalytics />}
