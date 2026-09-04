@@ -285,7 +285,11 @@ export default function HustleHub() {
         fetchWorkspaces();
       }
     } catch (e) {
-      setJoinError(e.response?.data?.detail || 'Failed to join: invalid code');
+      const detail = e.response?.data?.detail;
+      const message = Array.isArray(detail)
+        ? detail.map((d) => d.msg || JSON.stringify(d)).join('; ')
+        : (typeof detail === 'string' ? detail : 'Failed to join: invalid code');
+      setJoinError(message);
     }
   };
 
@@ -431,31 +435,32 @@ export default function HustleHub() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)] max-w-6xl mx-auto w-full">
+    <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)] max-w-7xl mx-auto w-full overflow-hidden">
       <div className="border-b border-[var(--border-color)] p-4 flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">Hustle Hub</h1>
           <p className="text-sm text-[var(--text-muted)]">Private, invite-only workspaces — 5000 CLOSE to create, 6000 CLOSE to join</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => { setShowCreate(true); setCreateError(''); }} className="btn-primary">
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button onClick={() => { setShowCreate(true); setCreateError(''); }} className="btn-primary flex-1 sm:flex-none justify-center">
             <Plus size={18} /> New
           </button>
-          <button onClick={() => document.getElementById('join-input').focus()} className="btn-secondary">
+          <button onClick={() => document.getElementById('join-input').focus()} className="btn-secondary flex-1 sm:flex-none justify-center">
             <LogIn size={18} /> Join
           </button>
-          <button onClick={() => setShowDiscover(true)} className="btn-secondary">
+          <button onClick={() => setShowDiscover(true)} className="btn-secondary flex-1 sm:flex-none justify-center">
             <Compass size={18} /> Discover
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 p-4 border-b border-[var(--border-color)] overflow-x-auto">
+      <div className="px-5 md:px-7 py-4 border-b border-[var(--border-color)] bg-[var(--bg-secondary)]/20">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {workspaces.map((ws) => (
           <button
             key={ws.id}
             onClick={() => setSelectedWorkspace(ws)}
-            className={`px-4 py-2 rounded-full text-sm transition flex items-center gap-1 shrink-0 whitespace-nowrap ${
+            className={`px-4 py-2.5 rounded-2xl text-sm transition-all flex items-center gap-2 shrink-0 whitespace-nowrap border ${
               selectedWorkspace?.id === ws.id
                 ? 'bg-[var(--accent-brass)] text-white font-bold'
                 : 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] hover:border-[var(--border-bright)] text-[var(--text-primary)]'
@@ -465,7 +470,7 @@ export default function HustleHub() {
             {ws.name}
           </button>
         ))}
-        <div className="flex-1 min-w-[220px] shrink-0 flex flex-col gap-1">
+        <div className="w-full lg:w-auto lg:min-w-[360px] shrink-0 flex flex-col gap-1 mt-2 lg:mt-0">
           <div className="flex items-center gap-2">
             <input
               id="join-input"
@@ -473,9 +478,9 @@ export default function HustleHub() {
               placeholder="Enter room code"
               value={joinCode}
               onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinStatus(''); setJoinError(''); }}
-              className="input-glass flex-1 text-sm"
+              className="input-glass flex-1 text-sm rounded-2xl"
             />
-            <button onClick={() => handleJoinWorkspace()} className="bg-[var(--accent-brass)] text-white px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap">Request to Join</button>
+            <button onClick={() => handleJoinWorkspace()} className="bg-[var(--accent-brass)] hover:bg-[var(--accent-brass-dim)] text-white px-4 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition shadow-sm">Request to Join</button>
           </div>
           {joinStatus && <p className="text-xs text-[var(--success)]">{joinStatus}</p>}
           {joinError && <p className="text-xs text-[var(--danger)]">{joinError}</p>}
@@ -489,12 +494,16 @@ export default function HustleHub() {
           )}
         </div>
       </div>
+      </div>
 
       {selectedWorkspace ? (
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)] flex-wrap gap-2">
+          <div className="flex items-center justify-between px-5 md:px-7 py-4 border-b border-[var(--border-color)] bg-[var(--bg-secondary)]/30 flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[var(--text-primary)]">{selectedWorkspace.name}</span>
+              <div>
+              <span className="font-display font-bold text-lg text-[var(--text-primary)]">{selectedWorkspace.name}</span>
+              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Your shared space</p>
+            </div>
               {selectedWorkspace.is_public ? (
                 <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]"><Globe size={12} /> Public</span>
               ) : (
@@ -588,9 +597,15 @@ export default function HustleHub() {
             </div>
           )}
 
-          <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto px-5 md:px-8 py-6 space-y-4 scroll-smooth">
             {messages.length === 0 ? (
-              <div className="text-center text-[var(--text-muted)] py-10">No messages yet. Start the conversation!</div>
+              <div className="flex flex-col items-center justify-center text-center py-16 px-6">
+                  <div className="w-16 h-16 rounded-3xl bg-[var(--accent-brass)]/10 flex items-center justify-center mb-4">
+                    <Users size={28} className="text-[var(--accent-brass)]" />
+                  </div>
+                  <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">Start the conversation</h3>
+                  <p className="text-sm text-[var(--text-muted)] mt-1 max-w-sm">This is your space to exchange ideas, collaborate, and build something meaningful.</p>
+                </div>
             ) : (
               messages.map((msg) => {
                 const isOwnMsg = msg.user_id === user?.id;
@@ -598,8 +613,8 @@ export default function HustleHub() {
                 const isEditing = editingMessageId === msg.id;
                 return (
                   <div key={msg.id} className={`flex ${isOwnMsg ? 'justify-end' : 'justify-start'} group`}>
-                    <div className="max-w-[75%]">
-                      <div className={`glass-card rounded-2xl px-4 py-2 ${msg.is_ai ? 'border border-[var(--accent-indigo)]/30' : ''}`}>
+                    <div className="max-w-[88%] sm:max-w-[75%]">
+                      <div className={`glass-card rounded-[1.35rem] px-4 py-3 shadow-sm ${msg.is_ai ? 'border border-[var(--accent-indigo)]/30 bg-[var(--accent-indigo)]/5' : ''}`}>
                         <div className="flex items-center gap-2 text-xs mb-1">
                           {msg.is_ai && <Sparkles size={12} className="text-[var(--accent-indigo)]" />}
                           <span className={`font-bold ${msg.is_ai ? 'text-[var(--accent-indigo)]' : 'text-[var(--accent-brass)]'}`}>{msg.user_name || 'Unknown'}</span>
@@ -672,13 +687,13 @@ export default function HustleHub() {
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message... (try @osai to ask OS AI)"
+                placeholder="Share an idea, ask a question, or try @osai..."
                 className="flex-1 bg-transparent border-none outline-none px-3 py-2 text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
               />
               <button
                 type="submit"
                 disabled={!newMessage.trim()}
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[var(--accent-brass-dim)] text-white shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
+                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[var(--accent-brass-dim)] text-white shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
               >
                 <Send size={17} />
               </button>
@@ -693,8 +708,8 @@ export default function HustleHub() {
 
       {/* Create modal */}
       {showCreate && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="glass-panel rounded-[1.5rem] w-full max-w-md p-6 md:p-7 space-y-4 shadow-2xl border border-[var(--border-bright)]/50">
             <div className="flex justify-between items-center">
               <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Hustle Hub</h3>
               <button onClick={() => setShowCreate(false)} className="btn-glass-icon w-9 h-9"><X size={20} /></button>
@@ -754,8 +769,8 @@ export default function HustleHub() {
 
       {/* Members panel */}
       {showMembers && selectedWorkspace && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowMembers(false)}>
-          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-3 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowMembers(false)}>
+          <div className="glass-panel rounded-[1.5rem] w-full max-w-md p-6 md:p-7 space-y-3 max-h-[80vh] overflow-y-auto shadow-2xl border border-[var(--border-bright)]/50" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center">
               <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Members</h3>
               <button onClick={() => setShowMembers(false)} className="btn-glass-icon w-9 h-9"><X size={18} /></button>
@@ -791,8 +806,8 @@ export default function HustleHub() {
 
       {/* Discover panel */}
       {showDiscover && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowDiscover(false)}>
-          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-3 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowDiscover(false)}>
+          <div className="glass-panel rounded-[1.5rem] w-full max-w-md p-6 md:p-7 space-y-3 max-h-[80vh] overflow-y-auto shadow-2xl border border-[var(--border-bright)]/50" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center">
               <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Discover Public Hubs</h3>
               <button onClick={() => setShowDiscover(false)} className="btn-glass-icon w-9 h-9"><X size={18} /></button>
