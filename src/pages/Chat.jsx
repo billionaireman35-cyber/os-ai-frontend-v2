@@ -673,17 +673,74 @@ export default function Chat() {
           )}
         </div>
       )}
-      <div className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-        <div className="max-w-3xl mx-auto w-full space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        <div className="max-w-3xl mx-auto w-full space-y-6">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="mb-6">
-              <span className="text-5xl font-light text-[var(--accent-brass-bright)]">✦</span>
+          <div className="flex flex-col items-center justify-center h-full text-center px-4 py-12">
+            <div className="relative mb-7">
+              <div className="absolute inset-0 blur-2xl opacity-20 bg-[var(--accent-brass-bright)] rounded-full scale-150" />
+              <div className="relative w-16 h-16 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/80 backdrop-blur-xl flex items-center justify-center shadow-xl">
+                <span className="text-3xl font-light text-[var(--accent-brass-bright)]">✦</span>
+              </div>
             </div>
-            <p className="text-2xl font-light text-[var(--text-primary)]/80">{getGreeting()}</p>
-            <p className="text-sm max-w-sm mt-2 text-[var(--text-muted)]">
-              I'm OS AI. How can I help you today?
+
+            <p className="text-3xl sm:text-4xl font-light tracking-tight text-[var(--text-primary)]">
+              {getGreeting()}
             </p>
+
+            <p className="mt-3 text-base text-[var(--text-muted)] max-w-md leading-relaxed">
+              Your intelligent workspace is ready.
+              <br className="hidden sm:block" />
+              Ask anything, build something, or explore an idea.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-lg">
+              {[
+                {
+                  title: 'Research',
+                  text: 'Understand a topic deeply',
+                  prompt: 'Research '
+                },
+                {
+                  title: 'Build',
+                  text: 'Create, code, or solve',
+                  prompt: 'Code '
+                },
+                {
+                  title: 'Explore',
+                  text: 'Discover ideas and possibilities',
+                  prompt: 'Explore '
+                },
+                {
+                  title: 'Just ask',
+                  text: 'Start with anything',
+                  prompt: ''
+                }
+              ].map((item) => (
+                <button
+                  key={item.title}
+                  type="button"
+                  onClick={() => {
+                    setInput(item.prompt)
+                    setTimeout(() => inputRef.current?.focus(), 0)
+                  }}
+                  className="group text-left rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/45 hover:bg-[var(--bg-secondary)]/75 hover:border-[var(--accent-brass)]/30 backdrop-blur-xl p-4 transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[var(--text-primary)]">
+                      {item.title}
+                    </span>
+                    <ArrowUp
+                      size={14}
+                      className="opacity-30 group-hover:opacity-80 group-hover:-translate-y-0.5 transition-all"
+                    />
+                  </div>
+                  <p className="mt-1.5 text-xs text-[var(--text-muted)] leading-relaxed">
+                    {item.text}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -927,7 +984,7 @@ export default function Chat() {
       )}
 
       <div className="p-4">
-        <form onSubmit={sendMessage} className="glass-bar rounded-3xl max-w-3xl mx-auto shadow-lg">
+        <form onSubmit={sendMessage} className="glass-bar rounded-[26px] max-w-3xl mx-auto shadow-2xl border border-[var(--border-color)]/70 backdrop-blur-2xl">
           {attachedImage && (
             <div className="px-4 pt-3">
               <div className="relative inline-block">
