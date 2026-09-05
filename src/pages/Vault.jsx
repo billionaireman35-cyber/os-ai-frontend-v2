@@ -1018,6 +1018,7 @@ function StandardWallet() {
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
+  const [showReceiveModal, setShowReceiveModal] = useState(false);
 
   // CLOSE is pinned separately (hero strip + pinned row), so it's excluded
   // from the plain chain-filtered ledger list below to avoid showing twice.
@@ -1687,6 +1688,53 @@ function StandardWallet() {
       <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
       <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />
       <ChatTopupModal isOpen={showChatTopupModal} onClose={() => setShowChatTopupModal(false)} onToppedUp={(result) => { addToast(`Credited ${result.amount} CLOSE to your chat balance`, 'success'); }} />
+      {showReceiveModal && (
+        <div className="fixed inset-0 bg-[var(--bg-primary)]/70 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowReceiveModal(false)}>
+          <div className="glass-panel relative overflow-hidden rounded-[28px] w-full max-w-sm p-4.5 sm:p-6 space-y-5 border border-[var(--border-color)] shadow-[0_30px_100px_rgba(0,0,0,0.55)]" onClick={(e) => e.stopPropagation()}>
+            <div className="pointer-events-none absolute -top-24 -right-20 w-48 h-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
+            <div className="relative flex justify-between items-start gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/[0.10] border border-violet-400/20 shadow-[0_0_24px_rgba(139,92,246,0.10)]">
+                    <ArrowDownRight size={17} className="text-violet-300" />
+                  </span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-violet-200/80">OS VAULT · RECEIVE</span>
+                </div>
+                <h3 className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">Receive assets</h3>
+                <p className="text-[11px] text-[var(--text-muted)] mt-1">Your secure Polygon wallet address</p>
+              </div>
+              <button onClick={() => setShowReceiveModal(false)} className="btn-glass-icon w-9 h-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all hover:bg-[var(--surface-active)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30"><X size={18} /></button>
+            </div>
+            <div className="flex items-start gap-2.5 rounded-2xl border border-amber-400/[0.12] bg-amber-400/[0.035] px-3.5 py-3">
+              <span className="mt-0.5 text-sm">⚠️</span>
+              <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
+                Send only <span className="font-semibold text-[var(--text-secondary)]">Polygon-network assets</span> to this address. Using another network may permanently lose funds.
+              </p>
+            </div>
+            <div className="relative overflow-hidden rounded-[22px] p-4 sm:p-5 bg-gradient-to-br from-violet-500/[0.08] via-[var(--surface-hover)] to-transparent border border-violet-400/[0.14] shadow-[0_18px_55px_rgba(0,0,0,0.20)]">
+              <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-2xl pointer-events-none" />
+              <div className="relative flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-violet-400 shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
+                  <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-violet-200/75">Polygon Network</p>
+                </div>
+                <span className="text-[9px] uppercase tracking-[0.12em] text-[var(--text-muted)]">Wallet address</span>
+              </div>
+              <p className="relative text-[13px] sm:text-sm font-mono break-all leading-relaxed text-[var(--text-primary)]">
+                {user?.wallet_address}
+              </p>
+            </div>
+            <button onClick={copyAddress} className="btn-primary w-full justify-center min-h-13 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.98] shadow-[0_12px_35px_rgba(0,0,0,0.22)]">
+              {copied ? <CheckCircle size={18} /> : <Copy size={18} />}
+              {copied ? 'Address Copied' : 'Copy Wallet Address'}
+            </button>
+            <div className="flex items-center justify-center gap-2 pt-1 text-[9px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              <ShieldCheck size={12} className="text-violet-300/70" />
+              Non-custodial · You control the keys
+            </div>
+          </div>
+        </div>
+      )}
       {showAssetPicker && (
         <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
           <div className="glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
