@@ -256,23 +256,30 @@ export default function Pulse() {
   };
 
   return (
-    <div className="p-4 space-y-6 bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-full">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-display font-bold text-[var(--text-primary)]">Market Pulse</h1>
+    <div className="os-pulse-page p-4 space-y-6 bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-full">
+      <div className="os-pulse-header">
+        <div className="os-pulse-heading">
+  <div className="os-pulse-kicker">MARKET INTELLIGENCE</div>
+  <div className="flex items-center gap-3">
+    <h1 className="os-pulse-title text-3xl font-display font-bold text-[var(--text-primary)]">Market Pulse</h1>
+    <span className="os-pulse-live"><span />LIVE</span>
+  </div>
+  <p className="os-pulse-subtitle">Live intelligence across digital markets.</p>
+</div>
         <button
           onClick={handleRefresh}
-          className="btn-glass-icon w-9 h-9 text-[var(--accent-brass)]"
+          className="btn-glass-icon os-pulse-refresh w-9 h-9 text-[var(--accent-brass)]"
           aria-label="Refresh"
         >
           <RefreshCw size={17} className={loadingTokens || loadingNews ? 'animate-spin' : ''} />
         </button>
       </div>
 
-      <div className="input-glass flex items-center gap-3 focus-within:border-[var(--accent-brass)] focus-within:shadow-[0_0_0_3px_rgba(212,175,55,0.15)]">
+      <div className="input-glass os-pulse-search flex items-center gap-3 focus-within:border-[var(--accent-brass)]">
         <Search size={18} className="text-[var(--text-muted)] shrink-0" />
         <input
           type="text"
-          placeholder="Search token, address, news..."
+          placeholder="Search markets, tokens..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="bg-transparent border-none outline-none text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)] w-full"
@@ -288,8 +295,8 @@ export default function Pulse() {
         </div>
       )}
 
-      <div>
-        <h2 className="text-sm font-mono uppercase tracking-wider text-[var(--text-muted)] mb-3 flex items-center gap-2">
+      <div className="os-pulse-market-section">
+        <h2 className="os-pulse-section-head text-sm font-mono uppercase tracking-wider text-[var(--text-muted)] mb-3 flex items-center gap-2">
           Live Token Feed
           <span
             className={`w-2 h-2 rounded-full ${
@@ -308,7 +315,7 @@ export default function Pulse() {
             {searchQuery ? 'No tokens match your search.' : 'No token data available.'}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="os-pulse-token-grid">
             {filteredTokens.map((token, idx) => {
               const isUp = (token.price_change_percentage_24h ?? 0) >= 0;
               const isPinned = !!token.is_pinned;
@@ -316,17 +323,17 @@ export default function Pulse() {
                 <div
                   key={token.id || idx}
                   onClick={() => handleSelectToken(token)}
-                  className={`glass-card px-4 py-3 flex items-center justify-between cursor-pointer ${
+                  className={`glass-card os-pulse-token-card cursor-pointer ${
                     isPinned ? 'border-[var(--border-bright)]' : ''
                   }`}
                   style={isPinned ? { background: 'linear-gradient(135deg, rgba(201,169,97,0.09), var(--glass-bg))' } : undefined}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     {token.image ? (
-                      <img src={token.image} alt={token.symbol} className="w-9 h-9 rounded-full shrink-0" />
+                      <img src={token.image} alt={token.symbol} className="os-pulse-token-image w-9 h-9 rounded-full shrink-0" />
                     ) : (
                       <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
+                        className="os-pulse-token-avatar w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
                         style={
                           isPinned
                             ? { background: 'linear-gradient(135deg, var(--accent-brass-bright), var(--accent-brass-dim))', color: '#14120C' }
@@ -336,7 +343,7 @@ export default function Pulse() {
                         {token.symbol?.charAt(0)?.toUpperCase() || '?'}
                       </div>
                     )}
-                    <div className="min-w-0">
+                    <div className="os-pulse-token-identity min-w-0">
                       <p className="font-bold text-[var(--text-primary)] text-sm truncate">{token.symbol?.toUpperCase()}</p>
                       <p className="text-xs text-[var(--text-muted)] truncate max-w-[110px]">
                         {isPinned ? 'On-chain · Polygon' : token.name}
@@ -344,11 +351,11 @@ export default function Pulse() {
                     </div>
                   </div>
 
-                  <div className="shrink-0 px-2">
+                  <div className="os-pulse-token-chart shrink-0 px-2">
                     <Sparkline prices={token.sparkline_in_7d?.price} isUp={isUp} />
                   </div>
 
-                  <div className="text-right font-mono shrink-0">
+                  <div className="os-pulse-token-price text-right font-mono shrink-0">
                     <p className="text-sm text-[var(--accent-brass)]">${formatPrice(token.current_price)}</p>
                     <p className={`text-xs flex items-center justify-end gap-1 mt-0.5 ${isUp ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
                       {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -362,47 +369,142 @@ export default function Pulse() {
         )}
       </div>
 
-      <div>
-        <h2 className="text-sm font-mono uppercase tracking-wider text-[var(--text-muted)] mb-3">Market Stories</h2>
-        {loadingNews && news.length === 0 ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="glass-card px-4 py-3 animate-pulse h-16" />
-            ))}
-          </div>
-        ) : news.length === 0 ? (
-          <div className="text-center text-[var(--text-muted)] py-8">No stories available.</div>
-        ) : (
-          <div className="space-y-3">
-            {news.map((item, idx) => (
-              <div
-                key={idx}
-                className="glass-card px-4 py-3 flex items-start gap-3"
-              >
-                {item.image ? (
-                  <img src={item.image} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
-                ) : (
-                  <div className="w-16 h-16 rounded-xl shrink-0 bg-gradient-to-br from-[var(--accent-brass)]/25 to-[var(--accent-indigo)]/15" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[var(--text-primary)] font-medium text-sm line-clamp-2">{item.title}</p>
-                  <p className="text-xs text-[var(--text-muted)] line-clamp-2 mt-1">{item.description}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--accent-brass)] hover:underline flex items-center gap-1">
-                      Read more <ExternalLink size={11} />
-                    </a>
-                    <span className="text-xs text-[var(--text-muted)]">
-                      · {item.source} · {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : ''}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <div className="os-pulse-news-section">
+  <div className="os-pulse-section-head-row flex items-end justify-between mb-4">
+    <div>
+      <h2 className="os-pulse-section-head text-sm font-mono uppercase tracking-wider text-[var(--text-muted)]">
+        Market Stories
+      </h2>
+      <p className="os-pulse-section-subtitle mt-1 text-sm text-[var(--text-secondary)]">
+        The signals shaping digital markets.
+      </p>
+    </div>
+    <span className="hidden sm:block text-xs font-mono text-[var(--text-muted)]">
+      LIVE INTELLIGENCE
+    </span>
+  </div>
 
-      <TokenDetailModal
+  {loadingNews && news.length === 0 ? (
+    <div className="os-pulse-news-grid">
+      <div className="glass-card os-pulse-news-feature animate-pulse min-h-[300px]" />
+      <div className="os-pulse-news-support-grid">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="glass-card os-pulse-news-support animate-pulse min-h-[190px]" />
+        ))}
+      </div>
+    </div>
+  ) : news.length === 0 ? (
+    <div className="glass-card text-center text-[var(--text-muted)] py-12 rounded-2xl">
+      No stories available.
+    </div>
+  ) : (
+    <div className="os-pulse-news-grid">
+      {news[0] && (
+        <a
+          href={news[0].url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="glass-card os-pulse-news-feature group"
+        >
+          <div className="os-pulse-news-feature-media">
+            {news[0].image ? (
+              <img
+                src={news[0].image}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[var(--accent-brass)]/25 via-[var(--bg-tertiary)] to-[var(--accent-indigo)]/15" />
+            )}
+            <div className="os-pulse-news-feature-overlay" />
+            <div className="os-pulse-news-feature-label">
+              FEATURED
+            </div>
+          </div>
+
+          <div className="os-pulse-news-feature-content">
+            <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)] mb-3">
+              <span>{news[0].source || 'Market Intelligence'}</span>
+              {news[0].publishedAt && (
+                <>
+                  <span>•</span>
+                  <span>{new Date(news[0].publishedAt).toLocaleDateString()}</span>
+                </>
+              )}
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-semibold leading-tight tracking-tight text-[var(--text-primary)] group-hover:text-[var(--accent-brass)] transition-colors">
+              {news[0].title}
+            </h3>
+
+            {news[0].description && (
+              <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)] line-clamp-3">
+                {news[0].description}
+              </p>
+            )}
+
+            <div className="mt-5 inline-flex items-center gap-2 text-xs font-medium text-[var(--accent-brass)]">
+              Read intelligence
+              <ExternalLink size={12} />
+            </div>
+          </div>
+        </a>
+      )}
+
+      <div className="os-pulse-news-support-grid">
+        {news.slice(1).map((item, idx) => (
+          <a
+            key={idx}
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="glass-card os-pulse-news-support group"
+          >
+            <div className="os-pulse-news-support-media">
+              {item.image ? (
+                <img
+                  src={item.image}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[var(--accent-brass)]/20 to-[var(--accent-indigo)]/10" />
+              )}
+            </div>
+
+            <div className="os-pulse-news-support-content">
+              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                <span>{item.source || 'Market'}</span>
+                {item.publishedAt && (
+                  <>
+                    <span>•</span>
+                    <span>{new Date(item.publishedAt).toLocaleDateString()}</span>
+                  </>
+                )}
+              </div>
+
+              <h3 className="text-sm sm:text-[15px] font-semibold leading-snug text-[var(--text-primary)] line-clamp-3 group-hover:text-[var(--accent-brass)] transition-colors">
+                {item.title}
+              </h3>
+
+              {item.description && (
+                <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)] line-clamp-2">
+                  {item.description}
+                </p>
+              )}
+
+              <div className="mt-3 flex items-center gap-1 text-[11px] text-[var(--accent-brass)]">
+                Read more <ExternalLink size={10} />
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+
+<TokenDetailModal
         token={selectedToken}
         detail={detail}
         loading={detailLoading}
