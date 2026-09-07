@@ -2035,3 +2035,1879 @@ body {
     transition: none;
   }
 }
+
+/* =========================================================
+   OS VAULT — PREMIUM PRODUCT SURFACE
+   Presentation layer only.
+   Wallet, staking, governance and transaction logic untouched.
+   ========================================================= */
+
+.os-vault-page {
+  --vault-violet: #8b5cf6;
+  --vault-violet-soft: rgba(139, 92, 246, 0.10);
+  --vault-violet-border: rgba(139, 92, 246, 0.18);
+}
+
+.os-vault-page > * {
+  position: relative;
+}
+
+.os-vault-header {
+  isolation: isolate;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.os-vault-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      rgba(255,255,255,0.025) 42%,
+      transparent 68%
+    );
+  opacity: 0.7;
+}
+
+.os-vault-tabs {
+  scrollbar-width: none;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--bg-secondary) 97%, var(--accent-brass) 3%),
+      var(--bg-secondary)
+    );
+}
+
+.os-vault-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.os-vault-tabs button {
+  position: relative;
+  min-height: 43px;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-vault-tabs button:hover {
+  transform: translateY(-1px);
+}
+
+.os-vault-action-grid {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--bg-secondary) 98%, var(--accent-brass) 2%),
+      var(--bg-secondary)
+    );
+}
+
+.os-vault-action-grid > button {
+  position: relative;
+  min-height: 112px;
+  transition:
+    background 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-vault-action-grid > button::after {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border-radius: 18px;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 12px 35px var(--vault-violet-soft);
+  transition: opacity 180ms ease;
+}
+
+.os-vault-action-grid > button:hover::after {
+  opacity: 1;
+}
+
+.os-vault-action-grid > button:hover {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent-brass) 4%, transparent),
+      transparent
+    );
+}
+
+@media (max-width: 640px) {
+  .os-vault-page {
+    padding-bottom: 18px;
+  }
+
+  .os-vault-header {
+    border-radius: 24px;
+  }
+
+  .os-vault-tabs {
+    border-radius: 18px;
+  }
+
+  .os-vault-tabs button {
+    min-height: 44px;
+    padding-left: 15px;
+    padding-right: 15px;
+    font-size: 13px;
+  }
+
+  .os-vault-action-grid > button {
+    min-height: 96px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-vault-header,
+  .os-vault-tabs button,
+  .os-vault-action-grid > button,
+  .os-vault-action-grid > button::after {
+    transition: none;
+  }
+}
+
+/* =========================================================
+   OS VAULT — BALANCE + ASSET REFINEMENT
+   Presentation only.
+   ========================================================= */
+
+.os-vault-hero-content {
+  min-height: 280px;
+}
+
+.os-vault-hero-brand {
+  opacity: 0.96;
+}
+
+.os-vault-balance-block {
+  padding-top: 2px;
+}
+
+.os-vault-balance-value {
+  display: flex;
+  align-items: baseline;
+  min-height: 68px;
+}
+
+.os-vault-balance-value > span {
+  font-variant-numeric: tabular-nums;
+}
+
+.os-vault-address {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--bg-secondary) 88%, var(--vault-violet) 12%),
+      var(--surface-hover)
+    ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--vault-violet) 20%,
+    var(--border-color)
+  ) !important;
+  box-shadow:
+    0 8px 26px rgba(0,0,0,0.10),
+    inset 0 1px 0 rgba(255,255,255,0.025);
+}
+
+.os-vault-address:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--vault-violet) 38%,
+    var(--border-bright)
+  ) !important;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.14),
+    0 0 0 3px rgba(139,92,246,0.06);
+}
+
+.os-vault-hero-footer {
+  border-color: color-mix(
+    in srgb,
+    var(--vault-violet) 12%,
+    var(--glass-border)
+  );
+}
+
+.os-vault-close-card {
+  box-shadow:
+    0 22px 65px rgba(0,0,0,0.16),
+    0 0 0 1px rgba(139,92,246,0.025);
+}
+
+.os-vault-close-card:hover {
+  border-color: rgba(139,92,246,0.30) !important;
+  box-shadow:
+    0 28px 78px rgba(0,0,0,0.19),
+    0 12px 45px rgba(139,92,246,0.07);
+}
+
+.os-vault-close-card button {
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-vault-close-card button:hover {
+  box-shadow: 0 8px 25px rgba(139,92,246,0.10);
+}
+
+.os-vault-network-bar {
+  padding: 3px;
+  border-radius: 15px;
+  width: fit-content;
+  max-width: 100%;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--bg-secondary) 96%, var(--vault-violet) 4%),
+      var(--surface-hover)
+    );
+}
+
+.os-vault-network-bar > span {
+  padding-left: 8px;
+  padding-right: 3px;
+}
+
+.os-vault-network-bar button {
+  min-height: 34px;
+}
+
+@media (max-width: 640px) {
+  .os-vault-hero-content {
+    min-height: 245px;
+  }
+
+  .os-vault-balance-value {
+    min-height: 54px;
+  }
+
+  .os-vault-balance-value > span {
+    font-size: 2.35rem !important;
+    letter-spacing: -2.5px !important;
+  }
+
+  .os-vault-address {
+    margin-top: 18px !important;
+    max-width: 100%;
+  }
+
+  .os-vault-hero-footer {
+    margin-top: 22px !important;
+  }
+
+  .os-vault-close-card {
+    border-radius: 24px;
+  }
+
+  .os-vault-network-bar {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .os-vault-network-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .os-vault-network-bar > span {
+    flex-shrink: 0;
+  }
+
+  .os-vault-network-bar button {
+    flex-shrink: 0;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-vault-address,
+  .os-vault-close-card,
+  .os-vault-close-card button {
+    transition: none;
+  }
+}
+
+/* =========================================================
+   OS VAULT — PORTFOLIO + STAKING REFINEMENT
+   Presentation only. Wallet/staking logic untouched.
+   ========================================================= */
+
+.os-vault-assets-panel {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 97%, var(--accent-brass) 3%),
+      var(--surface-hover)
+    );
+}
+
+.os-vault-assets-header {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-secondary) 96%, var(--vault-violet) 4%),
+      transparent
+    );
+}
+
+.os-vault-asset-row {
+  min-height: 72px;
+  background: transparent;
+}
+
+.os-vault-asset-row:hover {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--vault-violet) 5%, transparent),
+      color-mix(in srgb, var(--accent-brass) 2%, transparent)
+    ) !important;
+}
+
+.os-vault-asset-row > div:first-child {
+  min-width: 0;
+}
+
+.os-vault-asset-row .font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.os-vault-staking-metrics {
+  align-items: stretch;
+}
+
+.os-vault-staking-metric {
+  isolation: isolate;
+  min-height: 124px;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--accent-brass) 7%, transparent),
+      transparent 42%
+    ),
+    var(--glass-bg);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-vault-staking-metric::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(255,255,255,0.025) 46%,
+      transparent 72%
+    );
+}
+
+.os-vault-staking-metric:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(
+    in srgb,
+    var(--accent-brass) 22%,
+    var(--glass-border)
+  );
+  box-shadow:
+    0 18px 50px rgba(0,0,0,0.12),
+    0 0 0 1px color-mix(in srgb, var(--accent-brass) 3%, transparent);
+}
+
+.os-vault-staking-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 2px 2px;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+.os-vault-stake-position {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--vault-violet) 7%, transparent),
+      transparent 38%
+    ),
+    var(--glass-bg);
+  box-shadow:
+    0 12px 38px rgba(0,0,0,0.08);
+}
+
+.os-vault-stake-position:hover {
+  box-shadow:
+    0 18px 48px rgba(0,0,0,0.12),
+    0 0 0 1px color-mix(in srgb, var(--vault-violet) 4%, transparent);
+}
+
+.os-vault-stake-position .font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.os-vault-stake-position button {
+  min-height: 42px;
+}
+
+.os-vault-new-stake {
+  position: relative;
+  overflow: hidden;
+  min-height: 56px;
+}
+
+.os-vault-new-stake::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      105deg,
+      transparent 15%,
+      rgba(255,255,255,0.10) 50%,
+      transparent 85%
+    );
+  transform: translateX(-120%);
+  transition: transform 500ms ease;
+}
+
+.os-vault-new-stake:hover::before {
+  transform: translateX(120%);
+}
+
+@media (max-width: 640px) {
+  .os-vault-asset-row {
+    min-height: 68px;
+    padding-top: 13px;
+    padding-bottom: 13px;
+  }
+
+  .os-vault-staking-metric {
+    min-height: 112px;
+    border-radius: 19px;
+    padding: 16px;
+  }
+
+  .os-vault-staking-section-head {
+    margin-top: 2px;
+    margin-bottom: 2px;
+  }
+
+  .os-vault-stake-position {
+    border-radius: 19px;
+    padding: 16px;
+  }
+
+  .os-vault-stake-position button {
+    min-height: 44px;
+  }
+
+  .os-vault-new-stake {
+    min-height: 54px;
+    border-radius: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-vault-staking-metric,
+  .os-vault-new-stake::before {
+    transition: none;
+  }
+}
+
+
+/* =========================================================
+   OS VAULT — STAKING ACTION FLOWS
+   Presentation only. Staking logic untouched.
+   ========================================================= */
+
+.os-vault-stake-modal-backdrop,
+.os-vault-unstake-backdrop {
+  background:
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(139,92,246,0.08),
+      transparent 42%
+    ),
+    rgba(8,8,10,0.62);
+}
+
+.os-vault-stake-modal,
+.os-vault-unstake-modal {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--vault-violet) 16%,
+    var(--glass-border)
+  );
+  box-shadow:
+    0 35px 110px rgba(0,0,0,0.38),
+    0 0 0 1px rgba(255,255,255,0.015);
+}
+
+.os-vault-stake-modal::before,
+.os-vault-unstake-modal::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--accent-brass) 55%, transparent),
+      transparent
+    );
+}
+
+.os-vault-modal-kicker {
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-brass-bright);
+}
+
+.os-vault-stake-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.os-vault-stake-progress-step {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--glass-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.os-vault-stake-progress-step.is-active {
+  background: var(--accent-brass);
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+
+.os-vault-stake-progress-labels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: -1px;
+  font-size: 8px;
+  line-height: 12px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--text-muted);
+}
+
+.os-vault-stake-progress-labels span:nth-child(2) {
+  text-align: center;
+}
+
+.os-vault-stake-progress-labels span:last-child {
+  text-align: right;
+}
+
+.os-vault-stake-progress-labels .is-active {
+  color: var(--accent-brass-bright);
+}
+
+.os-vault-stake-intro {
+  padding: 2px 1px;
+}
+
+.os-vault-stake-amount {
+  margin-top: 2px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--accent-brass) 4%, var(--bg-secondary)),
+      var(--surface-hover)
+    );
+}
+
+.os-vault-stake-amount .input-glass {
+  min-height: 54px;
+  font-size: 21px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  border-radius: 14px;
+  background: var(--bg-secondary);
+}
+
+.os-vault-term-card {
+  min-height: 92px;
+  background:
+    linear-gradient(
+      145deg,
+      var(--bg-secondary),
+      var(--surface-hover)
+    );
+}
+
+.os-vault-term-card:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--accent-brass) 30%,
+    var(--glass-border)
+  ) !important;
+  transform: translateY(-1px);
+}
+
+.os-vault-term-card.is-selected {
+  border-color: var(--accent-brass) !important;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(249,115,22,0.10),
+      transparent 48%
+    ),
+    color-mix(in srgb, var(--accent-brass) 5%, var(--bg-secondary));
+  box-shadow:
+    0 10px 28px rgba(249,115,22,0.08),
+    inset 0 0 0 1px rgba(249,115,22,0.05);
+}
+
+.os-vault-treasury-card {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(139,92,246,0.09),
+      transparent 42%
+    ),
+    var(--surface-hover);
+}
+
+.os-vault-tx-input-wrap {
+  position: relative;
+}
+
+.os-vault-tx-input-wrap .input-glass {
+  padding-right: 86px;
+  min-height: 50px;
+  font-family: var(--font-mono);
+}
+
+.os-vault-tx-badge {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  padding: 4px 7px;
+  border-radius: 7px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.10em;
+}
+
+.os-vault-unstake-summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 98%, var(--accent-brass) 2%),
+      var(--surface-hover)
+    );
+}
+
+.os-vault-unstake-summary strong {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.os-vault-unstake-summary strong span {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.os-vault-early-warning {
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .os-vault-stake-modal,
+  .os-vault-unstake-modal {
+    border-radius: 22px;
+    max-height: calc(100vh - 28px);
+    overflow-y: auto;
+  }
+
+  .os-vault-term-card {
+    min-height: 88px;
+  }
+
+  .os-vault-stake-amount {
+    padding: 12px;
+  }
+
+  .os-vault-stake-amount .input-glass {
+    min-height: 52px;
+    font-size: 19px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-vault-term-card {
+    transition: none;
+  }
+}
+
+
+/* =========================================================
+   OS VAULT — GOVERNANCE
+   Premium presentation layer.
+   Governance logic intentionally untouched.
+   ========================================================= */
+
+.os-vault-governance {
+  --governance-violet: #8b5cf6;
+  --governance-violet-soft: rgba(139, 92, 246, 0.08);
+}
+
+.os-vault-governance-header {
+  isolation: isolate;
+  background:
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(139,92,246,0.13),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 8% 100%,
+      rgba(249,115,22,0.055),
+      transparent 38%
+    ),
+    var(--glass-bg);
+}
+
+.os-vault-governance-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(255,255,255,0.025) 46%,
+      transparent 72%
+    );
+}
+
+.os-vault-governance-icon {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  color: var(--accent-brass-bright);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--accent-brass) 10%, var(--bg-secondary)),
+      var(--surface-hover)
+    );
+  border: 1px solid color-mix(
+    in srgb,
+    var(--accent-brass) 18%,
+    var(--glass-border)
+  );
+  box-shadow: 0 8px 26px var(--accent-glow);
+}
+
+.os-vault-governance-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(74,128,98,0.18);
+  background: rgba(74,128,98,0.055);
+  color: var(--success);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.os-vault-governance-live > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 10px rgba(74,128,98,0.55);
+}
+
+.os-vault-governance-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.os-vault-governance-stats > div {
+  min-width: 0;
+  padding: 12px 13px;
+  border-radius: 15px;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 97%, var(--governance-violet) 3%),
+      var(--surface-hover)
+    );
+}
+
+.os-vault-governance-stats span {
+  display: block;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  line-height: 12px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.os-vault-governance-stats strong {
+  display: block;
+  margin-top: 7px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 18px;
+  font-weight: 700;
+}
+
+.os-vault-governance-stats small {
+  font-size: 8px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.os-vault-governance-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 3px 2px;
+}
+
+.os-vault-governance-empty {
+  border: 1px solid var(--glass-border);
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      var(--governance-violet-soft),
+      transparent 48%
+    ),
+    var(--glass-bg);
+}
+
+.os-vault-proposal-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--governance-violet) 6%, transparent),
+      transparent 34%
+    ),
+    var(--glass-bg);
+  box-shadow:
+    0 12px 38px rgba(0,0,0,0.075);
+  cursor: pointer;
+}
+
+.os-vault-proposal-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--governance-violet);
+  opacity: 0.22;
+  transition: opacity 180ms ease;
+}
+
+.os-vault-proposal-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(
+    in srgb,
+    var(--governance-violet) 26%,
+    var(--glass-border)
+  );
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--governance-violet) 9%, transparent),
+      transparent 38%
+    ),
+    var(--glass-bg);
+  box-shadow:
+    0 20px 55px rgba(0,0,0,0.11),
+    0 0 0 1px rgba(139,92,246,0.025);
+}
+
+.os-vault-proposal-card:hover::before {
+  opacity: 0.7;
+}
+
+.os-vault-proposal-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--surface-hover);
+  border: 1px solid var(--glass-border);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.os-vault-proposal-status > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 9px currentColor;
+}
+
+.os-vault-proposal-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+}
+
+.os-vault-proposal-meta > span {
+  white-space: nowrap;
+}
+
+.os-vault-proposal-vote-for {
+  color: var(--success);
+}
+
+.os-vault-proposal-vote-against {
+  color: var(--danger);
+}
+
+.os-vault-proposal-open {
+  margin-left: auto;
+  color: var(--text-secondary);
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.os-vault-proposal-card:hover .os-vault-proposal-open {
+  color: var(--accent-brass-bright);
+  transform: translateX(2px);
+}
+
+.os-vault-new-proposal {
+  position: relative;
+  overflow: hidden;
+}
+
+.os-vault-new-proposal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      105deg,
+      transparent 15%,
+      rgba(255,255,255,0.14) 50%,
+      transparent 85%
+    );
+  transform: translateX(-120%);
+  transition: transform 500ms ease;
+}
+
+.os-vault-new-proposal:hover::before {
+  transform: translateX(120%);
+}
+
+.os-vault-governance-modal-backdrop {
+  background:
+    radial-gradient(
+      circle at 50% 18%,
+      rgba(139,92,246,0.09),
+      transparent 40%
+    ),
+    rgba(8,8,10,0.64);
+}
+
+.os-vault-governance-modal {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--governance-violet) 16%,
+    var(--glass-border)
+  );
+  box-shadow:
+    0 35px 110px rgba(0,0,0,0.38),
+    0 0 0 1px rgba(255,255,255,0.015);
+}
+
+.os-vault-governance-modal::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--accent-brass) 55%, transparent),
+      transparent
+    );
+}
+
+.os-vault-proposal-modal .input-glass {
+  min-height: 50px;
+  border-radius: 14px;
+}
+
+.os-vault-proposal-modal textarea.input-glass {
+  padding-top: 13px;
+  padding-bottom: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .os-vault-governance-header {
+    border-radius: 22px;
+  }
+
+  .os-vault-governance-stats {
+    gap: 6px;
+  }
+
+  .os-vault-governance-stats > div {
+    padding: 11px 10px;
+    border-radius: 13px;
+  }
+
+  .os-vault-governance-stats strong {
+    font-size: 13px;
+  }
+
+  .os-vault-proposal-card {
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  .os-vault-proposal-meta {
+    gap: 6px;
+  }
+
+  .os-vault-proposal-open {
+    width: 100%;
+    margin-left: 0;
+    padding-top: 3px;
+  }
+
+  .os-vault-governance-modal {
+    border-radius: 22px;
+    max-height: calc(100vh - 28px);
+    overflow-y: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-vault-proposal-card,
+  .os-vault-proposal-card::before,
+  .os-vault-proposal-open,
+  .os-vault-new-proposal::before {
+    transition: none;
+  }
+}
+
+
+/* =========================================================
+   OS VAULT — GOVERNANCE INTERACTION PASS
+   Decision controls + proposal detail presentation.
+   Logic intentionally untouched.
+   ========================================================= */
+
+.os-vault-governance-voting-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 15px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(139,92,246,0.08),
+      transparent 42%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 97%, var(--accent-brass) 3%),
+      var(--surface-hover)
+    );
+}
+
+.os-vault-governance-voting-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      rgba(255,255,255,0.025) 48%,
+      transparent 72%
+    );
+}
+
+.os-vault-voting-weight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 13px;
+  background: var(--surface-hover);
+  border: 1px solid var(--glass-border);
+}
+
+.os-vault-voting-weight-label {
+  font-size: 8px;
+  line-height: 12px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.os-vault-voting-weight-value {
+  font-size: 13px;
+  line-height: 17px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent-brass-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.os-vault-vote-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.os-vault-vote-button {
+  position: relative;
+  min-height: 48px;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-vault-vote-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      110deg,
+      transparent 15%,
+      rgba(255,255,255,0.08) 50%,
+      transparent 85%
+    );
+  transform: translateX(-120%);
+  transition: transform 450ms ease;
+}
+
+.os-vault-vote-button:hover::after {
+  transform: translateX(120%);
+}
+
+.os-vault-vote-button:hover {
+  transform: translateY(-1px);
+}
+
+.os-vault-vote-for:hover {
+  color: var(--success);
+  border-color: color-mix(
+    in srgb,
+    var(--success) 38%,
+    var(--glass-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--success) 7%,
+    var(--surface-hover)
+  );
+  box-shadow: 0 10px 28px rgba(74,128,98,0.08);
+}
+
+.os-vault-vote-against:hover {
+  color: var(--danger);
+  border-color: color-mix(
+    in srgb,
+    var(--danger) 38%,
+    var(--glass-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--danger) 7%,
+    var(--surface-hover)
+  );
+  box-shadow: 0 10px 28px rgba(193,85,74,0.08);
+}
+
+.os-vault-vote-abstain:hover {
+  color: var(--text-primary);
+  border-color: var(--border-bright);
+  background: var(--surface-active);
+}
+
+.os-vault-vote-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.os-vault-vote-closed {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.os-vault-founder-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(216,154,58,0.18);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(216,154,58,0.08),
+      transparent 48%
+    ),
+    var(--surface-hover);
+}
+
+.os-vault-founder-panel::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent-brass);
+  opacity: 0.55;
+}
+
+.os-vault-founder-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--accent-brass-bright);
+}
+
+.os-vault-founder-panel textarea {
+  min-height: 82px;
+  border-radius: 14px;
+}
+
+.os-vault-founder-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.os-vault-founder-approve,
+.os-vault-founder-reject {
+  min-height: 44px;
+  border-radius: 13px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.os-vault-founder-approve:hover,
+.os-vault-founder-reject:hover {
+  transform: translateY(-1px);
+}
+
+.os-vault-proposal-decision {
+  padding: 13px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+}
+
+.os-vault-proposal-detail-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 3px;
+}
+
+.os-vault-proposal-detail-stat + .os-vault-proposal-detail-stat {
+  border-top: 1px dashed var(--glass-border);
+}
+
+.os-vault-proposal-detail-stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.os-vault-proposal-detail-stat-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.os-vault-governance-modal .btn-primary {
+  min-height: 46px;
+  border-radius: 14px;
+}
+
+@media (max-width: 640px) {
+  .os-vault-governance-voting-panel {
+    padding: 13px;
+    border-radius: 18px;
+  }
+
+  .os-vault-vote-actions {
+    gap: 6px;
+  }
+
+  .os-vault-vote-button {
+    min-height: 46px;
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 9px;
+  }
+
+  .os-vault-founder-panel {
+    padding: 13px;
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-vault-vote-button,
+  .os-vault-vote-button::after,
+  .os-vault-founder-approve,
+  .os-vault-founder-reject {
+    transition: none;
+  }
+}
+
+/* =========================================================
+   OS VAULT — WALLET MANAGEMENT
+   Presentation layer only. Wallet logic untouched.
+   ========================================================= */
+
+.os-vault-wallets-tab {
+  --wallet-violet: #8b5cf6;
+  --wallet-violet-soft: rgba(139, 92, 246, 0.10);
+  --wallet-gold-soft: rgba(249, 115, 22, 0.08);
+}
+
+.os-vault-wallets-head {
+  padding: 4px 2px 2px;
+}
+
+.os-vault-wallets-kicker {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-brass-bright);
+}
+
+.os-vault-wallet-actions {
+  flex-shrink: 0;
+}
+
+.os-vault-wallet-head-action {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 11px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-vault-wallet-head-action span {
+  color: var(--accent-brass-bright);
+}
+
+.os-vault-wallet-head-action:hover {
+  transform: translateY(-1px);
+  color: var(--text-primary);
+  border-color: var(--border-bright);
+  background: var(--bg-secondary);
+}
+
+.os-vault-wallet-head-action-primary {
+  border-color: color-mix(
+    in srgb,
+    var(--accent-brass) 25%,
+    var(--glass-border)
+  );
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-brass) 9%, var(--bg-secondary)),
+      var(--bg-secondary)
+    );
+  box-shadow: 0 8px 25px var(--accent-glow);
+}
+
+.os-vault-wallet-list {
+  display: grid;
+  gap: 9px;
+}
+
+.os-vault-wallet-card {
+  position: relative;
+  min-height: 72px;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 98%, var(--wallet-violet) 2%),
+      var(--surface-hover)
+    );
+  box-shadow: 0 8px 26px rgba(0,0,0,0.045);
+}
+
+.os-vault-wallet-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 180ms ease, box-shadow 180ms ease;
+}
+
+.os-vault-wallet-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-bright) !important;
+  box-shadow: 0 14px 35px rgba(0,0,0,0.08);
+}
+
+.os-vault-wallet-card.is-active {
+  border-color: color-mix(
+    in srgb,
+    var(--accent-brass) 45%,
+    var(--glass-border)
+  ) !important;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--accent-brass) 8%, transparent),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 95%, var(--accent-brass) 5%),
+      var(--surface-hover)
+    ) !important;
+  box-shadow:
+    0 14px 40px rgba(0,0,0,0.08),
+    0 0 0 1px color-mix(in srgb, var(--accent-brass) 4%, transparent);
+}
+
+.os-vault-wallet-card.is-active::before {
+  background: var(--accent-brass);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+.os-vault-wallet-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-active);
+  color: var(--text-muted);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-vault-wallet-avatar.is-primary {
+  color: var(--accent-brass-bright);
+  border-color: color-mix(
+    in srgb,
+    var(--accent-brass) 24%,
+    var(--glass-border)
+  );
+  background:
+    radial-gradient(
+      circle,
+      color-mix(in srgb, var(--accent-brass) 10%, transparent),
+      transparent 72%
+    ),
+    var(--surface-active);
+}
+
+.os-vault-wallet-card.is-active .os-vault-wallet-avatar {
+  color: var(--accent-brass-bright);
+  border-color: color-mix(
+    in srgb,
+    var(--accent-brass) 32%,
+    var(--glass-border)
+  );
+  box-shadow: 0 0 22px var(--accent-glow);
+}
+
+.os-vault-wallet-badge {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.os-vault-wallet-badge.is-primary {
+  border-color: color-mix(
+    in srgb,
+    var(--accent-brass) 22%,
+    var(--glass-border)
+  );
+  color: var(--accent-brass-bright);
+  background: color-mix(
+    in srgb,
+    var(--accent-brass) 5%,
+    var(--surface-hover)
+  );
+}
+
+.os-vault-wallet-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--accent-brass-bright);
+}
+
+.os-vault-wallet-active span {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent-brass);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.os-vault-active-wallet {
+  isolation: isolate;
+  min-height: 270px;
+}
+
+.os-vault-active-wallet-glow {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  right: -90px;
+  top: -120px;
+  border-radius: 999px;
+  background: rgba(139,92,246,0.10);
+  filter: blur(55px);
+  pointer-events: none;
+}
+
+.os-vault-active-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 12px rgba(74,222,128,0.35);
+}
+
+.os-vault-wallet-status {
+  flex-shrink: 0;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+}
+
+.os-vault-active-balance {
+  font-family: var(--font-display);
+  font-size: clamp(42px, 6vw, 58px);
+  line-height: 0.98;
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.os-vault-wallet-action-grid {
+  position: relative;
+  z-index: 1;
+}
+
+.os-vault-wallet-action-grid > button {
+  min-height: 50px;
+  border-radius: 15px !important;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.os-vault-wallet-action-grid > button:hover {
+  transform: translateY(-1px);
+}
+
+.os-vault-wallet-activity-head {
+  padding: 3px 2px 2px;
+}
+
+.os-vault-wallet-history {
+  margin-top: 10px;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 97%, var(--accent-brass) 3%),
+      var(--surface-hover)
+    );
+}
+
+.os-vault-wallet-history-row {
+  min-height: 66px;
+  transition: background 160ms ease;
+}
+
+.os-vault-wallet-history-row:hover {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent-brass) 4%, transparent),
+      transparent
+    );
+}
+
+.os-vault-wallet-picker-backdrop {
+  background:
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(139,92,246,0.08),
+      transparent 42%
+    ),
+    rgba(8,8,10,0.62);
+}
+
+.os-vault-wallet-picker {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--wallet-violet, #8b5cf6) 18%,
+    var(--glass-border)
+  );
+  box-shadow:
+    0 35px 100px rgba(0,0,0,0.38),
+    0 0 0 1px rgba(255,255,255,0.015);
+}
+
+.os-vault-wallet-picker-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-hover);
+  color: var(--accent-brass-bright);
+}
+
+@media (max-width: 640px) {
+  .os-vault-wallets-head {
+    align-items: flex-end;
+  }
+
+  .os-vault-wallet-actions {
+    gap: 6px;
+  }
+
+  .os-vault-wallet-head-action {
+    min-height: 36px;
+    padding: 0 9px;
+    font-size: 10px;
+  }
+
+  .os-vault-wallet-card {
+    min-height: 68px;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .os-vault-wallet-avatar {
+    width: 35px;
+    height: 35px;
+    flex-basis: 35px;
+  }
+
+  .os-vault-active-wallet {
+    min-height: 245px;
+    border-radius: 23px;
+  }
+
+  .os-vault-active-balance {
+    font-size: 40px;
+  }
+
+  .os-vault-wallet-action-grid {
+    gap: 7px;
+  }
+
+  .os-vault-wallet-action-grid > button {
+    min-height: 48px;
+    font-size: 12px;
+  }
+
+  .os-vault-wallet-activity-head {
+    margin-top: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-vault-wallet-head-action,
+  .os-vault-wallet-card,
+  .os-vault-wallet-avatar,
+  .os-vault-wallet-action-grid > button,
+  .os-vault-wallet-history-row {
+    transition: none;
+  }
+}

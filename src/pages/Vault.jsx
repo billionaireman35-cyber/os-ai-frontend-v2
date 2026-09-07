@@ -1093,7 +1093,7 @@ function StandardWallet() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="os-vault-governance space-y-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       {/* OS VAULT — Premium Hero */}
@@ -1319,7 +1319,7 @@ function StandardWallet() {
               boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
             }}
           >
-            <div className="grid grid-cols-4 divide-x divide-[var(--glass-border)]">
+            <div className="os-vault-action-grid grid grid-cols-4 divide-x divide-[var(--glass-border)]">
 
               {/* Send */}
               <button
@@ -1603,8 +1603,8 @@ function StandardWallet() {
           )}
 
           {/* Other Assets */}
-          <div className="overflow-hidden rounded-[26px] border border-[var(--border-color)] bg-[var(--surface-hover)] shadow-[0_18px_55px_rgba(0,0,0,0.18)]">
-            <div className="px-4 sm:px-5 py-3 border-b border-[var(--glass-border)] flex items-center justify-between">
+          <div className="os-vault-assets-panel overflow-hidden rounded-[26px] border border-[var(--border-color)] bg-[var(--surface-hover)] shadow-[0_18px_55px_rgba(0,0,0,0.18)]">
+            <div className="os-vault-assets-header px-4 sm:px-5 py-3.5 border-b border-[var(--glass-border)] flex items-center justify-between">
               <p className="text-[9px] uppercase tracking-[2px] font-semibold text-[var(--text-muted)]">
                 Other Assets
               </p>
@@ -1627,7 +1627,7 @@ function StandardWallet() {
                 return (
                   <div
                     key={i}
-                    className={`group flex items-center justify-between gap-2.5 px-3.5 sm:px-5 py-4 hover:bg-[var(--surface-hover)] transition-colors ${
+                    className={`os-vault-asset-row group flex items-center justify-between gap-2.5 px-3.5 sm:px-5 py-4 hover:bg-[var(--surface-hover)] transition-colors ${
                       i < filtered.length - 1 ? 'border-b border-[var(--glass-border)]' : ''
                     }`}
                   >
@@ -1736,9 +1736,15 @@ function StandardWallet() {
         </div>
       )}
       {showAssetPicker && (
-        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
-          <div className="glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-display font-bold mb-2 text-[var(--text-primary)]">Send which asset?</h3>
+        <div className="os-vault-wallet-picker-backdrop fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
+          <div className="os-vault-wallet-picker glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="os-vault-wallet-picker-icon"><Send size={14} /></span>
+              <div>
+                <p className="text-[9px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)]">OS VAULT</p>
+                <h3 className="text-lg font-display font-bold text-[var(--text-primary)]">Choose an asset</h3>
+              </div>
+            </div>
             {(closeAsset ? [closeAsset, ...filtered] : filtered).map((a, i) => (
               <button key={i} onClick={() => { setSendAsset(a); setShowAssetPicker(false); setShowSendModal(true); }}
                 className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-[var(--surface-hover)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]">
@@ -1908,8 +1914,8 @@ function Staking() {
     <div className="space-y-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-[var(--glass-border)] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
+      <div className="os-vault-staking-metrics grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="os-vault-staking-metric relative overflow-hidden glass-panel rounded-[22px] p-5 border border-[var(--glass-border)] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[9.5px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">Total Staked</p>
             <Coins size={15} className="text-[var(--accent-brass-bright)]" />
@@ -1933,10 +1939,16 @@ function Staking() {
 
       {!loading && (
         <>
-          <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Your Positions</p>
+          <div className="os-vault-staking-section-head">
+            <div>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-brass-bright)]">CLOSE Yield</p>
+              <p className="mt-1 text-lg font-display font-semibold tracking-tight text-[var(--text-primary)]">Your Positions</p>
+            </div>
+            <span className="text-[9px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Active stakes</span>
+          </div>
 
           {positions.length === 0 ? (
-            <div className="glass-panel rounded-2xl p-8 text-center">
+            <div className="os-vault-governance-empty rounded-[22px] p-9 text-center">
               <p className="text-sm text-[var(--text-muted)]">No stakes yet. Open one to start earning yield.</p>
             </div>
           ) : (
@@ -1949,7 +1961,7 @@ function Staking() {
                 return (
                   <div
                     key={p.id}
-                    className="relative overflow-hidden glass-panel rounded-[22px] p-5 border border-[var(--glass-border)] transition-all duration-200 hover:border-[var(--glass-border-hover)] hover:-translate-y-px"
+                    className="os-vault-stake-position relative overflow-hidden glass-panel rounded-[22px] p-5 border border-[var(--glass-border)] transition-all duration-200 hover:border-[var(--glass-border-hover)] hover:-translate-y-px"
                     style={early ? { borderColor: 'rgba(216,154,58,0.35)' } : undefined}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -2007,7 +2019,7 @@ function Staking() {
 
           <button
             onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowNewStake(true); }}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-[20px] font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_12px_35px_rgba(216,154,58,0.16)] transition-all duration-200 hover:-translate-y-px active:scale-[0.99]"
+            className="os-vault-new-stake w-full flex items-center justify-center gap-2 py-4 rounded-[20px] font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_12px_35px_rgba(216,154,58,0.16)] transition-all duration-200 hover:-translate-y-px active:scale-[0.99]"
           >
             + New Stake
           </button>
@@ -2015,44 +2027,72 @@ function Staking() {
       )}
 
       {showNewStake && (
-        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={resetNewStake}>
-          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center">
-              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Stake</h3>
+        <div className="os-vault-stake-modal-backdrop fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={resetNewStake}>
+          <div className="os-vault-stake-modal glass-panel rounded-[26px] w-full max-w-md p-5 sm:p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="os-vault-modal-kicker">OS VAULT</span>
+                  <span className="h-1 w-1 rounded-full bg-[var(--accent-brass-bright)]" />
+                  <span className="text-[9px] uppercase tracking-[0.16em] text-[var(--text-muted)]">CLOSE STAKING</span>
+                </div>
+                <h3 className="text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">New Stake</h3>
+              </div>
               <button onClick={resetNewStake} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
             </div>
 
-            <div className="flex gap-1.5">
+            <div className="os-vault-stake-progress">
               {[1, 2, 3].map(s => (
-                <div key={s} className="flex-1 h-1 rounded-full" style={{ background: s <= stakeStep ? 'var(--accent-brass)' : 'var(--glass-border)' }} />
+                <div
+                  key={s}
+                  className={`os-vault-stake-progress-step ${s <= stakeStep ? 'is-active' : ''}`}
+                />
               ))}
+            </div>
+            <div className="os-vault-stake-progress-labels">
+              <span className={stakeStep === 1 ? 'is-active' : ''}>Choose</span>
+              <span className={stakeStep === 2 ? 'is-active' : ''}>Send</span>
+              <span className={stakeStep === 3 ? 'is-active' : ''}>Verify</span>
             </div>
 
             {stakeStep === 1 && (
               <>
-                <p className="text-sm text-[var(--text-secondary)]">Choose how much to stake and for how long.</p>
-                <div>
-                  <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount (CLOSE)</label>
+                <div className="os-vault-stake-intro">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">Choose your amount and lock term.</p>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1">Your selected term determines the APY and unlock schedule.</p>
+                </div>
+
+                <div className="os-vault-stake-amount">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[9px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">Amount</label>
+                    <span className="text-[9px] uppercase tracking-[0.12em] text-[var(--accent-brass-bright)]">CLOSE</span>
+                  </div>
                   <input type="text" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} className="input-glass w-full mt-1" placeholder="0" />
                   {closeAsset && (
-                    <p className="text-xs text-[var(--text-muted)] mt-1">Available: {closeAsset.balance.toFixed(0)} CLOSE</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-[10px] text-[var(--text-muted)]">Available balance</p>
+                      <p className="text-[10px] font-mono font-semibold text-[var(--text-secondary)]">{closeAsset.balance.toFixed(0)} CLOSE</p>
+                    </div>
                   )}
                 </div>
                 <div>
-                  <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide mb-2 block">Lock Term</label>
+                  <label className="text-[9px] text-[var(--text-muted)] font-mono uppercase tracking-[0.16em] mb-2 block">Lock Term</label>
                   <div className="grid grid-cols-2 gap-2">
                     {terms && Object.entries(terms).map(([key, info]) => (
                       <button
                         key={key}
                         onClick={() => setSelectedTerm(key)}
-                        className="rounded-xl p-3 text-center border transition"
+                        className={`os-vault-term-card rounded-[16px] p-3.5 text-left border transition ${selectedTerm === key ? 'is-selected' : ''}`}
                         style={selectedTerm === key
                           ? { borderColor: 'var(--accent-brass)', background: 'rgba(249,115,22,0.08)' }
                           : { borderColor: 'var(--glass-border)' }}
                       >
-                        <p className="text-xs font-semibold text-[var(--text-primary)]">{termLabel(key)}</p>
-                        <p className="font-mono text-base font-bold text-[var(--accent-brass-bright)] mt-0.5">{info.apy}%</p>
-                        <p className="text-[8.5px] font-mono text-[var(--text-muted)]">APY</p>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-xs font-semibold leading-4 text-[var(--text-primary)]">{termLabel(key)}</p>
+                          {selectedTerm === key && <Check size={14} className="text-[var(--accent-brass-bright)] shrink-0" />}
+                        </div>
+                        <p className="font-mono text-xl font-bold tracking-tight text-[var(--accent-brass-bright)] mt-2">{info.apy}%</p>
+                        <p className="text-[8.5px] font-mono uppercase tracking-[0.12em] text-[var(--text-muted)]">Annual yield</p>
                       </button>
                     ))}
                   </div>
@@ -2072,18 +2112,21 @@ function Staking() {
 
             {stakeStep === 2 && (
               <>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Send exactly {stakeAmount} CLOSE from your own wallet to the address below.
-                </p>
-                <div className="rounded-xl p-3 bg-[var(--surface-hover)] border border-[var(--glass-border)]">
+                <div className="os-vault-stake-intro">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">Fund your stake</p>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1">
+                    Send exactly <span className="font-mono font-semibold text-[var(--text-secondary)]">{stakeAmount} CLOSE</span> from your own wallet.
+                  </p>
+                </div>
+                <div className="os-vault-treasury-card rounded-[18px] p-3.5 bg-[var(--surface-hover)] border border-[var(--glass-border)]">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono break-all pr-2 text-[var(--text-primary)]">{treasuryAddress}</span>
                     <button onClick={copyTreasury} className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                       {copied ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
                     </button>
                   </div>
-                  <p className="text-[11px] text-[var(--text-muted)] mt-2 leading-relaxed">
-                    This is the CLOSE staking treasury. Only send from a wallet you control — staking credits the account whose wallet sent the transaction.
+                  <p className="text-[10.5px] text-[var(--text-muted)] mt-2.5 leading-relaxed">
+                    CLOSE staking treasury. Only send from a wallet you control. Your stake is credited to the account associated with the sending wallet.
                   </p>
                 </div>
                 <button
@@ -2100,12 +2143,18 @@ function Staking() {
 
             {stakeStep === 3 && (
               <>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Paste the transaction hash from your send — we'll verify it on-chain and open your position.
-                </p>
+                <div className="os-vault-stake-intro">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">Verify your transaction</p>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1">
+                    Paste the transaction hash from your send. We'll verify it on-chain before opening your position.
+                  </p>
+                </div>
                 <div>
                   <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Transaction Hash</label>
+                  <div className="os-vault-tx-input-wrap">
                   <input type="text" value={stakeTxHash} onChange={(e) => setStakeTxHash(e.target.value)} className="input-glass w-full mt-1" placeholder="0x..." />
+                  <span className="os-vault-tx-badge">ON-CHAIN</span>
+                </div>
                 </div>
                 <button onClick={submitStake} disabled={submittingStake} className="btn-primary w-full justify-center">
                   {submittingStake ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Verify and Open Stake'}
@@ -2133,20 +2182,29 @@ function Staking() {
       )}
 
       {showUnstakeConfirm && (
-        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowUnstakeConfirm(null)}>
-          <div className="glass-panel rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Confirm Unstake</h3>
-            <p className="text-sm text-[var(--text-secondary)]">
-              Return {showUnstakeConfirm.amount.toLocaleString()} CLOSE principal to your wallet.
-            </p>
+        <div className="os-vault-unstake-backdrop fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowUnstakeConfirm(null)}>
+          <div className="os-vault-unstake-modal glass-panel rounded-[26px] w-full max-w-sm p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <span className="os-vault-modal-kicker">OS VAULT · POSITION</span>
+                <h3 className="text-xl font-display font-bold tracking-tight text-[var(--text-primary)] mt-1.5">Confirm Unstake</h3>
+              </div>
+              <button onClick={() => setShowUnstakeConfirm(null)} className="btn-glass-icon w-9 h-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="os-vault-unstake-summary">
+              <span className="text-[9px] uppercase tracking-[0.15em] text-[var(--text-muted)]">Principal returned</span>
+              <strong>{showUnstakeConfirm.amount.toLocaleString()} <span>CLOSE</span></strong>
+            </div>
             {isEarly(showUnstakeConfirm) && (
-              <p className="text-sm font-mono p-3 rounded-xl" style={{ color: '#d89a3a', background: 'rgba(216,154,58,0.08)', border: '1px solid rgba(216,154,58,0.25)' }}>
+              <p className="os-vault-early-warning text-[11px] font-mono p-3.5 rounded-[16px]" style={{ color: '#d89a3a', background: 'rgba(216,154,58,0.08)', border: '1px solid rgba(216,154,58,0.25)' }}>
                 ⚠️ This stake hasn't unlocked yet. Unstaking now forfeits your {showUnstakeConfirm.pending_yield.toFixed(2)} CLOSE pending yield.
               </p>
             )}
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 gap-2.5">
+              <button onClick={() => setShowUnstakeConfirm(null)} className="btn-secondary min-h-12 rounded-2xl justify-center">Cancel</button>
               <button onClick={() => doUnstake(showUnstakeConfirm.id)} className="btn-primary min-h-12 rounded-2xl justify-center">Confirm Unstake</button>
-              <button onClick={() => setShowUnstakeConfirm(null)} className="btn-secondary flex-1 justify-center">Cancel</button>
             </div>
           </div>
         </div>
@@ -2283,16 +2341,45 @@ function Governance() {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       {params && (
-        <div className="relative overflow-hidden glass-panel rounded-[22px] p-5 space-y-2 border border-[var(--glass-border)] shadow-[0_14px_45px_rgba(0,0,0,0.12)]">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/[0.09] border border-violet-400/[0.14]">
-              <Vote size={14} className="text-violet-300" />
+        <div className="os-vault-governance-header relative overflow-hidden rounded-[24px] p-5 sm:p-6 space-y-4 border border-[var(--glass-border)] shadow-[0_18px_55px_rgba(0,0,0,0.12)]">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="os-vault-governance-icon">
+                <Vote size={16} />
+              </span>
+              <div>
+                <p className="text-[9px] font-mono uppercase tracking-[0.18em] text-[var(--accent-brass-bright)]">
+                  OS VAULT · GOVERNANCE
+                </p>
+                <h2 className="mt-1 text-xl sm:text-2xl font-display font-bold tracking-tight text-[var(--text-primary)]">
+                  Community decisions
+                </h2>
+              </div>
+            </div>
+            <span className="os-vault-governance-live">
+              <span />
+              LIVE
             </span>
-            <p className="text-xs font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">Governance Requirements</p>
           </div>
-          <p className="text-sm text-[var(--text-secondary)]">
-            {params.min_staked_to_propose.toLocaleString()} CLOSE staked to propose · {params.voting_period_days}-day voting period · {params.quorum_percent}% quorum
+          <p className="text-sm leading-relaxed text-[var(--text-secondary)] max-w-2xl">
+            Shape the direction of the ecosystem through stake-weighted proposals and voting.
+            Governance is designed around participation, transparency and user ownership.
           </p>
+
+          <div className="os-vault-governance-stats">
+            <div>
+              <span>Proposal threshold</span>
+              <strong>{params.min_staked_to_propose.toLocaleString()} <small>CLOSE</small></strong>
+            </div>
+            <div>
+              <span>Voting period</span>
+              <strong>{params.voting_period_days}<small> DAYS</small></strong>
+            </div>
+            <div>
+              <span>Quorum</span>
+              <strong>{params.quorum_percent}<small>%</small></strong>
+            </div>
+          </div>
         </div>
       )}
 
@@ -2304,32 +2391,59 @@ function Governance() {
 
       {!loading && (
         <>
-          <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Proposals</p>
+          <div className="os-vault-governance-section-head">
+            <div>
+              <p className="text-[9px] font-mono uppercase tracking-[0.18em] text-[var(--text-muted)]">Governance</p>
+              <h3 className="mt-1 text-lg font-display font-bold tracking-tight text-[var(--text-primary)]">
+                Proposals
+              </h3>
+            </div>
+            <span className="text-[9px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              {proposals.length} {proposals.length === 1 ? 'proposal' : 'proposals'}
+            </span>
+          </div>
 
           {proposals.length === 0 ? (
             <div className="glass-panel rounded-2xl p-8 text-center">
               <p className="text-sm text-[var(--text-muted)]">No proposals yet.</p>
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="os-vault-proposal-list space-y-3">
               {proposals.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => openProposal(p)}
-                  className="w-full text-left glass-panel rounded-[22px] p-5 transition-all duration-200 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] hover:-translate-y-px hover:bg-[var(--surface-active)]"
+                  className="os-vault-proposal-card w-full text-left rounded-[22px] p-5 sm:p-5.5 transition-all duration-200 border border-[var(--glass-border)]"
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="min-w-0 flex-1">
-                      <p className="font-display font-bold text-lg leading-tight text-[var(--text-primary)] pr-3">{p.title}</p>
+                      <p className="text-[9px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)] mb-1">
+                        Proposal #{p.id}
+                      </p>
+                      <p className="font-display font-bold text-lg leading-tight tracking-tight text-[var(--text-primary)] pr-2">
+                        {p.title}
+                      </p>
                     </div>
-                    <span className="text-[10px] font-mono uppercase whitespace-nowrap px-2 py-1 rounded-full" style={{ color: statusColor(p.effective_status), background: 'rgba(255,255,255,0.05)' }}>
+                    <span
+                      className="os-vault-proposal-status"
+                      style={{ color: statusColor(p.effective_status) }}
+                    >
+                      <span />
                       {statusLabel(p.effective_status)}
                     </span>
                   </div>
                   <p className="text-sm leading-relaxed text-[var(--text-muted)] line-clamp-2 mt-1">{p.description}</p>
-                  <div className="flex items-center gap-3 mt-3 text-[10px] font-mono text-[var(--text-muted)]">
+                  <div className="os-vault-proposal-meta">
                     <span>{p.voter_count} voters</span>
-                    <span>{p.vote_totals.for.toLocaleString()} for · {p.vote_totals.against.toLocaleString()} against</span>
+                    <span className="os-vault-proposal-vote-for">
+                      {p.vote_totals.for.toLocaleString()} FOR
+                    </span>
+                    <span className="os-vault-proposal-vote-against">
+                      {p.vote_totals.against.toLocaleString()} AGAINST
+                    </span>
+                    <span className="os-vault-proposal-open">
+                      View proposal →
+                    </span>
                   </div>
                 </button>
               ))}
@@ -2338,7 +2452,7 @@ function Governance() {
 
           <button
             onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowNewProposal(true); }}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-[20px] font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_12px_35px_rgba(216,154,58,0.16)] transition-all duration-200 hover:-translate-y-px active:scale-[0.99]"
+            className="os-vault-new-proposal w-full flex items-center justify-center gap-2 py-4 rounded-[20px] font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_12px_35px_rgba(216,154,58,0.16)] transition-all duration-200 hover:-translate-y-px active:scale-[0.99]"
           >
             + New Proposal
           </button>
@@ -2346,8 +2460,8 @@ function Governance() {
       )}
 
       {showNewProposal && (
-        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowNewProposal(false)}>
-          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="os-vault-governance-modal-backdrop fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowNewProposal(false)}>
+          <div className="os-vault-governance-modal glass-panel rounded-[26px] w-full max-w-md p-5 sm:p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center">
               <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Proposal</h3>
               <button onClick={() => setShowNewProposal(false)} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
@@ -2371,70 +2485,157 @@ function Governance() {
       )}
 
       {selectedProposal && (
-        <div className="fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setSelectedProposal(null)}>
-          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="os-vault-governance-modal-backdrop fixed inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setSelectedProposal(null)}>
+          <div className="os-vault-governance-modal os-vault-proposal-modal glass-panel rounded-[26px] w-full max-w-md p-5 sm:p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center">
               <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">{selectedProposal.title}</h3>
               <button onClick={() => setSelectedProposal(null)} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
             </div>
             <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{selectedProposal.description}</p>
 
-            <div className="flex items-center justify-between text-[11.5px] text-[var(--text-secondary)] py-2.5 border-t border-b border-dashed border-[var(--glass-border)]">
-              <span>For</span>
-              <span className="font-mono font-semibold text-[var(--success)]">{selectedProposal.vote_totals.for.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between text-[11.5px] text-[var(--text-secondary)] pb-2.5 border-b border-dashed border-[var(--glass-border)]">
-              <span>Against</span>
-              <span className="font-mono font-semibold text-[var(--danger)]">{selectedProposal.vote_totals.against.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between text-[11.5px] text-[var(--text-secondary)] pb-2.5 border-b border-dashed border-[var(--glass-border)]">
-              <span>Abstain</span>
-              <span className="font-mono font-semibold text-[var(--text-muted)]">{selectedProposal.vote_totals.abstain.toLocaleString()}</span>
+            <div className="os-vault-proposal-detail-stats">
+              <div className="os-vault-proposal-detail-stat">
+                <span className="os-vault-proposal-detail-stat-label">For</span>
+                <span className="os-vault-proposal-detail-stat-value text-[var(--success)]">
+                  {selectedProposal.vote_totals.for.toLocaleString()}
+                </span>
+              </div>
+              <div className="os-vault-proposal-detail-stat">
+                <span className="os-vault-proposal-detail-stat-label">Against</span>
+                <span className="os-vault-proposal-detail-stat-value text-[var(--danger)]">
+                  {selectedProposal.vote_totals.against.toLocaleString()}
+                </span>
+              </div>
+              <div className="os-vault-proposal-detail-stat">
+                <span className="os-vault-proposal-detail-stat-label">Abstain</span>
+                <span className="os-vault-proposal-detail-stat-value text-[var(--text-muted)]">
+                  {selectedProposal.vote_totals.abstain.toLocaleString()}
+                </span>
+              </div>
             </div>
 
             {selectedProposal.founder_decision && (
-              <div className="rounded-xl p-3" style={{
-                background: selectedProposal.founder_decision === 'approved' ? 'rgba(52,199,89,0.08)' : 'rgba(255,69,58,0.08)',
-                border: `1px solid ${selectedProposal.founder_decision === 'approved' ? 'rgba(52,199,89,0.25)' : 'rgba(255,69,58,0.25)'}`,
-              }}>
-                <p className="text-xs font-mono uppercase tracking-wide" style={{ color: statusColor(selectedProposal.founder_decision) }}>
+              <div
+                className="os-vault-proposal-decision"
+                style={{
+                  background: selectedProposal.founder_decision === 'approved'
+                    ? 'rgba(52,199,89,0.07)'
+                    : 'rgba(255,69,58,0.07)',
+                  borderColor: selectedProposal.founder_decision === 'approved'
+                    ? 'rgba(52,199,89,0.22)'
+                    : 'rgba(255,69,58,0.22)',
+                }}
+              >
+                <p
+                  className="text-[9px] font-mono uppercase tracking-[0.14em] font-bold"
+                  style={{ color: statusColor(selectedProposal.founder_decision) }}
+                >
                   {statusLabel(selectedProposal.founder_decision)}
                 </p>
-                <p className="text-sm text-[var(--text-secondary)] mt-1">{selectedProposal.founder_reason}</p>
+                <p className="text-sm leading-relaxed text-[var(--text-secondary)] mt-2">
+                  {selectedProposal.founder_reason}
+                </p>
               </div>
             )}
 
             {votingPower === null ? (
               <p className="text-xs text-center text-[var(--text-muted)]">Checking your voting eligibility...</p>
             ) : votingPower.already_voted ? (
-              <p className="text-xs text-center text-[var(--text-muted)]">You voted "{votingPower.voted_support}" on this proposal.</p>
+              <div className="os-vault-vote-closed">
+                <span className="h-2 w-2 rounded-full bg-[var(--success)] shrink-0" />
+                <span>You voted "{votingPower.voted_support}" on this proposal.</span>
+              </div>
             ) : !votingPower.eligible ? (
-              <p className="text-xs text-center text-[var(--text-muted)]">You had no active staked CLOSE when this proposal was created, so you can't vote on it.</p>
+              <div className="os-vault-vote-closed">
+                <span className="h-2 w-2 rounded-full bg-[var(--text-muted)] shrink-0" />
+                <span>You had no active staked CLOSE when this proposal was created, so you can't vote on it.</span>
+              </div>
             ) : selectedProposal.status !== 'active' ? (
-              <p className="text-xs text-center text-[var(--text-muted)]">Voting has closed on this proposal.</p>
+              <div className="os-vault-vote-closed">
+                <span className="h-2 w-2 rounded-full bg-[var(--text-muted)] shrink-0" />
+                <span>Voting has closed on this proposal.</span>
+              </div>
             ) : (
-              <div className="space-y-2">
-                <p className="text-xs text-center text-[var(--text-muted)]">Your voting weight: {votingPower.weight.toLocaleString()} CLOSE</p>
-                <div className="flex gap-2">
-                  <button onClick={() => castVote('for')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--success)] text-black">For</button>
-                  <button onClick={() => castVote('against')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--danger)] text-[var(--text-primary)]">Against</button>
-                  <button onClick={() => castVote('abstain')} disabled={voting} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--surface-hover)] border border-[var(--glass-border)] text-[var(--text-secondary)]">Abstain</button>
+              <div className="os-vault-governance-voting-panel">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div>
+                    <p className="text-[9px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                      Cast your vote
+                    </p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-1">
+                      Your stake determines your voting weight.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="os-vault-voting-weight mb-3">
+                  <span className="os-vault-voting-weight-label">
+                    Voting weight
+                  </span>
+                  <span className="os-vault-voting-weight-value">
+                    {votingPower.weight.toLocaleString()} CLOSE
+                  </span>
+                </div>
+
+                <div className="os-vault-vote-actions">
+                  <button
+                    onClick={() => castVote('for')}
+                    disabled={voting}
+                    className="os-vault-vote-button os-vault-vote-for"
+                  >
+                    For
+                  </button>
+                  <button
+                    onClick={() => castVote('against')}
+                    disabled={voting}
+                    className="os-vault-vote-button os-vault-vote-against"
+                  >
+                    Against
+                  </button>
+                  <button
+                    onClick={() => castVote('abstain')}
+                    disabled={voting}
+                    className="os-vault-vote-button os-vault-vote-abstain"
+                  >
+                    Abstain
+                  </button>
                 </div>
               </div>
             )}
 
             {user?.is_founder && selectedProposal.status !== 'active' && !selectedProposal.founder_decision && (
-              <div className="space-y-2 pt-2 border-t border-dashed border-[var(--glass-border)]">
-                <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Founder Decision</p>
+              <div className="os-vault-founder-panel">
+                <div className="os-vault-founder-label">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-brass)]" />
+                  Founder decision
+                </div>
+
+                <p className="text-[11px] leading-relaxed text-[var(--text-muted)] mt-2">
+                  Record the final decision and provide a public reason for the proposal outcome.
+                </p>
+
                 <textarea
                   value={founderReason}
                   onChange={(e) => setFounderReason(e.target.value)}
-                  className="input-glass w-full min-h-[80px]"
-                  placeholder="Reason (shown publicly on this proposal)"
+                  className="input-glass w-full mt-3"
+                  placeholder="Reason shown publicly on this proposal"
                 />
-                <div className="flex gap-2">
-                  <button onClick={() => submitFounderDecision('approved')} disabled={submittingDecision} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--success)] text-black">Approve</button>
-                  <button onClick={() => submitFounderDecision('rejected')} disabled={submittingDecision} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--danger)] text-[var(--text-primary)]">Reject</button>
+
+                <div className="os-vault-founder-actions mt-2.5">
+                  <button
+                    onClick={() => submitFounderDecision('approved')}
+                    disabled={submittingDecision}
+                    className="os-vault-founder-approve bg-[var(--success)] text-black"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => submitFounderDecision('rejected')}
+                    disabled={submittingDecision}
+                    className="os-vault-founder-reject bg-[var(--danger)] text-[var(--text-primary)]"
+                  >
+                    Reject
+                  </button>
                 </div>
               </div>
             )}
@@ -2569,41 +2770,81 @@ function WalletsTab() {
   }, [activeAddress]);
 
   return (
-    <div className="space-y-6">
+    <div className="os-vault-wallets-tab space-y-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="os-vault-wallets-head flex items-center justify-between gap-3">
         <div>
-          <p className="text-lg font-display font-bold text-[var(--text-primary)]">Your Wallets</p>
-          <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--text-muted)] mt-0.5">Manage your connected assets</p>
+          <div className="os-vault-wallets-kicker">OS VAULT · WALLET CONTROL</div>
+          <p className="text-2xl sm:text-[28px] font-display font-bold tracking-[-0.035em] text-[var(--text-primary)] mt-1">
+            Your Wallets
+          </p>
+          <p className="text-[11px] text-[var(--text-muted)] mt-1">
+            Manage your wallets, assets and on-chain activity.
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => openAppKit()} className="text-xs font-medium text-[var(--accent-brass-bright)]">+ Connect</button>
-          <button onClick={() => setShowImportModal(true)} className="text-xs font-medium text-[var(--accent-brass-bright)]">+ Import</button>
+        <div className="os-vault-wallet-actions flex items-center gap-2">
+          <button
+            onClick={() => openAppKit()}
+            className="os-vault-wallet-head-action"
+          >
+            <span>+</span> Connect
+          </button>
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="os-vault-wallet-head-action os-vault-wallet-head-action-primary"
+          >
+            <span>+</span> Import
+          </button>
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="os-vault-wallet-list space-y-2">
         {allWallets.map((w) => (
           <button
             key={w.address}
             onClick={() => setSelectedAddress(w.isPrimary ? null : w.address)}
-            className="w-full flex items-center justify-between px-4 py-3.5 rounded-[18px] border transition-all duration-200 text-left hover:bg-[var(--surface-active)]"
+            className={`os-vault-wallet-card w-full flex items-center justify-between px-4 py-3.5 rounded-[18px] border transition-all duration-200 text-left hover:bg-[var(--surface-active)] ${activeAddress === w.address ? 'is-active' : ''}`}
             style={activeAddress === w.address
               ? { background: 'rgba(249,115,22,0.10)', borderColor: 'var(--accent-brass)' }
               : { background: 'rgba(255,255,255,0.05)', borderColor: 'var(--glass-border)' }}
           >
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium text-[var(--text-primary)] truncate">{w.label}{w.isPrimary ? ' (Primary)' : ''}</p>
-                {w.wallet_type === 'connected' && (
-                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-[var(--surface-active)] text-[var(--text-muted)] shrink-0">Connected</span>
-                )}
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`os-vault-wallet-avatar ${w.isPrimary ? 'is-primary' : ''}`}>
+                  <Wallet size={16} />
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
+                      {w.label}
+                    </p>
+
+                    {w.isPrimary && (
+                      <span className="os-vault-wallet-badge is-primary">
+                        Primary
+                      </span>
+                    )}
+
+                    {w.wallet_type === 'connected' && (
+                      <span className="os-vault-wallet-badge">
+                        Connected
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-[10.5px] font-mono text-[var(--text-muted)] mt-1">
+                    {w.address?.slice(0, 8)}...{w.address?.slice(-6)}
+                  </p>
+                </div>
               </div>
-              <p className="text-[11px] font-mono text-[var(--text-muted)]">{w.address?.slice(0, 8)}...{w.address?.slice(-6)}</p>
             </div>
             {activeAddress === w.address && (
-              <span className="text-[10px] font-mono uppercase text-[var(--accent-brass-bright)] shrink-0">Active</span>
+              <span className="os-vault-wallet-active">
+                <span />
+                Active
+              </span>
             )}
           </button>
         ))}
@@ -2611,14 +2852,44 @@ function WalletsTab() {
 
       {activeWallet && (
         <>
-          <div className="relative overflow-hidden glass-panel rounded-[26px] p-5 sm:p-6 border border-[var(--glass-border)] shadow-[0_18px_60px_rgba(0,0,0,0.08)]">
-            <p className="text-xs uppercase tracking-widest text-[var(--text-muted)] mb-2" style={{ letterSpacing: '2px' }}>
-              {activeWallet.label} Balance
-            </p>
-            <div className="text-4xl sm:text-5xl font-display font-bold tracking-tight text-[var(--text-primary)] mb-5">
-              {balanceLoading ? '...' : `$${walletTotalUsd.toFixed(2)}`}
+          <div className="os-vault-active-wallet relative overflow-hidden glass-panel rounded-[26px] p-5 sm:p-6 border border-[var(--glass-border)] shadow-[0_18px_60px_rgba(0,0,0,0.08)]">
+            <div className="os-vault-active-wallet-glow" />
+
+            <div className="relative flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="os-vault-active-dot" />
+                  <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                    Active Wallet
+                  </p>
+                </div>
+
+                <p className="text-lg font-display font-bold text-[var(--text-primary)] mt-2">
+                  {activeWallet.label}
+                </p>
+
+                <p className="text-[10px] font-mono text-[var(--text-muted)] mt-1">
+                  {activeAddress?.slice(0, 10)}...{activeAddress?.slice(-8)}
+                </p>
+              </div>
+
+              {activeWallet.isPrimary ? (
+                <span className="os-vault-wallet-status">PRIMARY</span>
+              ) : (
+                <span className="os-vault-wallet-status">CONNECTED</span>
+              )}
             </div>
-            <div className="grid grid-cols-3 gap-2.5">
+
+            <div className="relative mt-7 mb-6">
+              <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)] mb-2">
+                Portfolio Balance
+              </p>
+
+              <div className="os-vault-active-balance">
+                {balanceLoading ? '...' : `$${walletTotalUsd.toFixed(2)}`}
+              </div>
+            </div>
+            <div className="os-vault-wallet-action-grid grid grid-cols-3 gap-2.5">
               <button
                 onClick={() => {
                   if (walletAssets.length === 0) { addToast('No assets to send from this wallet.', 'warning'); return; }
@@ -2639,17 +2910,25 @@ function WalletsTab() {
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)] flex items-center gap-1.5">
-              <History size={12} /> Transaction History
-            </p>
+            <div className="os-vault-wallet-activity-head flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                  Activity
+                </p>
+                <p className="text-base font-display font-bold text-[var(--text-primary)] mt-1">
+                  Transaction History
+                </p>
+              </div>
+              <History size={17} className="text-[var(--accent-brass-dim)]" />
+            </div>
             {historyLoading ? (
               <div className="h-14 animate-pulse rounded-lg bg-[var(--surface-hover)]" />
             ) : history.length === 0 ? (
               <p className="text-sm text-[var(--text-muted)] py-4 text-center">No transactions for this wallet yet.</p>
             ) : (
-              <div className="glass-panel rounded-[20px] px-1 border border-[var(--glass-border)] overflow-hidden">
+              <div className="os-vault-wallet-history glass-panel rounded-[20px] px-1 border border-[var(--glass-border)] overflow-hidden">
                 {history.map((tx, i) => (
-                  <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < history.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
+                  <div key={i} className={`os-vault-wallet-history-row flex items-center justify-between px-4 py-3 ${i < history.length - 1 ? 'border-b border-[var(--glass-border)]' : ''}`}>
                     <div>
                       <p className="text-sm font-medium capitalize text-[var(--text-primary)]">{tx.kind}</p>
                       <p className="text-xs text-[var(--text-muted)]">{tx.amount} {tx.token_symbol || 'CLOSE'} {tx.status ? `\u00b7 ${tx.status}` : ''}</p>
@@ -2755,8 +3034,8 @@ export default function Vault() {
   const initialTab = searchParams.get('tab') === 'staking' ? 'staking' : 'standard';
   const [tab, setTab] = useState(initialTab);
   return (
-    <div className="p-4 tablet:p-6 space-y-6 max-w-6xl mx-auto w-full">
-      <div className="relative overflow-hidden rounded-[28px] border border-[var(--glass-border)] bg-[var(--bg-secondary)] p-5 sm:p-7 shadow-[0_20px_70px_rgba(0,0,0,0.08)]">
+    <div className="os-vault-page p-4 tablet:p-6 space-y-6 max-w-6xl mx-auto w-full">
+      <div className="os-vault-header relative overflow-hidden rounded-[28px] border border-[var(--glass-border)] bg-[var(--bg-secondary)] p-5 sm:p-7 shadow-[0_20px_70px_rgba(0,0,0,0.08)]">
         <div className="pointer-events-none absolute -top-24 -right-20 h-64 w-64 rounded-full bg-amber-400/[0.06] blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-violet-500/[0.045] blur-3xl" />
 
@@ -2786,7 +3065,7 @@ export default function Vault() {
           </div>
         </div>
       </div>
-      <div className="glass-panel flex gap-1.5 p-1.5 rounded-[22px] overflow-x-auto max-w-full border border-[var(--glass-border)] shadow-[0_12px_45px_rgba(0,0,0,0.08)]">
+      <div className="os-vault-tabs glass-panel flex gap-1.5 p-1.5 rounded-[22px] overflow-x-auto max-w-full border border-[var(--glass-border)] shadow-[0_12px_45px_rgba(0,0,0,0.08)]">
         <button onClick={() => setTab('standard')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap ${tab === 'standard' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'}`}>Portfolio</button>
         <button onClick={() => setTab('analytics')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'analytics' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'}`}><BarChart size={16} /> Analytics</button>
         <button onClick={() => setTab('safe')} className={`px-5 py-2.5 rounded-[16px] text-sm font-bold touch transition-all duration-200 shrink-0 whitespace-nowrap flex items-center gap-2 ${tab === 'safe' ? 'bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B] shadow-[0_6px_22px_rgba(216,154,58,0.18)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'}`}><ShieldCheck size={16} /> Safe</button>
