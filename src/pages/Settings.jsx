@@ -785,8 +785,8 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <div className="h-[60px] flex items-center gap-2 px-4 border-b border-[var(--glass-border)] sticky top-0 bg-[var(--bg-primary)]/85 backdrop-blur-xl z-10">
+    <div className="os-settings-page min-h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <div className="os-settings-header h-[60px] flex items-center gap-2 px-4 border-b border-[var(--glass-border)] sticky top-0 bg-[var(--bg-primary)]/85 backdrop-blur-xl z-10">
         {section ? (
           <button onClick={() => setSection(null)} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
             <ArrowLeft size={20} />

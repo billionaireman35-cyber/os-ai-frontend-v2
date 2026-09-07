@@ -7421,3 +7421,256 @@ body {
   }
 }
 
+
+/* =========================================================
+   OS AI — SETTINGS CONTROL CENTER
+   Presentation only — existing settings logic preserved.
+   ========================================================= */
+
+.os-settings-page {
+  position: relative;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+.os-settings-page::before {
+  content: "";
+  position: fixed;
+  top: 60px;
+  right: 0;
+  width: 420px;
+  height: 320px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent-brass) 5%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.os-settings-header {
+  position: sticky;
+  z-index: 12;
+  background:
+    color-mix(in srgb, var(--bg-primary) 88%, var(--accent-brass) 12%) !important;
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--border-color) 82%,
+    var(--accent-brass) 18%
+  ) !important;
+  box-shadow: 0 6px 24px rgba(0,0,0,.025);
+}
+
+.os-settings-header h2 {
+  letter-spacing: -.025em;
+}
+
+.os-settings-page > div:not(.os-settings-header) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Main settings profile / identity card */
+.os-settings-page .relative.rounded-2xl.p-5.mb-2 {
+  border-radius: 24px !important;
+  padding: 22px !important;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--accent-brass) 10%, transparent),
+      transparent 42%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-brass) 10%, var(--bg-secondary)),
+      var(--bg-secondary) 72%
+    ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--accent-brass) 24%,
+    var(--border-color)
+  ) !important;
+  box-shadow:
+    0 14px 40px rgba(0,0,0,.045),
+    inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+/* CLOSE balance becomes a deliberate financial status surface */
+.os-settings-page .relative.rounded-2xl.p-5.mb-2 > .mt-4 {
+  margin-top: 18px !important;
+  padding: 13px 15px !important;
+  border: 1px solid var(--border-color);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-brass) 6%, var(--surface-hover)),
+      var(--surface-hover)
+    ) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+}
+
+.os-settings-page .relative.rounded-2xl.p-5.mb-2 > .mt-4 p:last-child {
+  font-size: 22px;
+  letter-spacing: -.035em;
+}
+
+/* Main navigation rows */
+.os-settings-page > div:last-child > div > button {
+  min-height: 58px;
+  padding: 14px 15px !important;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--bg-secondary) 92%, var(--accent-brass) 8%),
+      var(--surface-hover)
+    ) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,.018);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.os-settings-page > div:last-child > div > button:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(
+    in srgb,
+    var(--accent-brass) 20%,
+    var(--border-color)
+  );
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-brass) 7%, var(--bg-secondary)),
+      var(--surface-active)
+    ) !important;
+  box-shadow: 0 7px 22px rgba(0,0,0,.045);
+}
+
+.os-settings-page > div:last-child > div > button:active {
+  transform: translateY(0) scale(.995);
+}
+
+.os-settings-page > div:last-child > div > button svg:last-child {
+  transition: transform 160ms ease;
+}
+
+.os-settings-page > div:last-child > div > button:hover svg:last-child {
+  transform: translateX(2px);
+}
+
+/* Appearance card */
+.os-settings-page .glass-card {
+  border-color: var(--border-color);
+  box-shadow:
+    0 5px 22px rgba(0,0,0,.025),
+    inset 0 1px 0 rgba(255,255,255,.02);
+}
+
+.os-settings-page .grid.grid-cols-3 > button {
+  min-height: 82px;
+  border-radius: 14px !important;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.os-settings-page .grid.grid-cols-3 > button:hover {
+  transform: translateY(-1px);
+}
+
+/* Founder action remains special without overpowering the page */
+.os-settings-page button.bg-gradient-to-br.from-\[var\(--accent-brass-bright\)\] {
+  min-height: 48px;
+  border-radius: 14px !important;
+  box-shadow:
+    0 8px 24px color-mix(in srgb, var(--accent-brass) 12%, transparent);
+}
+
+/* Logout should feel deliberate and separated */
+.os-settings-page button.text-\[var\(--danger\)\] {
+  min-height: 50px;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--danger) 16%,
+    transparent
+  );
+  border-radius: 14px !important;
+}
+
+/* Sub-pages */
+.os-settings-page > div:last-child > div > .p-4,
+.os-settings-page > div:last-child > div > div.p-4 {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.os-settings-page input.input-glass,
+.os-settings-page .input-glass {
+  min-height: 46px;
+  border-radius: 13px !important;
+}
+
+.os-settings-page .btn-primary,
+.os-settings-page .btn-secondary {
+  min-height: 44px;
+  border-radius: 13px !important;
+}
+
+/* Profile sub-page */
+.os-settings-page .rounded-3xl {
+  box-shadow:
+    0 14px 42px rgba(0,0,0,.04),
+    inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+/* Setting toggles become more refined */
+.os-settings-page button.w-12.h-7 {
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.12);
+}
+
+@media (max-width: 700px) {
+  .os-settings-page {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .os-settings-header {
+    height: 56px;
+  }
+
+  .os-settings-page::before {
+    top: 56px;
+    width: 280px;
+    height: 220px;
+    opacity: .55;
+  }
+
+  .os-settings-page .relative.rounded-2xl.p-5.mb-2 {
+    padding: 18px !important;
+    border-radius: 20px !important;
+  }
+
+  .os-settings-page > div:last-child > div > button {
+    min-height: 60px;
+    border-radius: 16px !important;
+  }
+
+  .os-settings-page .grid.grid-cols-3 > button {
+    min-height: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-settings-page > div:last-child > div > button,
+  .os-settings-page .grid.grid-cols-3 > button,
+  .os-settings-page > div:last-child > div > button svg:last-child {
+    transition: none;
+    transform: none !important;
+  }
+}
+
