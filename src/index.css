@@ -4246,3 +4246,388 @@ body {
     transition: none;
   }
 }
+
+/* =========================================================
+   OS AI — PREMIUM MARKET PULSE
+   Presentation layer only.
+   API, state, refresh and token logic unchanged.
+   ========================================================= */
+
+.os-pulse-page {
+  --pulse-violet: #8b5cf6;
+  --pulse-gold-soft: rgba(249, 115, 22, 0.07);
+}
+
+.os-pulse-header {
+  min-height: 82px;
+  padding: 4px 2px 2px;
+}
+
+.os-pulse-kicker {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--accent-brass-bright);
+}
+
+.os-pulse-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(29px, 4vw, 40px);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  color: var(--text-primary);
+}
+
+.os-pulse-subtitle {
+  margin: 9px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-muted);
+}
+
+.os-pulse-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--success) 20%, var(--glass-border));
+  background: color-mix(in srgb, var(--success) 5%, var(--bg-secondary));
+  color: var(--success);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.os-pulse-live span {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.45);
+  animation: osPulseLive 1.8s ease-in-out infinite;
+}
+
+.os-pulse-refresh {
+  border-radius: 12px !important;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.os-pulse-refresh:hover {
+  transform: translateY(-1px) rotate(4deg);
+  background: color-mix(in srgb, var(--accent-brass) 7%, var(--bg-secondary));
+  border-color: color-mix(in srgb, var(--accent-brass) 30%, var(--glass-border));
+  box-shadow: 0 8px 25px var(--accent-glow);
+}
+
+.os-pulse-search {
+  min-height: 50px;
+  border-radius: 16px !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--bg-secondary) 97%, var(--accent-brass) 3%),
+      var(--bg-secondary)
+    ) !important;
+  box-shadow:
+    0 8px 30px rgba(0,0,0,0.035),
+    inset 0 1px 0 rgba(255,255,255,0.025);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.os-pulse-search:focus-within {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent-brass) 38%, var(--glass-border)) !important;
+  box-shadow:
+    0 12px 35px rgba(0,0,0,0.07),
+    0 0 0 3px color-mix(in srgb, var(--accent-brass) 8%, transparent);
+}
+
+.os-pulse-market-strip {
+  margin-top: 2px;
+}
+
+.os-pulse-market-section,
+.os-pulse-news-section {
+  position: relative;
+}
+
+.os-pulse-section-head {
+  padding: 1px 2px 0;
+}
+
+.os-pulse-section-subtitle {
+  margin: 4px 0 0;
+  font-size: 10px;
+  line-height: 15px;
+  color: var(--text-muted);
+}
+
+.os-pulse-token-list {
+  display: grid;
+}
+
+.os-pulse-token-row {
+  position: relative;
+  min-height: 70px;
+  overflow: hidden;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 98%, var(--accent-brass) 2%),
+      var(--bg-secondary)
+    );
+  box-shadow: 0 7px 25px rgba(0,0,0,0.035);
+  transition:
+    transform 170ms ease,
+    border-color 170ms ease,
+    box-shadow 170ms ease,
+    background 170ms ease;
+}
+
+.os-pulse-token-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 170ms ease, box-shadow 170ms ease;
+}
+
+.os-pulse-token-row:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-bright) !important;
+  box-shadow: 0 13px 34px rgba(0,0,0,0.07);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--accent-brass) 4%, var(--bg-secondary)),
+      var(--bg-secondary)
+    );
+}
+
+.os-pulse-token-row:hover::before {
+  background: var(--accent-brass);
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+
+.os-pulse-token-row.is-pinned {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--accent-brass) 9%, transparent),
+      transparent 35%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 94%, var(--accent-brass) 6%),
+      var(--bg-secondary)
+    ) !important;
+}
+
+.os-pulse-token-row.is-pinned::before {
+  background: var(--accent-brass);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+.os-pulse-token-image,
+.os-pulse-token-avatar {
+  box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+  transition: transform 170ms ease, box-shadow 170ms ease;
+}
+
+.os-pulse-token-row:hover .os-pulse-token-image,
+.os-pulse-token-row:hover .os-pulse-token-avatar {
+  transform: scale(1.035);
+  box-shadow: 0 8px 23px rgba(0,0,0,0.11);
+}
+
+.os-pulse-token-identity {
+  padding-right: 5px;
+}
+
+.os-pulse-token-identity p:first-child {
+  letter-spacing: -0.015em;
+}
+
+.os-pulse-token-chart {
+  opacity: 0.92;
+  transition: opacity 170ms ease, transform 170ms ease;
+}
+
+.os-pulse-token-row:hover .os-pulse-token-chart {
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.os-pulse-token-price {
+  min-width: 86px;
+}
+
+.os-pulse-token-price > p:first-child {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.os-pulse-news-list {
+  display: grid;
+}
+
+.os-pulse-news-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 17px !important;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 98%, var(--accent-brass) 2%),
+      var(--bg-secondary)
+    );
+  box-shadow: 0 8px 27px rgba(0,0,0,0.035);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-pulse-news-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      rgba(255,255,255,0.025) 42%,
+      transparent 70%
+    );
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.os-pulse-news-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-bright);
+  box-shadow: 0 15px 38px rgba(0,0,0,0.075);
+}
+
+.os-pulse-news-card:hover::after {
+  opacity: 1;
+}
+
+.os-pulse-news-image {
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.10);
+  transition: transform 180ms ease;
+}
+
+.os-pulse-news-card:hover .os-pulse-news-image {
+  transform: scale(1.025);
+}
+
+.os-pulse-news-card p:first-child {
+  letter-spacing: -0.012em;
+  line-height: 1.45;
+}
+
+.os-pulse-news-card a {
+  text-underline-offset: 3px;
+}
+
+@keyframes osPulseLive {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .os-pulse-page {
+    padding: 14px !important;
+  }
+
+  .os-pulse-header {
+    min-height: 70px;
+  }
+
+  .os-pulse-title {
+    font-size: 29px;
+  }
+
+  .os-pulse-subtitle {
+    font-size: 11px;
+  }
+
+  .os-pulse-live {
+    padding: 5px 6px;
+  }
+
+  .os-pulse-search {
+    min-height: 48px;
+    border-radius: 14px !important;
+  }
+
+  .os-pulse-token-row {
+    min-height: 66px;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .os-pulse-token-chart {
+    display: none;
+  }
+
+  .os-pulse-token-price {
+    min-width: 78px;
+  }
+
+  .os-pulse-news-card {
+    border-radius: 15px !important;
+  }
+
+  .os-pulse-news-image {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-pulse-live span,
+  .os-pulse-refresh,
+  .os-pulse-search,
+  .os-pulse-token-row,
+  .os-pulse-token-image,
+  .os-pulse-token-avatar,
+  .os-pulse-token-chart,
+  .os-pulse-news-card,
+  .os-pulse-news-image {
+    animation: none;
+    transition: none;
+  }
+}
+
