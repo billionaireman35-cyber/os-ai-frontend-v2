@@ -111,7 +111,7 @@ export default function Developer() {
 
   if (!hasAccess) {
     return (
-      <div className="p-4 tablet:p-6 max-w-md mx-auto">
+      <div className="os-foundry-page p-4 tablet:p-6 max-w-md mx-auto">
         <h1 className="text-3xl font-display font-bold text-[var(--text-primary)]">Foundry</h1>
         <p className="text-sm text-[var(--text-muted)] mt-1 mb-6">API keys and webhooks to integrate with OS AI</p>
 
@@ -155,7 +155,7 @@ export default function Developer() {
   if (loading) return <div className="p-4 text-[var(--text-muted)]">Loading...</div>;
 
   return (
-    <div className="p-4 tablet:p-6 space-y-6 max-w-4xl">
+    <div className="os-foundry-page p-4 tablet:p-6 space-y-6 max-w-5xl">
       <h1 className="text-3xl font-display font-bold text-[var(--text-primary)]">Foundry</h1>
       <p className="text-sm text-[var(--text-muted)]">API keys and webhooks to integrate with OS AI</p>
 

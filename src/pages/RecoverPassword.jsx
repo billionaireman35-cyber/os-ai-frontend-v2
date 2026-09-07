@@ -40,7 +40,7 @@ export default function RecoverPassword() {
 
   if (done) {
     return (
-      <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
+      <div className="os-recovery-page min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
           <p className="font-display font-bold text-2xl text-[var(--text-primary)] mb-2">Password reset</p>
           <p className="text-sm text-[var(--text-muted)] mb-6">
@@ -58,7 +58,7 @@ export default function RecoverPassword() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
+    <div className="os-recovery-page min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <p className="font-display font-bold text-3xl text-[var(--text-primary)]">Reset password</p>

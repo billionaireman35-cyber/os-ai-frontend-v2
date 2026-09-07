@@ -485,7 +485,7 @@ export default function Sanctum() {
 
   if (!user?.is_founder) {
     return (
-      <div className="p-6 text-[var(--text-primary)]">
+      <div className="os-sanctum-page p-6 text-[var(--text-primary)]">
         <h1 className="text-2xl font-bold">Sanctum</h1>
         <p className="text-sm text-[var(--text-muted)] mt-2">Founder-only area</p>
         <div className="mt-4 text-yellow-400">Access denied. You must be a founder.</div>
@@ -494,7 +494,7 @@ export default function Sanctum() {
   }
 
   return (
-    <div className="p-4 space-y-6 bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-full">
+    <div className="os-sanctum-page p-4 space-y-6 bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-full">
       <div
         className="relative rounded-2xl p-5 overflow-hidden"
         style={{
