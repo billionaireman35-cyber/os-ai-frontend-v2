@@ -58,7 +58,7 @@ function UsersTab({ active }) {
     return (
       <div className="p-4 text-yellow-400">
         <p>⚠️ {error}</p>
-        <button onClick={reload} className="mt-2 underline text-[#d4af37]">Retry</button>
+        <button onClick={reload} className="mt-2 underline text-[var(--accent-brass-bright)]">Retry</button>
       </div>
     );
   }
@@ -67,19 +67,19 @@ function UsersTab({ active }) {
     <div className="space-y-2">
       <p className="text-xs text-[var(--text-muted)]">{total} users</p>
       {items.map((u) => (
-        <div key={u.id} className="glass-card p-3 flex items-center gap-3 border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
+        <div key={u.id} className="glass-card p-3 flex items-center gap-3 border border-[var(--border-color)] hover:border-[color-mix(in_srgb,var(--accent-brass)_30%,transparent)] transition-all rounded-xl">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(99,102,241,0.14)', color: '#818cf8' }}>
             <Users size={17} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold">{u.name || 'Unnamed'} {u.is_founder && <span className="text-[#d4af37]">👑</span>}</p>
+            <p className="font-bold">{u.name || 'Unnamed'} {u.is_founder && <span className="text-[var(--accent-brass-bright)]">👑</span>}</p>
             <p className="text-xs text-[var(--text-muted)]">{u.email}</p>
             <p className="text-xs text-[var(--text-muted)] mt-1">
               {u.stake_tier || 'guest'} · {u.fingerprint_verified ? 'verified' : 'unverified'}
             </p>
           </div>
           <div className="text-right shrink-0">
-            <p className="font-mono text-[#d4af37]">{u.close_balance} CLOSE</p>
+            <p className="font-mono text-[var(--accent-brass-bright)]">{u.close_balance} CLOSE</p>
             <p className="text-xs text-[var(--text-muted)]">staked: {u.close_staked}</p>
             <p className="text-xs text-[var(--text-muted)]">
               {u.last_active ? new Date(u.last_active).toLocaleDateString() : 'never active'}
@@ -94,7 +94,7 @@ function UsersTab({ active }) {
         <button
           onClick={loadMore}
           disabled={loading}
-          className="w-full mt-3 py-2 rounded-xl border border-[var(--border-color)] hover:border-[#d4af37]/30 text-sm text-[var(--text-secondary)] disabled:opacity-50"
+          className="w-full mt-3 py-2 rounded-xl border border-[var(--border-color)] hover:border-[color-mix(in_srgb,var(--accent-brass)_30%,transparent)] text-sm text-[var(--text-secondary)] disabled:opacity-50"
         >
           {loading ? 'Loading...' : 'Load more'}
         </button>
@@ -112,7 +112,7 @@ function WorkspacesTab({ active }) {
     return (
       <div className="p-4 text-yellow-400">
         <p>⚠️ {error}</p>
-        <button onClick={reload} className="mt-2 underline text-[#d4af37]">Retry</button>
+        <button onClick={reload} className="mt-2 underline text-[var(--accent-brass-bright)]">Retry</button>
       </div>
     );
   }
@@ -121,7 +121,7 @@ function WorkspacesTab({ active }) {
     <div className="space-y-2">
       <p className="text-xs text-[var(--text-muted)]">{total} hubs</p>
       {items.map((w) => (
-        <div key={w.id} className="glass-card p-3 flex items-center gap-3 border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
+        <div key={w.id} className="glass-card p-3 flex items-center gap-3 border border-[var(--border-color)] hover:border-[color-mix(in_srgb,var(--accent-brass)_30%,transparent)] transition-all rounded-xl">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(110,155,121,0.14)', color: '#6E9B79' }}>
             <Layers size={17} />
           </div>
@@ -146,7 +146,7 @@ function WorkspacesTab({ active }) {
         <button
           onClick={loadMore}
           disabled={loading}
-          className="w-full mt-3 py-2 rounded-xl border border-[var(--border-color)] hover:border-[#d4af37]/30 text-sm text-[var(--text-secondary)] disabled:opacity-50"
+          className="w-full mt-3 py-2 rounded-xl border border-[var(--border-color)] hover:border-[color-mix(in_srgb,var(--accent-brass)_30%,transparent)] text-sm text-[var(--text-secondary)] disabled:opacity-50"
         >
           {loading ? 'Loading...' : 'Load more'}
         </button>
@@ -165,14 +165,14 @@ function TransactionsTab({ active }) {
       {error ? (
         <div className="p-4 text-yellow-400">
           <p>⚠️ {error}</p>
-          <button onClick={reload} className="mt-2 underline text-[#d4af37]">Retry</button>
+          <button onClick={reload} className="mt-2 underline text-[var(--accent-brass-bright)]">Retry</button>
         </div>
       ) : (
         <>
           <p className="text-xs text-[var(--text-muted)]">{total} transactions</p>
           {items.map((t) => (
-            <div key={`${t.source}-${t.id}`} className="glass-card p-3 flex items-center gap-3 border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(201,169,97,0.14)', color: '#d4af37' }}>
+            <div key={`${t.source}-${t.id}`} className="glass-card p-3 flex items-center gap-3 border border-[var(--border-color)] hover:border-[color-mix(in_srgb,var(--accent-brass)_30%,transparent)] transition-all rounded-xl">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'color-mix(in srgb, var(--accent-brass) 14%, transparent)', color: 'var(--accent-brass-bright)' }}>
                 <ArrowLeftRight size={17} />
               </div>
               <div className="flex-1 min-w-0">
@@ -183,7 +183,7 @@ function TransactionsTab({ active }) {
                 </p>
               </div>
               <div className="text-right shrink-0">
-                {t.amount != null && <p className="font-mono text-[#d4af37]">{t.amount}</p>}
+                {t.amount != null && <p className="font-mono text-[var(--accent-brass-bright)]">{t.amount}</p>}
                 <p className="text-xs text-[var(--text-muted)]">
                   {t.created ? new Date(t.created).toLocaleString() : ''}
                 </p>
@@ -197,7 +197,7 @@ function TransactionsTab({ active }) {
             <button
               onClick={loadMore}
               disabled={loading}
-              className="w-full mt-3 py-2 rounded-xl border border-[var(--border-color)] hover:border-[#d4af37]/30 text-sm text-[var(--text-secondary)] disabled:opacity-50"
+              className="w-full mt-3 py-2 rounded-xl border border-[var(--border-color)] hover:border-[color-mix(in_srgb,var(--accent-brass)_30%,transparent)] text-sm text-[var(--text-secondary)] disabled:opacity-50"
             >
               {loading ? 'Loading...' : 'Load more'}
             </button>
@@ -251,25 +251,25 @@ function GovernanceTab({ active }) {
     return (
       <div className="p-4 text-yellow-400">
         <p>⚠️ {error}</p>
-        <button onClick={load} className="mt-2 underline text-[#d4af37]">Retry</button>
+        <button onClick={load} className="mt-2 underline text-[var(--accent-brass-bright)]">Retry</button>
       </div>
     );
   }
 
   if (loading && proposals.length === 0) {
-    return <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-[#d4af37]" /></div>;
+    return <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-[var(--accent-brass-bright)]" /></div>;
   }
 
   const needsDecision = proposals.filter((p) => p.status !== 'active' && !p.founder_decision);
   const rest = proposals.filter((p) => !(p.status !== 'active' && !p.founder_decision));
 
   const statusColor = (status) => ({
-    active: '#d4af37', passed: '#6E9B79', failed: '#C1554A',
+    active: 'var(--accent-brass-bright)', passed: '#6E9B79', failed: '#C1554A',
     quorum_not_reached: 'var(--text-muted)', approved: '#6E9B79', rejected: '#C1554A',
   }[status] || 'var(--text-muted)');
 
   const renderProposal = (p, awaitingDecision) => (
-    <div key={p.id} className="glass-card p-3 border border-[var(--border-color)] hover:border-[#d4af37]/30 transition-all rounded-xl space-y-2">
+    <div key={p.id} className="glass-card p-3 border border-[var(--border-color)] hover:border-[color-mix(in_srgb,var(--accent-brass)_30%,transparent)] transition-all rounded-xl space-y-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-bold">{p.title}</p>
@@ -365,14 +365,14 @@ function TreasuryTab({ active }) {
     return (
       <div className="p-4 text-yellow-400">
         <p>⚠️ {error}</p>
-        <button onClick={load} className="mt-2 underline text-[#d4af37]">Retry</button>
+        <button onClick={load} className="mt-2 underline text-[var(--accent-brass-bright)]">Retry</button>
       </div>
     );
   }
 
   if (!data) {
     return loading ? (
-      <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-[#d4af37]" /></div>
+      <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-[var(--accent-brass-bright)]" /></div>
     ) : null;
   }
 
@@ -498,18 +498,18 @@ export default function Sanctum() {
       <div
         className="relative rounded-2xl p-5 overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(201,169,97,0.14), rgba(201,169,97,0.03))',
-          border: '1px solid rgba(201,169,97,0.32)',
+          background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent-brass) 14%, transparent), color-mix(in srgb, var(--accent-brass) 3%, transparent))',
+          border: '1px solid color-mix(in srgb, var(--accent-brass) 32%, transparent)',
         }}
       >
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(circle at 15% 0%, rgba(201,169,97,0.2), transparent 65%)' }}
+          style={{ background: 'radial-gradient(circle at 15% 0%, color-mix(in srgb, var(--accent-brass) 20%, transparent), transparent 65%)' }}
         />
         <div className="relative flex items-center gap-3.5">
           <div
             className="w-13 h-13 rounded-2xl flex items-center justify-center shrink-0"
-            style={{ width: 52, height: 52, background: 'linear-gradient(135deg, var(--accent-brass-bright, #E8C877), #C9A961)', color: '#14120C' }}
+            style={{ width: 52, height: 52, background: 'linear-gradient(135deg, var(--accent-brass-bright), var(--accent-brass-dim))', color: '#14120C' }}
           >
             <Crown size={26} />
           </div>
@@ -520,7 +520,7 @@ export default function Sanctum() {
         </div>
         <div
           className="relative inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full text-xs font-mono font-semibold"
-          style={{ background: 'rgba(201,169,97,0.12)', border: '1px solid rgba(201,169,97,0.16)', color: '#E8C877' }}
+          style={{ background: 'color-mix(in srgb, var(--accent-brass) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent-brass) 16%, transparent)', color: 'var(--accent-brass-bright)' }}
         >
           <Coins size={13} /> {user.close_balance} CLOSE
         </div>
@@ -528,7 +528,7 @@ export default function Sanctum() {
 
       <div
         className="flex gap-1 p-1 w-fit rounded-2xl flex-wrap"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(201,169,97,0.16)' }}
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid color-mix(in srgb, var(--accent-brass) 16%, transparent)' }}
       >
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
@@ -536,7 +536,7 @@ export default function Sanctum() {
             onClick={() => setTab(key)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
             style={tab === key
-              ? { background: '#d4af37', color: '#000' }
+              ? { background: 'var(--accent-brass)', color: 'var(--bg-primary)' }
               : { color: 'var(--text-muted)' }}
           >
             <Icon size={15} />

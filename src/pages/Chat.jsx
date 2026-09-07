@@ -648,7 +648,7 @@ export default function Chat() {
                 color:
                   usage.tier === 'platinum' ? '#F0EDE4' :
                   usage.tier === 'gold' ? '#E8C877' :
-                  '#C9A961',
+                  'var(--accent-brass-dim)',
               }}
             >
               {usage.tier}

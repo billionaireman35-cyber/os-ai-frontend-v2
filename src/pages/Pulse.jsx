@@ -84,7 +84,7 @@ function TokenDetailModal({ token, detail, loading, notFound, onClose }) {
             style={
               isPinned
                 ? { background: 'linear-gradient(135deg, var(--accent-brass-bright), var(--accent-brass-dim))', color: '#14120C' }
-                : { background: 'rgba(201,169,97,0.12)', color: 'var(--accent-brass)', border: '1px solid var(--glass-border)' }
+                : { background: 'color-mix(in srgb, var(--accent-brass) 12%, transparent)', color: 'var(--accent-brass)', border: '1px solid var(--glass-border)' }
             }
           >
             {token.symbol?.charAt(0)?.toUpperCase() || '?'}
@@ -326,7 +326,7 @@ export default function Pulse() {
                   className={`glass-card os-pulse-token-card cursor-pointer ${
                     isPinned ? 'border-[var(--border-bright)]' : ''
                   }`}
-                  style={isPinned ? { background: 'linear-gradient(135deg, rgba(201,169,97,0.09), var(--glass-bg))' } : undefined}
+                  style={isPinned ? { background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent-brass) 9%, transparent), var(--glass-bg))' } : undefined}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     {token.image ? (
@@ -337,7 +337,7 @@ export default function Pulse() {
                         style={
                           isPinned
                             ? { background: 'linear-gradient(135deg, var(--accent-brass-bright), var(--accent-brass-dim))', color: '#14120C' }
-                            : { background: 'rgba(201,169,97,0.15)', color: 'var(--accent-brass)' }
+                            : { background: 'color-mix(in srgb, var(--accent-brass) 15%, transparent)', color: 'var(--accent-brass)' }
                         }
                       >
                         {token.symbol?.charAt(0)?.toUpperCase() || '?'}
