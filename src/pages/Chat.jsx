@@ -778,12 +778,12 @@ export default function Chat() {
           return (
             <div
               key={idx}
-              className={`flex ${isUser ? 'justify-end' : 'justify-start'} group`}
+              className={`os-ai-message-row flex ${isUser ? 'justify-end' : 'justify-start'} group`}
             >
-              <div className={`max-w-[80%] relative ${isUser ? 'order-2' : 'order-1'}`}>
+              <div className={`os-ai-message-wrap max-w-[80%] relative ${isUser ? 'order-2' : 'order-1'} ${isUser ? 'is-user' : 'is-assistant'}`}>
                 {!isUser && !isSystem && (
-                  <div className="flex items-center gap-2 mb-1 text-[11px] text-[var(--text-muted)]">
-                    <span className="font-medium text-[var(--accent-brass-bright)]">OS AI</span>
+                  <div className="os-ai-message-meta flex items-center gap-2 mb-1 text-[11px] text-[var(--text-muted)]">
+                    <span className="os-ai-message-brand"><span className="os-ai-message-brand-dot" />OS AI</span>
                     <span>{formatTime(timestamp)}</span>
                     {msg.model && <span className="text-[var(--text-muted)] opacity-60">• {msg.model}</span>}
                   </div>
@@ -831,7 +831,7 @@ export default function Chat() {
                   </div>
                 ) : (
                   <div
-                    className={`animate-slide-up rounded-2xl px-5 py-3 ${
+                    className={`os-ai-message-bubble animate-slide-up rounded-2xl px-5 py-3 ${
                       isUser
                         ? 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]'
                         : isSystem
@@ -871,7 +871,7 @@ export default function Chat() {
                     )}
                   </div>
                 )}
-                <div className="flex flex-wrap gap-1 mt-1">
+                <div className="os-ai-reactions flex flex-wrap gap-1 mt-1">
                   {Object.entries(reactions).map(([emoji, users]) => (
                     <button
                       key={emoji}
@@ -893,7 +893,7 @@ export default function Chat() {
                     ))}
                   </div>
                 </div>
-                <div className={`flex items-center gap-1 mt-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                <div className={`os-ai-message-actions flex items-center gap-1 mt-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
                   <button
                     onClick={() => copyToClipboard(msg.content, msgId)}
                     className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded"
@@ -947,8 +947,8 @@ export default function Chat() {
         )}
 
         {loading && (
-          <div className="flex justify-start">
-            <div className="max-w-[80%] bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-2xl px-5 py-3">
+          <div className="os-ai-thinking-row flex justify-start">
+            <div className="os-ai-thinking-bubble max-w-[80%] bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-2xl px-5 py-3">
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
                 <span className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
@@ -1006,10 +1006,10 @@ export default function Chat() {
       )}
 
       <div className="p-4">
-        <form onSubmit={sendMessage} className="os-ai-composer relative glass-bar rounded-[24px] sm:rounded-[28px] max-w-3xl mx-auto shadow-2xl border border-[var(--border-color)]/70 backdrop-blur-2xl overflow-hidden transition-all duration-200 focus-within:border-[var(--accent-brass)]/40 focus-within:shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
+        <form onSubmit={sendMessage} className="os-ai-composer os-ai-composer-premium relative glass-bar rounded-[24px] sm:rounded-[28px] max-w-3xl mx-auto shadow-2xl border border-[var(--border-color)]/70 backdrop-blur-2xl overflow-hidden transition-all duration-200 focus-within:border-[var(--accent-brass)]/40 focus-within:shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
           {attachedImage && (
-            <div className="px-4 pt-3">
-              <div className="relative inline-block">
+            <div className="os-ai-attachment-area px-4 pt-3">
+              <div className="os-ai-image-attachment relative inline-block">
                 <img
                   src={attachedImage.dataUrl}
                   alt={attachedImage.name}
@@ -1029,7 +1029,7 @@ export default function Chat() {
 
           {attachedText && (
             <div className="px-4 pt-3">
-              <div className="flex items-center gap-2.5 bg-[var(--bg-tertiary)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 max-w-[220px]">
+              <div className="os-ai-text-attachment flex items-center gap-2.5 bg-[var(--bg-tertiary)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 max-w-[220px]">
                 <div className="w-8 h-8 rounded-lg bg-[var(--accent-brass)]/15 text-[var(--accent-brass-bright)] flex items-center justify-center shrink-0 text-[10px] font-mono font-bold">
                   TXT
                 </div>

@@ -3911,3 +3911,338 @@ body {
     transition: none;
   }
 }
+
+/* =========================================================
+   OS AI — PREMIUM CONVERSATION EXPERIENCE
+   Presentation layer only.
+   Chat state, API calls and message behavior unchanged.
+   ========================================================= */
+
+.os-ai-message-row {
+  width: 100%;
+  padding: 4px 0;
+  animation: osAiMessageIn 220ms ease both;
+}
+
+.os-ai-message-wrap {
+  min-width: 0;
+}
+
+.os-ai-message-meta {
+  min-height: 18px;
+  padding: 0 3px;
+  opacity: 0.82;
+}
+
+.os-ai-message-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-brass-bright);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.os-ai-message-brand-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent-brass);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.os-ai-message-bubble {
+  position: relative;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-ai-message-wrap.is-user .os-ai-message-bubble {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--accent-brass) 7%, var(--bg-tertiary)),
+      var(--bg-tertiary)
+    ) !important;
+  border-color:
+    color-mix(in srgb, var(--accent-brass) 15%, var(--border-color)) !important;
+  border-radius: 20px 20px 6px 20px;
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.045),
+    inset 0 1px 0 rgba(255,255,255,0.025);
+}
+
+.os-ai-message-wrap.is-assistant .os-ai-message-bubble {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.os-ai-message-wrap.is-assistant .prose {
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.os-ai-message-wrap.is-assistant .prose > :first-child {
+  margin-top: 0;
+}
+
+.os-ai-message-wrap.is-assistant .prose > :last-child {
+  margin-bottom: 0;
+}
+
+.os-ai-message-wrap.is-assistant .prose p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.os-ai-message-wrap.is-assistant .prose h1,
+.os-ai-message-wrap.is-assistant .prose h2,
+.os-ai-message-wrap.is-assistant .prose h3,
+.os-ai-message-wrap.is-assistant .prose h4 {
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.os-ai-message-wrap.is-assistant .prose h1 {
+  font-size: 1.45em;
+}
+
+.os-ai-message-wrap.is-assistant .prose h2 {
+  font-size: 1.25em;
+}
+
+.os-ai-message-wrap.is-assistant .prose h3 {
+  font-size: 1.08em;
+}
+
+.os-ai-message-wrap.is-assistant .prose strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.os-ai-message-wrap.is-assistant .prose a {
+  color: var(--accent-brass-bright);
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--accent-brass) 35%,
+    transparent
+  );
+}
+
+.os-ai-message-wrap.is-assistant .prose blockquote {
+  margin: 1em 0;
+  padding: 0.65em 0.9em;
+  border-left: 2px solid var(--accent-brass);
+  background: color-mix(in srgb, var(--accent-brass) 4%, transparent);
+  color: var(--text-secondary);
+  border-radius: 0 10px 10px 0;
+}
+
+.os-ai-message-wrap.is-assistant .prose hr {
+  border-color: var(--border-color);
+  margin: 1.25em 0;
+}
+
+.os-ai-message-wrap.is-assistant .prose li::marker {
+  color: var(--accent-brass-bright);
+}
+
+.os-ai-message-wrap.is-assistant .prose code:not(pre code) {
+  padding: 0.16em 0.4em;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-tertiary) 88%, var(--accent-brass) 12%);
+  color: var(--accent-brass-bright);
+  font-size: 0.88em;
+}
+
+.os-ai-reactions {
+  padding-left: 2px;
+}
+
+.os-ai-reactions button {
+  min-height: 24px;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--bg-tertiary) 92%, transparent) !important;
+  border-color: var(--border-color) !important;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.os-ai-reactions button:hover {
+  transform: translateY(-1px);
+  border-color:
+    color-mix(in srgb, var(--accent-brass) 35%, var(--border-color)) !important;
+  background:
+    color-mix(in srgb, var(--accent-brass) 7%, var(--bg-tertiary)) !important;
+}
+
+.os-ai-message-actions {
+  min-height: 26px;
+  padding: 0 3px;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.os-ai-message-wrap:hover .os-ai-message-actions,
+.os-ai-message-wrap:focus-within .os-ai-message-actions {
+  opacity: 1;
+}
+
+.os-ai-message-actions button {
+  width: 27px;
+  height: 27px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.os-ai-message-actions button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.os-ai-thinking-row {
+  width: 100%;
+  padding: 4px 0;
+}
+
+.os-ai-thinking-bubble {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  border-radius: 18px 18px 18px 6px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.04);
+}
+
+.os-ai-thinking-bubble > div {
+  padding: 1px 2px;
+}
+
+.os-ai-thinking-bubble span {
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.os-ai-composer-premium {
+  position: relative;
+  border-radius: 25px !important;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-secondary) 98%, var(--accent-brass) 2%),
+      var(--bg-secondary)
+    ) !important;
+  box-shadow:
+    0 18px 60px rgba(0,0,0,0.12),
+    0 0 0 1px color-mix(in srgb, var(--accent-brass) 4%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.025);
+}
+
+.os-ai-composer-premium:focus-within {
+  border-color:
+    color-mix(in srgb, var(--accent-brass) 42%, var(--border-color)) !important;
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.16),
+    0 0 0 3px color-mix(in srgb, var(--accent-brass) 8%, transparent),
+    0 0 45px color-mix(in srgb, var(--accent-brass) 7%, transparent);
+}
+
+.os-ai-composer-premium textarea {
+  font-family: var(--font-display);
+  line-height: 1.55;
+}
+
+.os-ai-composer-premium textarea::placeholder {
+  opacity: 0.72;
+}
+
+.os-ai-attachment-area {
+  animation: osAiAttachmentIn 180ms ease both;
+}
+
+.os-ai-image-attachment img {
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.os-ai-text-attachment {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+
+@keyframes osAiMessageIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes osAiAttachmentIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .os-ai-message-row {
+    padding: 3px 0;
+  }
+
+  .os-ai-message-wrap {
+    max-width: 91% !important;
+  }
+
+  .os-ai-message-meta {
+    font-size: 10px;
+  }
+
+  .os-ai-message-wrap.is-assistant .prose {
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+
+  .os-ai-message-wrap.is-user .os-ai-message-bubble {
+    border-radius: 18px 18px 5px 18px;
+  }
+
+  .os-ai-message-actions {
+    opacity: 1;
+  }
+
+  .os-ai-composer-premium {
+    border-radius: 21px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-ai-message-row,
+  .os-ai-attachment-area {
+    animation: none;
+  }
+
+  .os-ai-message-bubble,
+  .os-ai-reactions button,
+  .os-ai-message-actions,
+  .os-ai-message-actions button {
+    transition: none;
+  }
+}
