@@ -13,13 +13,13 @@ import {
   SquarePen,
   Search,
   Settings,
-  Zap,
   ChevronDown,
   Star,
   Clock,
   Trophy,
 } from 'lucide-react';
 import { api } from '../../utils/api';
+import { OsAiMark } from '../ui/OsAiMark';
 
 const navItems = [
   { to: '/', label: 'Intelligence', icon: MessageSquare },
@@ -322,13 +322,13 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--border-color)] shrink-0">
+        <div className="os-sidebar-header flex items-center justify-between border-b border-[var(--border-color)] shrink-0">
           <div
-            className="flex items-center gap-2 cursor-pointer select-none rounded-lg px-1.5 py-1"
+            className="os-sidebar-brand flex items-center cursor-pointer select-none rounded-xl px-1.5 py-1"
             onClick={handleLogoClick}
           >
-            <Zap size={19} className="text-[var(--accent-brass)]" />
-            <span className="font-display font-bold text-[16px] text-[var(--text-primary)]">OS AI</span>
+            <div className="os-sidebar-brand-icon"><OsAiMark size={25} animated={false} /></div>
+            <div className="min-w-0"><span className="os-sidebar-brand-name block text-[var(--text-primary)]">OS AI</span><span className="block text-[9px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Intelligence</span></div>
           </div>
           <button
             ref={closeButtonRef}
@@ -342,13 +342,13 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
 
         <button
           onClick={newChat}
-          className="mx-3 mt-3 flex items-center gap-2.5 rounded-lg px-2.5 py-2 border border-[var(--border-color)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--border-bright)] transition-colors touch text-[14px] font-medium text-[var(--text-primary)]"
+          className="os-sidebar-new-chat mx-3 mt-3 flex items-center gap-2.5 rounded-lg px-2.5 py-2 border transition-colors touch text-[14px] font-semibold text-[var(--text-primary)]"
         >
           <SquarePen size={17} className="text-[var(--accent-brass)] shrink-0" />
           New chat
         </button>
 
-        <div className="mx-3 mt-2 flex items-center gap-2 bg-[var(--bg-tertiary)] rounded-lg px-2.5 py-1.5">
+        <div className="os-sidebar-search mx-3 mt-2 flex items-center gap-2 bg-[var(--bg-tertiary)] rounded-lg px-2.5 py-1.5">
           <Search size={14} className="text-[var(--text-muted)] shrink-0" aria-hidden="true" />
           <input
             type="text"
@@ -389,7 +389,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               end={to === '/'}
               onClick={() => { if (isMobile()) resetSidebarState(); }}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors touch mb-0.5 ${
+                `os-sidebar-nav-link flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors touch mb-0.5 ${
                   isActive
                     ? 'bg-[var(--accent-brass)]/10 text-[var(--accent-brass-bright)]'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
@@ -405,7 +405,7 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
               to="/sanctum"
               onClick={() => { if (isMobile()) resetSidebarState(); }}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors touch ${
+                `os-sidebar-nav-link flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors touch ${
                   isActive
                     ? 'bg-[var(--accent-brass)]/10 text-[var(--accent-brass-bright)]'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
@@ -519,10 +519,10 @@ export function Sidebar({ expanded, setExpanded, mobileOpen, setMobileOpen, onNe
             navigate('/settings');
             if (isMobile()) resetSidebarState();
           }}
-          className="border-t border-[var(--border-color)] px-3 py-3 flex items-center gap-3 shrink-0 hover:bg-[var(--bg-tertiary)] transition-colors w-full text-left"
+          className="os-sidebar-profile border-t border-[var(--border-color)] flex items-center gap-3 shrink-0 transition-colors w-full text-left"
         >
           <div
-            className="w-9 h-9 rounded-full bg-[var(--accent-brass)]/15 flex items-center justify-center text-[var(--accent-brass-bright)] font-bold text-[15px] shrink-0"
+            className="os-sidebar-avatar w-9 h-9 rounded-full bg-[var(--accent-brass)]/15 flex items-center justify-center text-[var(--accent-brass-bright)] font-bold text-[15px] shrink-0"
             aria-hidden="true"
           >
             {user?.name ? user.name.charAt(0).toUpperCase() : 'G'}
