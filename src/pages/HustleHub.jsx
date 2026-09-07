@@ -167,8 +167,13 @@ export default function HustleHub() {
   }, [selectedWorkspace]);
 
   useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+
     if (wasNearBottomRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
     }
   }, [messages]);
 
@@ -431,99 +436,208 @@ export default function HustleHub() {
   };
 
   if (loading && workspaces.length === 0) {
-    return <div className="flex items-center justify-center h-full text-[var(--text-muted)]">Loading workspaces...</div>;
+    return (
+      <div className="os-hustle-loading">
+        <div className="os-hustle-loading-orbit">
+          <div className="os-hustle-loading-core">
+            <Users size={20} />
+          </div>
+        </div>
+        <div className="os-hustle-loading-title">Hustle Hub</div>
+        <div className="os-hustle-loading-copy">Preparing your spaces...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)] max-w-7xl mx-auto w-full overflow-hidden">
-      <div className="border-b border-[var(--border-color)] p-4 flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">Hustle Hub</h1>
-          <p className="text-sm text-[var(--text-muted)]">Private, invite-only workspaces — 5000 CLOSE to create, 6000 CLOSE to join</p>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button onClick={() => { setShowCreate(true); setCreateError(''); }} className="btn-primary flex-1 sm:flex-none justify-center">
-            <Plus size={18} /> New
-          </button>
-          <button onClick={() => document.getElementById('join-input').focus()} className="btn-secondary flex-1 sm:flex-none justify-center">
-            <LogIn size={18} /> Join
-          </button>
-          <button onClick={() => setShowDiscover(true)} className="btn-secondary flex-1 sm:flex-none justify-center">
-            <Compass size={18} /> Discover
-          </button>
-        </div>
-      </div>
-
-      <div className="px-5 md:px-7 py-4 border-b border-[var(--border-color)] bg-[var(--bg-secondary)]/20">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {workspaces.map((ws) => (
-          <button
-            key={ws.id}
-            onClick={() => setSelectedWorkspace(ws)}
-            className={`px-4 py-2.5 rounded-2xl text-sm transition-all flex items-center gap-2 shrink-0 whitespace-nowrap border ${
-              selectedWorkspace?.id === ws.id
-                ? 'bg-[var(--accent-brass)] text-white font-bold'
-                : 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] hover:border-[var(--border-bright)] text-[var(--text-primary)]'
-            }`}
-          >
-            {ws.is_public ? <Globe size={14} /> : <Lock size={14} />}
-            {ws.name}
-          </button>
-        ))}
-        <div className="w-full lg:w-auto lg:min-w-[360px] shrink-0 flex flex-col gap-1 mt-2 lg:mt-0">
-          <div className="flex items-center gap-2">
-            <input
-              id="join-input"
-              type="text"
-              placeholder="Enter room code"
-              value={joinCode}
-              onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinStatus(''); setJoinError(''); }}
-              className="input-glass flex-1 text-sm rounded-2xl"
-            />
-            <button onClick={() => handleJoinWorkspace()} className="bg-[var(--accent-brass)] hover:bg-[var(--accent-brass-dim)] text-white px-4 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition shadow-sm">Request to Join</button>
+    <div className="os-hustle-page">
+      <section className="os-hustle-hero">
+        <div className="os-hustle-hero-copy">
+          <div className="os-hustle-kicker">
+            <span className="os-hustle-kicker-dot" />
+            COLLABORATION SPACE
           </div>
-          {joinStatus && <p className="text-xs text-[var(--success)]">{joinStatus}</p>}
-          {joinError && <p className="text-xs text-[var(--danger)]">{joinError}</p>}
-          {pendingJoin && (
-            <button
-              onClick={() => { setShowJoinPayment(true); setJoinPayError(''); }}
-              className="btn-primary text-sm justify-center mt-1"
-            >
-              Pay 6000 CLOSE to join "{pendingJoin.workspace_name}"
-            </button>
-          )}
+
+          <h1>Hustle Hub</h1>
+
+          <p>Build with people who are moving.</p>
+
+          <div className="os-hustle-hero-detail">
+            Ideas become valuable when people build on them.
+          </div>
         </div>
-      </div>
-      </div>
+
+        <div className="os-hustle-actions">
+          <button
+            onClick={() => {
+              setShowCreate(true);
+              setCreateError('');
+            }}
+            className="os-hustle-action os-hustle-action-primary"
+          >
+            <span className="os-hustle-action-icon"><Plus size={17} /></span>
+            <span>
+              <strong>Create a Hub</strong>
+              <small>5,000 CLOSE</small>
+            </span>
+          </button>
+
+          <button
+            onClick={() => document.getElementById('join-input')?.focus()}
+            className="os-hustle-action"
+          >
+            <span className="os-hustle-action-icon"><LogIn size={17} /></span>
+            <span>
+              <strong>Join a Hub</strong>
+              <small>6,000 CLOSE</small>
+            </span>
+          </button>
+
+          <button
+            onClick={() => setShowDiscover(true)}
+            className="os-hustle-action"
+          >
+            <span className="os-hustle-action-icon"><Compass size={17} /></span>
+            <span>
+              <strong>Discover</strong>
+              <small>Public hubs</small>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section className="os-hustle-workspace-bar">
+        <div className="os-hustle-section-label">
+          <span>Your Hubs</span>
+          <span>{workspaces.length}</span>
+        </div>
+
+        <div className="os-hustle-workspace-row">
+          <div className="os-hustle-workspace-list">
+            {workspaces.length === 0 ? (
+              <div className="os-hustle-no-hubs">
+                <span>Your first hub starts here.</span>
+              </div>
+            ) : (
+              workspaces.map((ws) => (
+                <button
+                  key={ws.id}
+                  onClick={() => setSelectedWorkspace(ws)}
+                  className={`os-hustle-workspace-chip ${
+                    selectedWorkspace?.id === ws.id ? 'is-active' : ''
+                  }`}
+                >
+                  <span className="os-hustle-workspace-chip-icon">
+                    {ws.is_public ? <Globe size={14} /> : <Lock size={14} />}
+                  </span>
+                  <span>{ws.name}</span>
+                  {selectedWorkspace?.id === ws.id && <Check size={13} />}
+                </button>
+              ))
+            )}
+          </div>
+
+          <div className="os-hustle-join">
+            <div className="os-hustle-join-field">
+              <Search size={15} />
+              <input
+                id="join-input"
+                type="text"
+                placeholder="Enter room code"
+                value={joinCode}
+                onChange={(e) => {
+                  setJoinCode(e.target.value.toUpperCase());
+                  setJoinStatus('');
+                  setJoinError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleJoinWorkspace();
+                }}
+              />
+              <button onClick={() => handleJoinWorkspace()}>
+                Join
+              </button>
+            </div>
+
+            {joinStatus && (
+              <p className="os-hustle-inline-success">{joinStatus}</p>
+            )}
+
+            {joinError && (
+              <p className="os-hustle-inline-error">{joinError}</p>
+            )}
+
+            {pendingJoin && (
+              <button
+                onClick={() => {
+                  setShowJoinPayment(true);
+                  setJoinPayError('');
+                }}
+                className="os-hustle-pending-payment"
+              >
+                <span>
+                  <strong>Finish joining {pendingJoin.workspace_name}</strong>
+                  <small>Pay 6,000 CLOSE to continue</small>
+                </span>
+                <LogIn size={15} />
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
 
       {selectedWorkspace ? (
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-5 md:px-7 py-4 border-b border-[var(--border-color)] bg-[var(--bg-secondary)]/30 flex-wrap gap-3">
-            <div className="flex items-center gap-2">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="os-hustle-active-header">
+            <div className="os-hustle-active-identity">
+              <div className="os-hustle-active-mark">
+                {selectedWorkspace.is_public ? <Globe size={19} /> : <Lock size={19} />}
+              </div>
+
               <div>
-              <span className="font-display font-bold text-lg text-[var(--text-primary)]">{selectedWorkspace.name}</span>
-              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Your shared space</p>
+                <div className="os-hustle-active-title">
+                  {selectedWorkspace.name}
+                </div>
+
+                <div className="os-hustle-active-meta">
+                  <span>
+                    {selectedWorkspace.is_public ? 'Public' : 'Private'} workspace
+                  </span>
+                  <span>•</span>
+                  <button onClick={() => setShowMembers(true)}>
+                    <Users size={12} />
+                    {selectedWorkspace.member_count || 0} members
+                  </button>
+                </div>
+              </div>
             </div>
-              {selectedWorkspace.is_public ? (
-                <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]"><Globe size={12} /> Public</span>
-              ) : (
-                <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]"><Lock size={12} /> Private</span>
-              )}
+
+            <div className="os-hustle-room-tools">
+              <span className="os-hustle-room-code">
+                <span>ROOM</span>
+                {selectedWorkspace.room_code}
+              </span>
+
               <button
-                onClick={() => setShowMembers(true)}
-                className="flex items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                onClick={copyRoomCode}
+                className="btn-glass-icon w-9 h-9"
+                title="Copy room code"
               >
-                <Users size={13} /> {selectedWorkspace.member_count || 0} members
+                {copied ? (
+                  <CheckCircle size={15} className="text-[var(--success)]" />
+                ) : (
+                  <Copy size={15} />
+                )}
               </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-[var(--text-muted)]">Code: {selectedWorkspace.room_code}</span>
-              <button onClick={copyRoomCode} className="btn-glass-icon w-8 h-8">
-                {copied ? <CheckCircle size={14} className="text-green-400" /> : <Copy size={14} />}
-              </button>
+
               {!isOwner && (
-                <button onClick={handleLeaveWorkspace} className="btn-glass-icon w-8 h-8 hover:text-[var(--danger)]" title="Leave hub">
-                  <LogOut size={14} />
+                <button
+                  onClick={handleLeaveWorkspace}
+                  className="os-hustle-leave"
+                  title="Leave hub"
+                >
+                  <LogOut size={15} />
+                  <span>Leave</span>
                 </button>
               )}
             </div>
@@ -538,9 +652,13 @@ export default function HustleHub() {
                 aria-expanded={pendingRequestsExpanded}
               >
                 <div className="flex items-center gap-2">
-                  <UserPlus size={16} className="text-[var(--accent-brass)]" />
+                  <UserPlus
+                    size={16}
+                    className="text-[var(--accent-brass)]"
+                  />
                   <span className="text-sm font-bold text-[var(--text-primary)]">
-                    Pending Join Requests {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                    Pending Join Requests
+                    {pendingRequests.length > 0 && ` (${pendingRequests.length})`}
                   </span>
                 </div>
 
@@ -557,34 +675,51 @@ export default function HustleHub() {
               {pendingRequestsExpanded && (
                 <div className="mt-3">
                   <p className="text-xs text-[var(--text-muted)] mb-2">
-                    Requesters now pay and submit their own transaction automatically. This manual approval is a fallback if that doesn't complete — paste their tx hash to verify and approve.
+                    Requesters now pay and submit their own transaction automatically.
+                    This manual approval is a fallback if that doesn't complete —
+                    paste their tx hash to verify and approve.
                   </p>
 
                   {requestActionError && (
-                    <p className="text-xs text-[var(--danger)] mb-2">{requestActionError}</p>
+                    <p className="text-xs text-[var(--danger)] mb-2">
+                      {requestActionError}
+                    </p>
                   )}
 
                   {pendingRequests.length === 0 ? (
-                    <p className="text-xs text-[var(--text-muted)]">No pending requests.</p>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      No pending requests.
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {pendingRequests.map((req) => (
-                        <div key={req.user_id} className="bg-[var(--bg-tertiary)] rounded-lg px-3 py-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-[var(--text-primary)]">{req.user_name}</span>
+                        <div
+                          key={req.user_id}
+                          className="bg-[var(--bg-tertiary)] rounded-lg px-3 py-2"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm text-[var(--text-primary)]">
+                              {req.user_name}
+                            </span>
+
                             <div className="flex gap-2">
                               <button
-                                onClick={() => { setApprovingUserId(req.user_id); setApproveTxHash(''); }}
+                                onClick={() => {
+                                  setApprovingUserId(req.user_id);
+                                  setApproveTxHash('');
+                                }}
                                 className="flex items-center gap-1 bg-[var(--success)]/15 text-[var(--success)] hover:bg-[var(--success)]/25 px-3 py-1 rounded-lg text-xs font-bold transition"
                               >
-                                <Check size={14} /> Approve
+                                <Check size={14} />
+                                Approve
                               </button>
 
                               <button
                                 onClick={() => handleRejectRequest(req.user_id)}
                                 className="flex items-center gap-1 bg-[var(--danger)]/15 text-[var(--danger)] hover:bg-[var(--danger)]/25 px-3 py-1 rounded-lg text-xs font-bold transition"
                               >
-                                <XCircle size={14} /> Reject
+                                <XCircle size={14} />
+                                Reject
                               </button>
                             </div>
                           </div>
@@ -597,30 +732,82 @@ export default function HustleHub() {
             </div>
           )}
 
-          <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto px-5 md:px-8 py-6 space-y-4 scroll-smooth">
+          <div
+            ref={messagesContainerRef}
+            onScroll={handleMessagesScroll}
+            className="flex-1 overflow-y-auto px-5 md:px-8 py-6 space-y-4 scroll-smooth"
+          >
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-16 px-6">
-                  <div className="w-16 h-16 rounded-3xl bg-[var(--accent-brass)]/10 flex items-center justify-center mb-4">
-                    <Users size={28} className="text-[var(--accent-brass)]" />
-                  </div>
-                  <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">Start the conversation</h3>
-                  <p className="text-sm text-[var(--text-muted)] mt-1 max-w-sm">This is your space to exchange ideas, collaborate, and build something meaningful.</p>
+              <div className="os-hustle-empty-chat">
+                <div className="os-hustle-empty-symbol">
+                  <Users size={25} />
                 </div>
+
+                <div className="os-hustle-empty-kicker">YOUR SPACE</div>
+
+                <h3>Start building together.</h3>
+
+                <p>
+                  Share an idea, ask a question, or bring something you are
+                  working on into the room.
+                </p>
+
+                <div className="os-hustle-empty-hint">
+                  Good conversations create momentum.
+                </div>
+              </div>
             ) : (
               messages.map((msg) => {
                 const isOwnMsg = msg.user_id === user?.id;
                 const canDelete = isOwnMsg || canManageRequests;
                 const isEditing = editingMessageId === msg.id;
+
                 return (
-                  <div key={msg.id} className={`flex ${isOwnMsg ? 'justify-end' : 'justify-start'} group`}>
+                  <div
+                    key={msg.id}
+                    className={`flex ${
+                      isOwnMsg ? 'justify-end' : 'justify-start'
+                    } group`}
+                  >
                     <div className="max-w-[88%] sm:max-w-[75%]">
-                      <div className={`glass-card rounded-[1.35rem] px-4 py-3 shadow-sm ${msg.is_ai ? 'border border-[var(--accent-indigo)]/30 bg-[var(--accent-indigo)]/5' : ''}`}>
+                      <div
+                        className={`glass-card rounded-[1.35rem] px-4 py-3 shadow-sm ${
+                          msg.is_ai
+                            ? 'border border-[var(--accent-indigo)]/30 bg-[var(--accent-indigo)]/5'
+                            : ''
+                        }`}
+                      >
                         <div className="flex items-center gap-2 text-xs mb-1">
-                          {msg.is_ai && <Sparkles size={12} className="text-[var(--accent-indigo)]" />}
-                          <span className={`font-bold ${msg.is_ai ? 'text-[var(--accent-indigo)]' : 'text-[var(--accent-brass)]'}`}>{msg.user_name || 'Unknown'}</span>
-                          <span className="text-[var(--text-muted)]">{msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : ''}</span>
-                          {msg.edited_at && <span className="text-[var(--text-muted)] italic">(edited)</span>}
+                          {msg.is_ai && (
+                            <Sparkles
+                              size={12}
+                              className="text-[var(--accent-indigo)]"
+                            />
+                          )}
+
+                          <span
+                            className={`font-bold ${
+                              msg.is_ai
+                                ? 'text-[var(--accent-indigo)]'
+                                : 'text-[var(--accent-brass)]'
+                            }`}
+                          >
+                            {msg.user_name || 'Unknown'}
+                          </span>
+
+                          <span className="text-[var(--text-muted)]">
+                            {msg.created_at
+                              ? new Date(msg.created_at).toLocaleTimeString()
+                              : ''}
+                          </span>
+
+                          {msg.edited_at && (
+                            <span className="text-[var(--text-muted)] italic">
+                              (edited)
+                            </span>
+                          )}
                         </div>
+
                         {isEditing ? (
                           <div className="space-y-1.5">
                             <input
@@ -634,23 +821,60 @@ export default function HustleHub() {
                                 if (e.key === 'Escape') cancelEditMessage();
                               }}
                             />
+
                             <div className="flex gap-1.5">
-                              <button onClick={() => saveEditMessage(msg.id)} className="text-xs text-[var(--success)] font-medium">Save</button>
-                              <button onClick={cancelEditMessage} className="text-xs text-[var(--text-muted)]">Cancel</button>
+                              <button
+                                onClick={() => saveEditMessage(msg.id)}
+                                className="text-xs text-[var(--success)] font-medium"
+                              >
+                                Save
+                              </button>
+
+                              <button
+                                onClick={cancelEditMessage}
+                                className="text-xs text-[var(--text-muted)]"
+                              >
+                                Cancel
+                              </button>
                             </div>
                           </div>
                         ) : (
-                          <div className={`prose prose-sm max-w-none break-words ${theme === 'dark' ? 'prose-invert' : ''}`}>
+                          <div
+                            className={`prose prose-sm max-w-none break-words ${
+                              theme === 'dark' ? 'prose-invert' : ''
+                            }`}
+                          >
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
                               components={{
-                                code({ inline, className, children, ...props }) {
-                                  const match = /language-(\w+)/.exec(className || '');
-                                  const value = String(children).replace(/\n$/, '');
+                                code({
+                                  inline,
+                                  className,
+                                  children,
+                                  ...props
+                                }) {
+                                  const match = /language-(\w+)/.exec(
+                                    className || ''
+                                  );
+                                  const value = String(children).replace(
+                                    /\n$/,
+                                    ''
+                                  );
+
                                   if (inline) {
-                                    return <code className={className} {...props}>{children}</code>;
+                                    return (
+                                      <code className={className} {...props}>
+                                        {children}
+                                      </code>
+                                    );
                                   }
-                                  return <CodeBlock language={match ? match[1] : undefined} value={value} />;
+
+                                  return (
+                                    <CodeBlock
+                                      language={match ? match[1] : undefined}
+                                      value={value}
+                                    />
+                                  );
                                 },
                               }}
                             >
@@ -659,15 +883,29 @@ export default function HustleHub() {
                           </div>
                         )}
                       </div>
+
                       {!isEditing && (
-                        <div className={`flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${isOwnMsg ? 'justify-end' : 'justify-start'}`}>
+                        <div
+                          className={`flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${
+                            isOwnMsg ? 'justify-end' : 'justify-start'
+                          }`}
+                        >
                           {isOwnMsg && (
-                            <button onClick={() => startEditMessage(msg)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1" aria-label="Edit">
+                            <button
+                              onClick={() => startEditMessage(msg)}
+                              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1"
+                              aria-label="Edit"
+                            >
                               <Pencil size={12} />
                             </button>
                           )}
+
                           {canDelete && (
-                            <button onClick={() => deleteMessage(msg.id)} className="text-[var(--text-muted)] hover:text-[var(--danger)] p-1" aria-label="Delete">
+                            <button
+                              onClick={() => deleteMessage(msg.id)}
+                              className="text-[var(--text-muted)] hover:text-[var(--danger)] p-1"
+                              aria-label="Delete"
+                            >
                               <Trash2 size={12} />
                             </button>
                           )}
@@ -678,31 +916,47 @@ export default function HustleHub() {
                 );
               })
             )}
+
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4">
-            <form onSubmit={handleSendMessage} className="glass-bar rounded-3xl max-w-2xl mx-auto shadow-lg flex items-center gap-2 p-2">
+          <div className="os-hustle-composer-wrap">
+            <form
+              onSubmit={handleSendMessage}
+              className="os-hustle-composer"
+            >
+              <div className="os-hustle-composer-leading">
+                <Sparkles size={16} />
+              </div>
+
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Share an idea, ask a question, or try @osai..."
-                className="flex-1 bg-transparent border-none outline-none px-3 py-2 text-[16px] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
               />
+
               <button
                 type="submit"
                 disabled={!newMessage.trim()}
-                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--accent-brass)] hover:bg-[var(--accent-brass-dim)] text-white shadow-md hover:shadow-lg disabled:shadow-none disabled:hover:bg-[var(--accent-brass)]"
+                aria-label="Send message"
               >
                 <Send size={17} />
               </button>
             </form>
+
+            <div className="os-hustle-composer-note">
+              <span>Enter to send</span>
+              <span>•</span>
+              <span>Build something meaningful.</span>
+            </div>
           </div>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-[var(--text-muted)]">
-          {workspaces.length === 0 ? 'No workspaces yet. Create, join, or discover one!' : 'Select a workspace to start chatting.'}
+          {workspaces.length === 0
+            ? 'No workspaces yet. Create, join, or discover one!'
+            : 'Select a workspace to start chatting.'}
         </div>
       )}
 
@@ -711,19 +965,51 @@ export default function HustleHub() {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="glass-panel rounded-[1.5rem] w-full max-w-md p-6 md:p-7 space-y-4 shadow-2xl border border-[var(--border-bright)]/50">
             <div className="flex justify-between items-center">
-              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">New Hustle Hub</h3>
-              <button onClick={() => setShowCreate(false)} className="btn-glass-icon w-9 h-9"><X size={20} /></button>
+              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">
+                New Hustle Hub
+              </h3>
+
+              <button
+                onClick={() => setShowCreate(false)}
+                className="btn-glass-icon w-9 h-9"
+              >
+                <X size={20} />
+              </button>
             </div>
+
             <div>
-              <label className="text-sm text-[var(--text-muted)] block">Name</label>
-              <input type="text" value={newWorkspaceName} onChange={(e) => setNewWorkspaceName(e.target.value)} className="input-glass w-full mt-1" placeholder="My Workspace" />
+              <label className="text-sm text-[var(--text-muted)] block">
+                Name
+              </label>
+
+              <input
+                type="text"
+                value={newWorkspaceName}
+                onChange={(e) => setNewWorkspaceName(e.target.value)}
+                className="input-glass w-full mt-1"
+                placeholder="My Workspace"
+              />
             </div>
+
             <div>
-              <label className="text-sm text-[var(--text-muted)] block">Description (optional)</label>
-              <input type="text" value={newWorkspaceDesc} onChange={(e) => setNewWorkspaceDesc(e.target.value)} className="input-glass w-full mt-1" placeholder="What's this workspace about?" />
+              <label className="text-sm text-[var(--text-muted)] block">
+                Description (optional)
+              </label>
+
+              <input
+                type="text"
+                value={newWorkspaceDesc}
+                onChange={(e) => setNewWorkspaceDesc(e.target.value)}
+                className="input-glass w-full mt-1"
+                placeholder="What's this workspace about?"
+              />
             </div>
+
             <div>
-              <label className="text-sm text-[var(--text-muted)] block mb-1">Visibility</label>
+              <label className="text-sm text-[var(--text-muted)] block mb-1">
+                Visibility
+              </label>
+
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -734,8 +1020,10 @@ export default function HustleHub() {
                       : 'bg-[var(--bg-tertiary)] border-[var(--border-color)] text-[var(--text-secondary)]'
                   }`}
                 >
-                  <Lock size={16} /> Private
+                  <Lock size={16} />
+                  Private
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setNewWorkspaceVisibility('public')}
@@ -745,23 +1033,48 @@ export default function HustleHub() {
                       : 'bg-[var(--bg-tertiary)] border-[var(--border-color)] text-[var(--text-secondary)]'
                   }`}
                 >
-                  <Globe size={16} /> Public
+                  <Globe size={16} />
+                  Public
                 </button>
               </div>
             </div>
-            <p className="text-xs text-[var(--text-muted)]">Creating a hub costs 5000 CLOSE, sent on-chain to the OS AI treasury.</p>
-            {createError && <p className="text-sm text-[var(--danger)]">{createError}</p>}
+
+            <p className="text-xs text-[var(--text-muted)]">
+              Creating a hub costs 5000 CLOSE, sent on-chain to the OS AI treasury.
+            </p>
+
+            {createError && (
+              <p className="text-sm text-[var(--danger)]">{createError}</p>
+            )}
+
             <div className="flex gap-2">
               <button
                 onClick={() => setShowCreatePassword(true)}
                 disabled={!newWorkspaceName.trim() || createStep !== ''}
                 className="btn-primary flex-1 justify-center"
               >
-                {createStep === 'paying' ? <><Loader2 size={16} className="animate-spin inline mr-1" /> Sending payment...</>
-                  : createStep === 'confirming' ? <><Loader2 size={16} className="animate-spin inline mr-1" /> Creating hub...</>
-                  : 'Create (5000 CLOSE)'}
+                {createStep === 'paying' ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin inline mr-1" />
+                    Sending payment...
+                  </>
+                ) : createStep === 'confirming' ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin inline mr-1" />
+                    Creating hub...
+                  </>
+                ) : (
+                  'Create (5000 CLOSE)'
+                )}
               </button>
-              <button onClick={() => setShowCreate(false)} disabled={createStep !== ''} className="btn-secondary flex-1 justify-center">Cancel</button>
+
+              <button
+                onClick={() => setShowCreate(false)}
+                disabled={createStep !== ''}
+                className="btn-secondary flex-1 justify-center"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -769,24 +1082,50 @@ export default function HustleHub() {
 
       {/* Members panel */}
       {showMembers && selectedWorkspace && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowMembers(false)}>
-          <div className="glass-panel rounded-[1.5rem] w-full max-w-md p-6 md:p-7 space-y-3 max-h-[80vh] overflow-y-auto shadow-2xl border border-[var(--border-bright)]/50" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in"
+          onClick={() => setShowMembers(false)}
+        >
+          <div
+            className="glass-panel rounded-[1.5rem] w-full max-w-md p-6 md:p-7 space-y-3 max-h-[80vh] overflow-y-auto shadow-2xl border border-[var(--border-bright)]/50"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Members</h3>
-              <button onClick={() => setShowMembers(false)} className="btn-glass-icon w-9 h-9"><X size={18} /></button>
+              <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">
+                Members
+              </h3>
+
+              <button
+                onClick={() => setShowMembers(false)}
+                className="btn-glass-icon w-9 h-9"
+              >
+                <X size={18} />
+              </button>
             </div>
+
             {membersLoading ? (
               <p className="text-sm text-[var(--text-muted)]">Loading...</p>
             ) : members.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">No members found.</p>
+              <p className="text-sm text-[var(--text-muted)]">
+                No members found.
+              </p>
             ) : (
               <div className="space-y-1.5">
                 {members.map((m) => (
-                  <div key={m.user_id} className="flex items-center justify-between bg-[var(--bg-tertiary)] rounded-lg px-3 py-2">
+                  <div
+                    key={m.user_id}
+                    className="flex items-center justify-between bg-[var(--bg-tertiary)] rounded-lg px-3 py-2"
+                  >
                     <div>
-                      <p className="text-sm text-[var(--text-primary)]">{m.user_name}</p>
-                      <p className="text-[11px] text-[var(--text-muted)] font-mono uppercase">{m.role}</p>
+                      <p className="text-sm text-[var(--text-primary)]">
+                        {m.user_name}
+                      </p>
+
+                      <p className="text-[11px] text-[var(--text-muted)] font-mono uppercase">
+                        {m.role}
+                      </p>
                     </div>
+
                     {canManageRequests && m.role !== 'admin' && (
                       <button
                         onClick={() => handleRemoveMember(m.user_id)}
@@ -806,44 +1145,82 @@ export default function HustleHub() {
 
       {/* Discover panel */}
       {showDiscover && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowDiscover(false)}>
-          <div className="glass-panel rounded-[1.5rem] w-full max-w-md p-6 md:p-7 space-y-3 max-h-[80vh] overflow-y-auto shadow-2xl border border-[var(--border-bright)]/50" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in"
+          onClick={() => setShowDiscover(false)}
+        >
+          <div
+            className="glass-panel rounded-[1.5rem] w-full max-w-md p-6 md:p-7 space-y-3 max-h-[80vh] overflow-y-auto shadow-2xl border border-[var(--border-bright)]/50"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">Discover Public Hubs</h3>
-              <button onClick={() => setShowDiscover(false)} className="btn-glass-icon w-9 h-9"><X size={18} /></button>
+              <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">
+                Discover Public Hubs
+              </h3>
+
+              <button
+                onClick={() => setShowDiscover(false)}
+                className="btn-glass-icon w-9 h-9"
+              >
+                <X size={18} />
+              </button>
             </div>
+
             <div className="flex items-center gap-2 bg-[var(--bg-tertiary)] rounded-lg px-3 py-2">
               <Search size={14} className="text-[var(--text-muted)]" />
+
               <input
                 type="text"
                 value={discoverQuery}
                 onChange={(e) => setDiscoverQuery(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') fetchDiscover(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') fetchDiscover();
+                }}
                 placeholder="Search hubs..."
                 className="bg-transparent border-none outline-none text-sm text-[var(--text-primary)] w-full"
               />
             </div>
+
             {discoverLoading ? (
               <p className="text-sm text-[var(--text-muted)]">Loading...</p>
             ) : discoverResults.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">No public hubs found.</p>
+              <p className="text-sm text-[var(--text-muted)]">
+                No public hubs found.
+              </p>
             ) : (
               <div className="space-y-1.5">
                 {discoverResults.map((ws) => (
-                  <div key={ws.id} className="bg-[var(--bg-tertiary)] rounded-lg px-3 py-2.5">
+                  <div
+                    key={ws.id}
+                    className="bg-[var(--bg-tertiary)] rounded-lg px-3 py-2.5"
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm text-[var(--text-primary)] font-medium truncate">{ws.name}</p>
-                        <p className="text-[11px] text-[var(--text-muted)]">{ws.member_count} members</p>
+                        <p className="text-sm text-[var(--text-primary)] font-medium truncate">
+                          {ws.name}
+                        </p>
+
+                        <p className="text-[11px] text-[var(--text-muted)]">
+                          {ws.member_count} members
+                        </p>
                       </div>
+
                       <button
-                        onClick={() => { handleJoinWorkspace(ws.room_code); setShowDiscover(false); }}
+                        onClick={() => {
+                          handleJoinWorkspace(ws.room_code);
+                          setShowDiscover(false);
+                        }}
                         className="btn-secondary text-xs py-1.5 px-3 shrink-0"
                       >
                         Request to Join
                       </button>
                     </div>
-                    {ws.description && <p className="text-xs text-[var(--text-muted)] mt-1 truncate">{ws.description}</p>}
+
+                    {ws.description && (
+                      <p className="text-xs text-[var(--text-muted)] mt-1 truncate">
+                        {ws.description}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -875,6 +1252,7 @@ export default function HustleHub() {
         confirmText={joinPayStep ? 'Processing...' : 'Pay & Join'}
         cancelText="Cancel"
       />
+
       {joinPayError && showJoinPayment && (
         <p className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] text-sm text-[var(--danger)] bg-[var(--bg-secondary)] border border-[var(--danger)]/30 rounded-lg px-4 py-2">
           {joinPayError}
