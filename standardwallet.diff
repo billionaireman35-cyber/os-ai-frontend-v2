@@ -1,0 +1,1268 @@
+--- Vault.git.standard.txt	2026-09-04 10:08:43.502395160 +0100
++++ Vault.current.standard.txt	2026-09-04 10:08:43.482395160 +0100
+@@ -2,6 +2,7 @@
+   const { assets, totalUsd, loading, error, fetchBalances, currency, setCurrency, supportedCurrencies } = useWallet();
+   const { user, refreshUser } = useAuth();
+   const { toasts, addToast, removeToast } = useToast();
++
+   const [chain, setChain] = useState('all');
+   const [showSendModal, setShowSendModal] = useState(false);
+   const [sendAsset, setSendAsset] = useState(null);
+@@ -16,25 +17,33 @@
+   const [copied, setCopied] = useState(false);
+   const [showOverflow, setShowOverflow] = useState(false);
+ 
+-  // CLOSE is pinned separately (hero strip + pinned row), so it's excluded
+-  // from the plain chain-filtered ledger list below to avoid showing twice.
+-  const nonCloseAssets = Array.isArray(assets) ? assets.filter((a) => a.symbol !== 'CLOSE') : [];
+-  const filtered = chain === 'all' ? nonCloseAssets : nonCloseAssets.filter((a) => a.chain === chain);
+-  const closeAsset = assets.find(a => a.symbol === 'CLOSE');
+-
+-  // Which chains actually hold a balance (for the live/dim dot on chain pills).
+-  // Checked against the full asset list (including CLOSE) so CLOSE's chain
+-  // still lights up even though CLOSE itself is filtered out of the ledger rows.
+-  const chainsWithBalance = new Set((Array.isArray(assets) ? assets : []).map((a) => a.chain));
++  const allAssets = Array.isArray(assets) ? assets : [];
++  const closeAsset = allAssets.find((a) => a.symbol === 'CLOSE');
++  const nonCloseAssets = allAssets.filter((a) => a.symbol !== 'CLOSE');
++
++  const filtered =
++    chain === 'all'
++      ? nonCloseAssets
++      : nonCloseAssets.filter((a) => a.chain === chain);
++
++  const chainsWithBalance = new Set(allAssets.map((a) => a.chain));
+ 
+   const createWallet = async (password) => {
+     if (!password || creating) return;
+     setCreating(true);
++
+     try {
+       const res = await api.post('/wallet/create', { password });
++
+       if (res.data?.wallet) {
+         const { address } = res.data.wallet;
+-        addToast(`Wallet created! Address: ${address.slice(0, 10)}...`, 'success', 6000);
++
++        addToast(
++          `Wallet created! Address: ${address.slice(0, 10)}...`,
++          'success',
++          6000
++        );
++
+         await refreshUser();
+         fetchBalances();
+         setShowCreatePasswordModal(false);
+@@ -42,657 +51,655 @@
+         throw new Error('Unexpected response');
+       }
+     } catch (e) {
+-      addToast(e.response?.data?.detail || e.message || 'Wallet creation failed.', 'error');
++      addToast(
++        e.response?.data?.detail ||
++          e.message ||
++          'Wallet creation failed.',
++        'error'
++      );
+     } finally {
+       setCreating(false);
+     }
+   };
+ 
+-  useEffect(() => { if (user) fetchBalances(); }, [user]);
++  useEffect(() => {
++    if (user) fetchBalances();
++  }, [user]);
++
++  const errorMessage =
++    typeof error === 'string'
++      ? error
++      : error?.message || JSON.stringify(error) || 'Unknown error';
+ 
+-  const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error) || 'Unknown error');
+   const copyAddress = () => {
+-    if (user?.wallet_address) {
+-      navigator.clipboard.writeText(user.wallet_address);
+-      setCopied(true);
+-      addToast('Address copied!', 'info', 2000);
+-      setTimeout(() => setCopied(false), 2000);
+-    }
+-  };
++    if (!user?.wallet_address) return;
+ 
++    navigator.clipboard.writeText(user.wallet_address);
++    setCopied(true);
++    addToast('Address copied!', 'info', 2000);
++
++    setTimeout(() => setCopied(false), 2000);
++  };
+ 
+-  // Tiny inline sparkline, mirrors Pulse's visual language. No new deps -
+-  // just an SVG polyline built from the 7d price array WalletContext
+-  // already provides on each asset (a.sparkline).
+   const Sparkline = ({ points, up }) => {
+-    const w = 48, h = 20;
++    const w = 52;
++    const h = 22;
++
+     if (!points || points.length < 2) {
+       return (
+         <svg width={w} height={h}>
+-          <line x1="0" y1={h / 2} x2={w} y2={h / 2} stroke="var(--text-muted)" strokeWidth="1" strokeDasharray="2,3" />
++          <line
++            x1="0"
++            y1={h / 2}
++            x2={w}
++            y2={h / 2}
++            stroke="var(--text-muted)"
++            strokeWidth="1"
++            strokeDasharray="2,3"
++          />
+         </svg>
+       );
+     }
+-    const min = Math.min(...points), max = Math.max(...points);
+-    const range = (max - min) || 1;
+-    const coords = points.map((p, i) => {
+-      const x = (i / (points.length - 1)) * w;
+-      const y = h - ((p - min) / range) * h;
+-      return `${x.toFixed(1)},${y.toFixed(1)}`;
+-    }).join(' ');
+-    const color = up ? 'var(--success)' : 'var(--danger)';
++
++    const min = Math.min(...points);
++    const max = Math.max(...points);
++    const range = max - min || 1;
++
++    const coords = points
++      .map((p, i) => {
++        const x = (i / (points.length - 1)) * w;
++        const y = h - ((p - min) / range) * h;
++        return `${x.toFixed(1)},${y.toFixed(1)}`;
++      })
++      .join(' ');
++
+     return (
+       <svg width={w} height={h}>
+-        <polyline points={coords} fill="none" stroke={color} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
++        <polyline
++          points={coords}
++          fill="none"
++          stroke={up ? 'var(--success)' : 'var(--danger)'}
++          strokeWidth="1.5"
++          strokeLinejoin="round"
++          strokeLinecap="round"
++        />
+       </svg>
+     );
+   };
+ 
++  const actionButton =
++    "flex items-center justify-center gap-2 rounded-2xl px-3 py-3 text-xs font-semibold border border-white/[0.07] bg-white/[0.035] hover:bg-white/[0.07] hover:border-white/[0.12] transition-all active:scale-[0.97]";
++
+   return (
+-    <div className="space-y-6">
++    <div className="space-y-5">
+       <ToastContainer toasts={toasts} removeToast={removeToast} />
+ 
+-      {/* OS VAULT — Premium Hero */}
+-      {user?.wallet_address ? (
+-        <div
+-          className="relative overflow-hidden rounded-[32px] min-h-[320px] shadow-[0_30px_90px_rgba(0,0,0,0.35)]"
+-          style={{
+-            background:
+-              'radial-gradient(circle at 78% 18%, rgba(124,58,237,0.20), transparent 34%), linear-gradient(135deg, #050506 0%, #09090d 55%, #050506 100%)',
+-            border: '1px solid rgba(124,58,237,0.16)',
+-          }}
+-        >
+-          {/* Violet edge accent */}
+-          <div
+-            className="absolute left-0 top-7 bottom-7 w-1.5 rounded-r-full"
+-            style={{
+-              background: 'linear-gradient(180deg, #8b5cf6, #6d28d9)',
+-              boxShadow: '0 0 18px rgba(139,92,246,0.85)',
+-            }}
+-          />
++      {loading && (
++        <div className="space-y-3">
++          <div className="h-52 rounded-[30px] animate-pulse bg-white/[0.035]" />
++          <div className="h-24 rounded-[24px] animate-pulse bg-white/[0.025]" />
++          <div className="h-40 rounded-[26px] animate-pulse bg-white/[0.025]" />
++        </div>
++      )}
+ 
+-          {/* Official OS Vault triangle — signature watermark */}
+-          <div
+-            className="absolute -right-14 -top-16 w-[310px] h-[310px] pointer-events-none opacity-90"
+-            style={{
+-              filter: 'drop-shadow(0 0 22px rgba(139,92,246,0.58)) drop-shadow(0 0 70px rgba(109,40,217,0.26))',
+-            }}
+-          >
+-            <svg
+-              viewBox="0 0 100 100"
+-              width="100%"
+-              height="100%"
+-              fill="none"
+-              xmlns="http://www.w3.org/2000/svg"
+-              aria-label="OS Vault"
+-            >
+-              <path
+-                d="M50 12 L90 84 L10 84 Z"
+-                stroke="url(#vaultTriangleGradient)"
+-                strokeWidth="3.2"
+-                strokeLinecap="round"
+-                strokeLinejoin="round"
+-              />
+-              <defs>
+-                <linearGradient id="vaultTriangleGradient" x1="20" y1="15" x2="80" y2="90" gradientUnits="userSpaceOnUse">
+-                  <stop offset="0%" stopColor="#c4b5fd" />
+-                  <stop offset="45%" stopColor="#8b5cf6" />
+-                  <stop offset="100%" stopColor="#6d28d9" />
+-                </linearGradient>
+-              </defs>
+-            </svg>
+-          </div>
++      {error && (
++        <div className="rounded-2xl p-4 flex items-center justify-between border border-yellow-500/20 bg-yellow-500/[0.04] text-yellow-400">
++          <span className="text-sm">⚠️ {errorMessage}</span>
++          <button onClick={fetchBalances} className="text-xs underline">
++            Retry
++          </button>
++        </div>
++      )}
+ 
+-          {/* Subtle atmosphere */}
+-          <div
+-            className="absolute right-10 top-16 w-52 h-52 rounded-full pointer-events-none"
++      {!loading && !error && (
++        <>
++          {/* Premium Portfolio Hero */}
++          <section
++            className="relative overflow-hidden rounded-[32px] p-5 sm:p-7"
+             style={{
+-              background: 'rgba(124,58,237,0.11)',
+-              filter: 'blur(65px)',
++              background:
++                'radial-gradient(circle at 85% 0%, rgba(139,92,246,0.22), transparent 34%), radial-gradient(circle at 5% 100%, rgba(217,164,65,0.08), transparent 38%), linear-gradient(145deg, #111017 0%, #08080c 58%, #050507 100%)',
++              border: '1px solid rgba(255,255,255,0.075)',
++              boxShadow: '0 28px 90px rgba(0,0,0,0.38)',
+             }}
+-          />
++          >
++            <div
++              className="absolute -right-20 -top-24 w-64 h-64 rounded-full pointer-events-none"
++              style={{
++                background: 'rgba(139,92,246,0.12)',
++                filter: 'blur(65px)',
++              }}
++            />
+ 
+-          <div
+-            className="absolute left-[42%] bottom-[-80px] w-72 h-40 rounded-full pointer-events-none"
+-            style={{
+-              background: 'rgba(196,181,253,0.035)',
+-              filter: 'blur(60px)',
+-            }}
+-          />
++            <div className="relative z-10">
++              <div className="flex items-start justify-between gap-4">
++                <div>
++                  <div className="flex items-center gap-2">
++                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.7)]" />
++                    <p className="text-[9px] uppercase tracking-[3px] text-violet-300/70 font-semibold">
++                      OS Vault Portfolio
++                    </p>
++                  </div>
+ 
+-          <div className="relative z-10 p-5 sm:p-9">
+-            {/* Hero header */}
+-            <div className="flex items-start justify-between mb-8 sm:mb-11">
+-              <div>
+-                <div className="flex items-center gap-2.5">
+-                  <div
+-                    className="w-2 h-2 rounded-full bg-emerald-400"
+-                    style={{
+-                      boxShadow: '0 0 12px rgba(52,211,153,0.65)',
+-                    }}
+-                  />
+-                  <p
+-                    className="text-[10px] uppercase font-semibold text-violet-100/90"
+-                    style={{ letterSpacing: '4px' }}
+-                  >
+-                    OS VAULT
++                  <p className="mt-5 text-[10px] uppercase tracking-[2px] text-[var(--text-muted)]">
++                    Total balance
+                   </p>
+-                </div>
+ 
+-                <div className="flex items-center gap-2 mt-2">
+-                  <Lock size={11} className="text-[var(--text-muted)]" />
+-                  <p
+-                    className="text-[9px] uppercase text-[var(--text-muted)]"
+-                    style={{ letterSpacing: '2px' }}
+-                  >
+-                    Secure · Non-custodial
++                  <div className="mt-1 flex items-end gap-3">
++                    <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-tight text-[var(--text-primary)]">
++                      {currency === 'USD'
++                        ? `$${Number(totalUsd || 0).toLocaleString(undefined, {
++                            minimumFractionDigits: 2,
++                            maximumFractionDigits: 2,
++                          })}`
++                        : `${Number(totalUsd || 0).toLocaleString(undefined, {
++                            minimumFractionDigits: 2,
++                            maximumFractionDigits: 2,
++                          })} ${currency || 'USD'}`}
++                    </h2>
++                  </div>
++
++                  <p className="mt-2 text-[10px] text-[var(--text-muted)]">
++                    Live portfolio value across your Vault assets
+                   </p>
+                 </div>
+-              </div>
+-
+-              <div className="relative z-20">
+-                <Dropdown
+-                  variant="compact"
+-                  value={currency}
+-                  onChange={setCurrency}
+-                  options={supportedCurrencies}
+-                />
+-              </div>
+-            </div>
+-
+-            {/* Balance */}
+-            <div className="relative max-w-[calc(100%-1rem)] sm:max-w-[72%]">
+-              <div className="flex items-center gap-2 mb-3">
+-                <p
+-                  className="text-[10px] uppercase font-semibold text-violet-300/75"
+-                  style={{ letterSpacing: '3px' }}
+-                >
+-                  Total Balance
+-                </p>
+-                <span className="w-1 h-1 rounded-full bg-white/20" />
+-                <span className="text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
+-                  Live
+-                </span>
+-              </div>
+-
+-              <div className="font-display leading-none">
+-                <span
+-                  className="text-[2.7rem] sm:text-7xl font-bold tracking-[-3px] sm:tracking-[-4px]"
+-                  style={{
+-                    color: 'var(--text-primary)',
+-                    textShadow: '0 0 34px rgba(255,255,255,0.07)',
+-                  }}
+-                >
+-                  {currency} {totalUsd.toFixed(2)}
+-                </span>
+-              </div>
+ 
+-              {/* Wallet address / identity */}
+-              <button
+-                onClick={copyAddress}
+-                className="group mt-6 inline-flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.045] hover:border-white/[0.10] active:scale-[0.985] transition-all duration-200"
+-              >
+-                <span>
+-                  {user.wallet_address.slice(0, 8)}...{user.wallet_address.slice(-6)}
+-                </span>
+-
+-                {copied ? (
+-                  <>
+-                    <CheckCircle size={14} className="text-green-400" />
+-                    <span className="text-[10px] font-sans text-green-400/80">
+-                      Copied
+-                    </span>
+-                  </>
+-                ) : (
+-                  <Copy
+-                    size={14}
+-                    className="group-hover:scale-110 transition-transform"
+-                  />
+-                )}
+-              </button>
+-            </div>
+-
+-            {/* Hero footer */}
+-            <div className="relative mt-7 sm:mt-8 pt-4 border-t border-white/[0.05] flex items-center justify-between max-w-[calc(100%-1rem)] sm:max-w-[72%]">
+-              <div>
+-                <p className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">
+-                  Portfolio
+-                </p>
+-                <p className="text-[11px] text-[var(--text-secondary)] mt-1">
+-                  Your assets, secured in one vault
+-                </p>
+-              </div>
+-
+-              <div className="hidden sm:flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
+-                <ShieldCheck size={13} className="text-violet-300/70" />
+-                Protected
++                <div className="hidden sm:flex items-center gap-2">
++                  <span className="px-3 py-1.5 rounded-full text-[8px] uppercase tracking-[1.5px] font-mono border border-emerald-400/15 bg-emerald-400/[0.05] text-emerald-300">
++                    Non-custodial
++                  </span>
++                </div>
+               </div>
+-            </div>
+-          </div>
+-        </div>
+-      ) : (
+-        <div className="glass-panel rounded-[28px] p-8 text-center">
+-          <div
+-            className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center"
+-            style={{
+-              border: '1px solid rgba(139,92,246,0.35)',
+-              boxShadow: '0 0 25px rgba(139,92,246,0.18)',
+-            }}
+-          >
+-            <svg viewBox="0 0 100 100" width="34" height="34" fill="none">
+-              <path
+-                d="M50 12 L90 84 L10 84 Z"
+-                stroke="#8b5cf6"
+-                strokeWidth="4"
+-                strokeLinecap="round"
+-                strokeLinejoin="round"
+-              />
+-            </svg>
+-          </div>
+-          <p className="text-[var(--text-muted)]">
+-            No wallet found. Create one to start.
+-          </p>
+-        </div>
+-      )}
+-
+-      {/* Primary Actions */}
+-      {!user?.wallet_address ? (
+-        <button
+-          onClick={() => setShowCreatePasswordModal(true)}
+-          disabled={creating}
+-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition disabled:opacity-50 bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-black"
+-        >
+-          <Lock size={18} /> {creating ? <Loader2 size={18} className="animate-spin" /> : 'Create Wallet'}
+-        </button>
+-      ) : (
+-        <>
+-          {/* OS VAULT — Primary Actions */}
+-          <div
+-            className="relative overflow-hidden rounded-[26px] border border-white/[0.07] shadow-[0_20px_60px_rgba(0,0,0,0.22)]"
+-            style={{
+-              background: 'linear-gradient(135deg, rgba(18,18,24,0.92), rgba(8,8,12,0.96))',
+-              border: '1px solid rgba(139,92,246,0.14)',
+-              boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+-            }}
+-          >
+-            <div className="grid grid-cols-4 divide-x divide-[var(--glass-border)]">
+ 
+-              {/* Send */}
+-              <button
+-                onClick={() => {
+-                  if (filtered.length === 0 && !closeAsset) {
+-                    addToast('No assets to send.', 'warning');
+-                    return;
+-                  }
+-                  if (filtered.length + (closeAsset ? 1 : 0) === 1) {
+-                    setSendAsset(closeAsset || filtered[0]);
+-                    setShowSendModal(true);
+-                  } else {
+-                    setShowAssetPicker(true);
+-                  }
+-                }}
+-                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-white/[0.035] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
+-              >
+-                <span
+-                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
+-                  style={{
+-                    border: '1px solid rgba(139,92,246,0.75)',
+-                    boxShadow: '0 0 18px rgba(139,92,246,0.16)',
++              {/* Quick actions */}
++              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-7">
++                <button
++                  className={actionButton}
++                  onClick={() => {
++                    if (allAssets.length === 1) {
++                      setSendAsset(allAssets[0]);
++                      setShowSendModal(true);
++                    } else {
++                      setShowAssetPicker(true);
++                    }
+                   }}
+                 >
+-                  <ArrowUpRight
+-                    size={20}
+-                    className="text-violet-400 transition-transform group-hover:-translate-y-0.5"
+-                  />
+-                </span>
+-                <span className="text-[11px] font-medium text-[var(--text-primary)]">
++                  <Send size={15} />
+                   Send
+-                </span>
+-              </button>
++                </button>
+ 
+-              {/* Receive */}
+-              <button
+-                onClick={() => setShowReceiveModal(true)}
+-                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-white/[0.035] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
+-              >
+-                <span
+-                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
+-                  style={{
+-                    border: '1px solid rgba(139,92,246,0.75)',
+-                    boxShadow: '0 0 18px rgba(139,92,246,0.16)',
++                <button
++                  className={actionButton}
++                  onClick={() => {
++                    if (closeAsset) {
++                      setSendAsset(closeAsset);
++                      setShowSendModal(true);
++                    } else {
++                      setShowAssetPicker(true);
++                    }
+                   }}
+                 >
+-                  <ArrowDownRight
+-                    size={20}
+-                    className="text-violet-400 transition-transform group-hover:translate-y-0.5"
+-                  />
+-                </span>
+-                <span className="text-[11px] font-medium text-[var(--text-primary)]">
++                  <ArrowDownRight size={15} />
+                   Receive
+-                </span>
+-              </button>
++                </button>
+ 
+-              {/* Swap */}
+-              <button
+-                onClick={() => setShowSwapModal(true)}
+-                className="group flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-white/[0.035] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
+-              >
+-                <span
+-                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
+-                  style={{
+-                    border: '1px solid rgba(139,92,246,0.75)',
+-                    boxShadow: '0 0 18px rgba(139,92,246,0.16)',
+-                  }}
++                <button
++                  className={actionButton}
++                  onClick={() => setShowSwapModal(true)}
+                 >
+-                  <ArrowUpDown
+-                    size={20}
+-                    className="text-violet-400 transition-transform group-hover:scale-105"
+-                  />
+-                </span>
+-                <span className="text-[11px] font-medium text-[var(--text-primary)]">
++                  <ArrowUpDown size={15} />
+                   Swap
+-                </span>
+-              </button>
++                </button>
+ 
+-              {/* Buy CLOSE */}
+-              <button
+-                onClick={() => setShowBuyModal(true)}
+-                className="group relative flex flex-col items-center justify-center gap-2 min-h-[104px] px-2 transition-all duration-200 hover:bg-[rgba(217,164,65,0.06)] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.975] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(217,164,65,0.35)]"
+-              >
+-                <span
+-                  className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/[0.06] border border-violet-400/25 transition-all group-hover:bg-violet-500/[0.10] group-hover:border-violet-300/45 group-hover:shadow-[0_8px_28px_rgba(139,92,246,0.16)]"
+-                  style={{
+-                    border: '1px solid rgba(139,92,246,0.75)',
+-                    boxShadow: '0 0 18px rgba(139,92,246,0.16)',
+-                  }}
++                <button
++                  className={actionButton}
++                  onClick={() => setShowBuyModal(true)}
+                 >
+-                  <CreditCard
+-                    size={20}
+-                    className="text-violet-400 transition-transform group-hover:scale-105"
+-                  />
+-                </span>
+-                <span className="text-[11px] font-medium text-[var(--text-primary)] whitespace-nowrap">
+-                  Buy CLOSE
+-                </span>
+-              </button>
+-
++                  <Plus size={15} />
++                  Buy
++                </button>
++
++                <button
++                  className={actionButton}
++                  onClick={() => setShowHistory(true)}
++                >
++                  <History size={15} />
++                  Activity
++                </button>
++              </div>
+             </div>
+-          </div>
+-
+-          {/* Overflow row - Sell, Refresh, History, Top Up Chat: same handlers, quieter treatment */}
+-          <div className="grid grid-cols-4 items-center rounded-2xl px-1 py-2 bg-white/[0.018] border border-white/[0.055]">
+-            <button onClick={() => setShowSellModal(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+-              <DollarSign size={14} className="text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:scale-110" /> Sell
+-            </button>
+-            <button onClick={fetchBalances} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+-              <RefreshCw size={14} className={`text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:rotate-12 ${loading ? 'animate-spin' : ''}`} /> Refresh
+-            </button>
+-            <button onClick={() => setShowHistory(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+-              <History size={14} className="text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:scale-110" /> History
+-            </button>
+-            <button onClick={() => setShowChatTopupModal(true)} className="group flex items-center justify-center gap-1.5 min-h-9 px-2 rounded-xl text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.035] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/30">
+-              <MessageSquare size={14} className="text-[var(--accent-brass-dim)] transition-transform duration-200 group-hover:scale-110" /> Top Up Chat
+-            </button>
+-          </div>
+-        </>
+-      )}
++          </section>
+ 
+-      {/* Chain Selector - dot shows whether the chain actually holds a balance */}
+-      <div className="flex gap-2 flex-wrap items-center">
+-        <span className="mr-1 text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">Network</span>
+-        {chains.map((c) => {
+-          const has = c === 'all' || chainsWithBalance.has(c);
+-          return (
+-            <button
+-              key={c}
+-              onClick={() => setChain(c)}
+-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-mono font-bold tracking-wider touch transition-all duration-200 hover:-translate-y-px active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-brass)]/30 ${
+-                chain === c
+-                  ? 'bg-[var(--accent-brass)] text-black'
+-                  : `bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)] ${has ? '' : 'opacity-45'}`
+-              }`}
+-            >
+-              {c !== 'all' && (
+-                <span
+-                  className="w-1.5 h-1.5 rounded-full"
+-                  style={{ background: has ? 'var(--success)' : 'var(--text-muted)' }}
+-                />
+-              )}
+-              {c.toUpperCase()}
+-            </button>
+-          );
+-        })}
+-      </div>
+-
+-      {/* Asset List */}
+-      {loading && (
+-        <div className="space-y-0.5">
+-          {[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-lg bg-white/5" />)}
+-        </div>
+-      )}
++          {/* Wallet identity */}
++          {user?.wallet_address && (
++            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
++              <div className="min-w-0">
++                <p className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">
++                  Vault address
++                </p>
++                <p className="mt-1 text-xs font-mono text-[var(--text-secondary)] truncate">
++                  {user.wallet_address}
++                </p>
++              </div>
+ 
+-      {error && (
+-        <div className="rounded-xl p-4 text-sm flex items-center justify-between border border-yellow-500/30 text-yellow-400">
+-          <span>⚠️ {errorMessage}</span>
+-          <button onClick={fetchBalances} className="underline">Retry</button>
+-        </div>
+-      )}
++              <div className="flex items-center gap-2 shrink-0">
++                <button
++                  onClick={copyAddress}
++                  className="btn-glass-icon w-9 h-9"
++                  aria-label="Copy wallet address"
++                >
++                  {copied ? <Check size={15} /> : <Copy size={15} />}
++                </button>
+ 
+-      {!loading && !error && (
+-        <div className="space-y-4">
+-          <div className="flex items-end justify-between px-1">
+-            <div>
+-              <p className="text-[10px] uppercase tracking-[3px] text-violet-300/60 font-semibold">Portfolio</p>
+-              <h3 className="mt-1 text-lg font-display font-semibold text-[var(--text-primary)]">Your Assets</h3>
++                <button
++                  onClick={() => setShowChatTopupModal(true)}
++                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[10px] font-semibold border border-violet-400/15 bg-violet-400/[0.05] text-violet-200 hover:bg-violet-400/[0.1]"
++                >
++                  <MessageSquare size={13} />
++                  Chat Top-up
++                </button>
++              </div>
+             </div>
+-            <span className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">Live balance</span>
+-          </div>
++          )}
+ 
+-          {/* OS VAULT — Flagship CLOSE Asset */}
++          {/* Featured CLOSE */}
+           {closeAsset && (chain === 'all' || closeAsset.chain === chain) && (
+-            <div
+-              className="group relative overflow-hidden rounded-[30px] p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.30)] transition-all duration-300 hover:-translate-y-[1px]"
++            <section
++              className="group relative overflow-hidden rounded-[30px] p-5 sm:p-7"
+               style={{
+                 background:
+-                  'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.16), transparent 38%), radial-gradient(circle at 0% 100%, rgba(217,164,65,0.06), transparent 34%), linear-gradient(135deg, rgba(21,20,27,0.98), rgba(7,7,11,0.99))',
+-                border: '1px solid rgba(139,92,246,0.20)',
++                  'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.18), transparent 38%), radial-gradient(circle at 0% 100%, rgba(217,164,65,0.08), transparent 36%), linear-gradient(135deg, rgba(21,20,27,0.99), rgba(7,7,11,0.99))',
++                border: '1px solid rgba(139,92,246,0.22)',
++                boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
+               }}
+             >
+-              <div
+-                className="absolute -right-16 -top-16 w-44 h-44 rounded-full pointer-events-none"
+-                style={{
+-                  background: 'rgba(139,92,246,0.13)',
+-                  filter: 'blur(50px)',
+-                }}
+-              />
++              <div className="flex items-center justify-between gap-4">
++                <div>
++                  <p className="text-[9px] uppercase tracking-[3px] font-semibold text-violet-300/75">
++                    Featured asset
++                  </p>
++                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
++                    Native to the OS AI ecosystem
++                  </p>
++                </div>
+ 
+-              <div className="relative z-10">
+-                <div className="flex items-center justify-between mb-6">
+-                  <div>
+-                    <p className="text-[9px] uppercase font-semibold text-violet-300/75" style={{ letterSpacing: '3px' }}>
+-                      Featured Asset
+-                    </p>
+-                    <p className="text-[10px] text-[var(--text-muted)] mt-1">
+-                      Native to the OS AI ecosystem
+-                    </p>
+-                  </div>
++                <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[8px] font-mono uppercase text-violet-200 bg-violet-400/[0.07] border border-violet-400/15">
++                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
++                  {closeAsset.chain || 'Polygon'}
++                </span>
++              </div>
+ 
+-                  <span
+-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[8px] font-mono uppercase"
++              <div className="mt-7 flex items-center justify-between gap-4">
++                <div className="flex items-center gap-4 min-w-0">
++                  <div
++                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] flex items-center justify-center shrink-0"
+                     style={{
+-                      color: '#c4b5fd',
+-                      background: 'rgba(139,92,246,0.08)',
+-                      border: '1px solid rgba(139,92,246,0.20)',
+-                      letterSpacing: '1px',
++                      background:
++                        'linear-gradient(145deg, var(--accent-brass-bright), var(--accent-brass-dim))',
++                      boxShadow:
++                        '0 0 30px rgba(217,164,65,0.23), inset 0 1px rgba(255,255,255,0.25)',
+                     }}
+                   >
+-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+-                    {closeAsset.chain || 'Polygon'}
+-                  </span>
+-                </div>
+-
+-                <div className="flex items-center justify-between gap-4">
+-                  <div className="flex items-center gap-3.5 min-w-0">
+-                    <div
+-                      className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-[18px] sm:rounded-[20px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-[1.03]"
+-                      style={{
+-                        background:
+-                          'linear-gradient(145deg, var(--accent-brass-bright), var(--accent-brass-dim))',
+-                        boxShadow:
+-                          '0 0 28px rgba(217,164,65,0.22), inset 0 1px rgba(255,255,255,0.25)',
+-                      }}
++                    <span
++                      className="font-display font-black text-2xl"
++                      style={{ color: '#14120C' }}
+                     >
+-                      <span className="font-display font-black text-xl sm:text-2xl" style={{ color: '#14120C' }}>
+-                        C
+-                      </span>
+-                    </div>
+-
+-                    <div className="min-w-0">
+-                      <div className="flex items-center gap-2">
+-                        <p className="text-lg font-display font-bold text-[var(--text-primary)]">
+-                          CLOSE
+-                        </p>
+-                        <span className="px-1.5 py-0.5 rounded-md text-[7px] uppercase font-semibold text-[var(--accent-brass-bright)] bg-[rgba(217,164,65,0.07)] border border-[rgba(217,164,65,0.14)]">
+-                          Native
+-                        </span>
+-                      </div>
+-                      <p className="text-[10px] text-[var(--text-muted)] mt-1">
+-                        OS AI Token
+-                      </p>
+-                    </div>
++                      C
++                    </span>
+                   </div>
+ 
+-                  <div className="text-right flex-shrink-0">
+-                    <p className="font-mono text-lg sm:text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+-                      {closeAsset.balance.toFixed(4)}
+-                    </p>
+-                    <p className="font-mono text-[11px] text-[var(--text-muted)] mt-1">
+-                      ${(closeAsset.usdValue || 0).toFixed(2)}
++                  <div className="min-w-0">
++                    <div className="flex items-center gap-2">
++                      <h3 className="text-xl font-display font-bold text-[var(--text-primary)]">
++                        CLOSE
++                      </h3>
++                      <span className="px-1.5 py-0.5 rounded-md text-[7px] uppercase font-semibold text-[var(--accent-brass-bright)] bg-[rgba(217,164,65,0.07)] border border-[rgba(217,164,65,0.14)]">
++                        Native
++                      </span>
++                    </div>
++                    <p className="text-[10px] text-[var(--text-muted)] mt-1">
++                      OS AI Token
+                     </p>
+                   </div>
+                 </div>
+ 
+-                <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between gap-3">
+-                  <div className="flex items-center gap-2">
+-                    <span
+-                      className="w-1.5 h-1.5 rounded-full bg-emerald-400"
+-                      style={{ boxShadow: '0 0 9px rgba(52,211,153,0.75)' }}
+-                    />
+-                    <span className="text-[9px] font-mono uppercase tracking-[1.5px] text-[var(--text-muted)]">
+-                      Available
+-                    </span>
+-                  </div>
++                <div className="text-right shrink-0">
++                  <p className="font-mono text-xl sm:text-2xl font-semibold text-[var(--text-primary)]">
++                    {Number(closeAsset.balance || 0).toFixed(4)}
++                  </p>
++                  <p className="font-mono text-[11px] text-[var(--text-muted)] mt-1">
++                    ${(closeAsset.usdValue || 0).toFixed(2)}
++                  </p>
++                </div>
++              </div>
++
++              <div className="mt-6 pt-4 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
++                <div className="flex items-center gap-2">
++                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_9px_rgba(52,211,153,0.75)]" />
++                  <span className="text-[9px] font-mono uppercase tracking-[1.5px] text-[var(--text-muted)]">
++                    Available
++                  </span>
++                </div>
++
++                <div className="flex items-center gap-2">
++                  <button
++                    onClick={() => setShowChatTopupModal(true)}
++                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-semibold text-[var(--text-secondary)] border border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.06]"
++                  >
++                    <MessageSquare size={13} />
++                    Top-up
++                  </button>
+ 
+                   <button
+                     onClick={() => {
+                       setSendAsset(closeAsset);
+                       setShowSendModal(true);
+                     }}
+-                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-semibold text-violet-200 border border-violet-400/15 bg-violet-400/[0.05] hover:bg-violet-400/[0.10] hover:border-violet-300/30 active:scale-[0.97] transition-all duration-200"
++                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-semibold text-violet-200 border border-violet-400/15 bg-violet-400/[0.05] hover:bg-violet-400/[0.1]"
+                   >
+                     Send CLOSE
+                     <ArrowUpRight size={13} />
+                   </button>
+                 </div>
+               </div>
+-            </div>
++            </section>
+           )}
+ 
+-          {/* Other Assets */}
+-          <div className="overflow-hidden rounded-[26px] border border-white/[0.06] bg-white/[0.018] shadow-[0_18px_55px_rgba(0,0,0,0.18)]">
+-            <div className="px-4 sm:px-5 py-3 border-b border-white/[0.05] flex items-center justify-between">
+-              <p className="text-[9px] uppercase tracking-[2px] font-semibold text-[var(--text-muted)]">
+-                Other Assets
+-              </p>
+-              <span className="text-[9px] text-[var(--text-muted)]">
+-                {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}
+-              </span>
++          {/* Portfolio assets */}
++          <section className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.018] shadow-[0_18px_55px_rgba(0,0,0,0.18)]">
++            <div className="px-4 sm:px-5 pt-5 pb-4">
++              <div className="flex items-end justify-between gap-3">
++                <div>
++                  <p className="text-[9px] uppercase tracking-[3px] text-violet-300/60 font-semibold">
++                    Portfolio
++                  </p>
++                  <h3 className="mt-1 text-lg font-display font-semibold text-[var(--text-primary)]">
++                    Your Assets
++                  </h3>
++                </div>
++
++                <button
++                  onClick={fetchBalances}
++                  className="btn-glass-icon w-9 h-9"
++                  aria-label="Refresh balances"
++                >
++                  <RefreshCw size={14} />
++                </button>
++              </div>
++
++              {/* Chain filters */}
++              <div className="flex gap-2 overflow-x-auto mt-4 pb-1 scrollbar-hide">
++                {chains.map((c) => {
++                  const active = chain === c;
++                  const hasBalance = c === 'all' || chainsWithBalance.has(c);
++
++                  return (
++                    <button
++                      key={c}
++                      onClick={() => setChain(c)}
++                      className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-[9px] font-mono uppercase tracking-[1px] border transition-all ${
++                        active
++                          ? 'border-violet-400/25 bg-violet-400/[0.09] text-violet-200'
++                          : 'border-white/[0.06] bg-white/[0.02] text-[var(--text-muted)] hover:bg-white/[0.05]'
++                      }`}
++                    >
++                      {c !== 'all' && (
++                        <span
++                          className="w-1.5 h-1.5 rounded-full"
++                          style={{
++                            background: hasBalance
++                              ? chainColors[c]
++                              : 'var(--text-muted)',
++                            opacity: hasBalance ? 1 : 0.35,
++                          }}
++                        />
++                      )}
++                      {c === 'all' ? 'All' : c}
++                    </button>
++                  );
++                })}
++              </div>
+             </div>
+ 
+             {filtered.length === 0 ? (
+-              <div className="py-8 px-5 text-center">
+-                <p className="text-sm text-[var(--text-secondary)]">No other assets</p>
++              <div className="px-5 py-12 text-center border-t border-white/[0.05]">
++                <Coins
++                  size={28}
++                  className="mx-auto text-[var(--text-muted)] opacity-60"
++                />
++                <p className="mt-3 text-sm text-[var(--text-secondary)]">
++                  No other assets
++                </p>
+                 <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                   Assets on this network will appear here.
+                 </p>
+               </div>
+             ) : (
+-              filtered.map((a, i) => {
+-                const up = (a.change24h ?? 0) >= 0;
+-
+-                return (
+-                  <div
+-                    key={i}
+-                    className={`group flex items-center justify-between gap-2.5 px-3.5 sm:px-5 py-4 hover:bg-white/[0.025] transition-colors ${
+-                      i < filtered.length - 1 ? 'border-b border-white/[0.045]' : ''
+-                    }`}
+-                  >
+-                    <div className="flex items-center gap-3 min-w-0">
+-                      <span
+-                        className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner flex-shrink-0"
+-                        style={{
+-                          background: chainColors[a.chain] || 'var(--text-muted)',
+-                          opacity: 0.9,
+-                        }}
+-                      />
+-                      <div className="min-w-0">
+-                        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
+-                          {a.symbol}
+-                        </p>
+-                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+-                          {a.chain}
+-                        </p>
+-                      </div>
+-                    </div>
++              <div className="border-t border-white/[0.05]">
++                {filtered.map((a, i) => {
++                  const up = (a.change24h ?? 0) >= 0;
+ 
+-                    <div className="flex items-center gap-2.5 flex-shrink-0">
+-                      <div className="hidden sm:block opacity-80 group-hover:opacity-100 transition-opacity">
+-                        <Sparkline points={a.sparkline} up={up} />
++                  return (
++                    <div
++                      key={`${a.symbol}-${a.chain}-${i}`}
++                      className={`group flex items-center justify-between gap-3 px-4 sm:px-5 py-4 hover:bg-white/[0.025] transition-colors ${
++                        i < filtered.length - 1
++                          ? 'border-b border-white/[0.045]'
++                          : ''
++                      }`}
++                    >
++                      <div className="flex items-center gap-3 min-w-0">
++                        <div
++                          className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
++                          style={{
++                            background:
++                              chainColors[a.chain] ||
++                              'rgba(255,255,255,0.08)',
++                            opacity: 0.9,
++                          }}
++                        >
++                          <span className="text-[10px] font-bold text-white">
++                            {(a.symbol || '?').slice(0, 2)}
++                          </span>
++                        </div>
++
++                        <div className="min-w-0">
++                          <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
++                            {a.symbol}
++                          </p>
++                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 capitalize">
++                            {a.chain}
++                          </p>
++                        </div>
+                       </div>
+ 
+-                      <div className="text-right font-mono">
+-                        <p className="text-sm font-medium text-[var(--text-primary)]">
+-                          {a.balance.toFixed(4)}
+-                        </p>
+-                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+-                          ${(a.usdValue || 0).toFixed(2)}
+-                        </p>
++                      <div className="flex items-center gap-3 shrink-0">
++                        <div className="hidden sm:block opacity-80">
++                          <Sparkline points={a.sparkline} up={up} />
++                        </div>
++
++                        <div className="text-right font-mono min-w-[82px]">
++                          <p className="text-sm font-medium text-[var(--text-primary)]">
++                            {Number(a.balance || 0).toFixed(4)}
++                          </p>
++                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
++                            ${(a.usdValue || 0).toFixed(2)}
++                          </p>
++                        </div>
++
++                        <button
++                          onClick={() => {
++                            setSendAsset(a);
++                            setShowSendModal(true);
++                          }}
++                          aria-label={`Send ${a.symbol}`}
++                          className="w-9 h-9 rounded-xl flex items-center justify-center text-[var(--text-muted)] border border-transparent hover:border-white/[0.08] hover:bg-white/[0.05] hover:text-[var(--accent-brass)] active:scale-[0.95] transition-all"
++                        >
++                          <Send size={14} />
++                        </button>
+                       </div>
+-
+-                      <button
+-                        onClick={() => {
+-                          setSendAsset(a);
+-                          setShowSendModal(true);
+-                        }}
+-                        aria-label={`Send ${a.symbol}`}
+-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border border-transparent hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-[var(--accent-brass)] active:scale-[0.95] transition-all"
+-                      >
+-                        <Send size={14} />
+-                      </button>
+                     </div>
+-                  </div>
+-                );
+-              })
++                  );
++                })}
++              </div>
+             )}
++          </section>
++
++          {/* Lower portfolio controls */}
++          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
++            <button
++              onClick={() => setShowBuyModal(true)}
++              className="glass-card p-4 text-left hover:bg-white/[0.04] transition-all"
++            >
++              <CreditCard size={18} className="text-[var(--accent-brass)]" />
++              <p className="mt-3 text-sm font-semibold text-[var(--text-primary)]">
++                Buy / Deposit
++              </p>
++              <p className="text-[10px] text-[var(--text-muted)] mt-1">
++                Add funds to your Vault
++              </p>
++            </button>
++
++            <button
++              onClick={() => setShowSellModal(true)}
++              className="glass-card p-4 text-left hover:bg-white/[0.04] transition-all"
++            >
++              <ArrowUpRight size={18} className="text-violet-300" />
++              <p className="mt-3 text-sm font-semibold text-[var(--text-primary)]">
++                Sell / Withdraw
++              </p>
++              <p className="text-[10px] text-[var(--text-muted)] mt-1">
++                Withdraw supported assets
++              </p>
++            </button>
++
++            <button
++              onClick={() => setShowHistory(true)}
++              className="glass-card p-4 text-left hover:bg-white/[0.04] transition-all col-span-2 sm:col-span-1"
++            >
++              <History size={18} className="text-emerald-300" />
++              <p className="mt-3 text-sm font-semibold text-[var(--text-primary)]">
++                Activity
++              </p>
++              <p className="text-[10px] text-[var(--text-muted)] mt-1">
++                View your Vault transactions
++              </p>
++            </button>
+           </div>
+-        </div>
++
++          {/* Wallet creation / utility */}
++          {!user?.wallet_address && (
++            <div className="glass-card p-5 flex items-center justify-between gap-4">
++              <div>
++                <p className="text-sm font-semibold text-[var(--text-primary)]">
++                  Create your OS Vault wallet
++                </p>
++                <p className="text-[10px] text-[var(--text-muted)] mt-1">
++                  Your wallet is encrypted and non-custodial.
++                </p>
++              </div>
++
++              <button
++                onClick={() => setShowCreatePasswordModal(true)}
++                className="btn-primary shrink-0"
++              >
++                <Plus size={15} />
++                Create
++              </button>
++            </div>
++          )}
++        </>
+       )}
+ 
+-      <SendModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} asset={sendAsset} assets={assets} refreshBalances={fetchBalances} onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+-      <SwapModal isOpen={showSwapModal} onClose={() => setShowSwapModal(false)} userWalletAddress={user?.wallet_address} assets={assets} onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchBalances(); }} />
+-      <DepositModal isOpen={showBuyModal} onClose={() => setShowBuyModal(false)} onDeposited={(result) => { addToast(`Purchased ${result.close_credited} CLOSE for ${result.amount} ${result.token_symbol}`, 'success'); fetchBalances(); }} />
+-      <WithdrawModal isOpen={showSellModal} onClose={() => setShowSellModal(false)} assets={filtered} onRequested={() => { addToast('Withdrawal requested - pending review.', 'info'); }} />
+-      <TransactionHistory isOpen={showHistory} onClose={() => setShowHistory(false)} />
+-      <ChatTopupModal isOpen={showChatTopupModal} onClose={() => setShowChatTopupModal(false)} onToppedUp={(result) => { addToast(`Credited ${result.amount} CLOSE to your chat balance`, 'success'); }} />
++      <SendModal
++        isOpen={showSendModal}
++        onClose={() => setShowSendModal(false)}
++        asset={sendAsset}
++        assets={assets}
++        refreshBalances={fetchBalances}
++        onSent={(txHash) => {
++          addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success');
++          fetchBalances();
++        }}
++      />
++
++      <SwapModal
++        isOpen={showSwapModal}
++        onClose={() => setShowSwapModal(false)}
++        userWalletAddress={user?.wallet_address}
++        assets={assets}
++        onSwap={(txHash) => {
++          addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success');
++          fetchBalances();
++        }}
++      />
++
++      <DepositModal
++        isOpen={showBuyModal}
++        onClose={() => setShowBuyModal(false)}
++        onDeposited={(result) => {
++          addToast(
++            `Purchased ${result.close_credited} CLOSE for ${result.amount} ${result.token_symbol}`,
++            'success'
++          );
++          fetchBalances();
++        }}
++      />
++
++      <WithdrawModal
++        isOpen={showSellModal}
++        onClose={() => setShowSellModal(false)}
++        assets={filtered}
++        onRequested={() => {
++          addToast('Withdrawal requested - pending review.', 'info');
++        }}
++      />
++
++      <TransactionHistory
++        isOpen={showHistory}
++        onClose={() => setShowHistory(false)}
++      />
++
++      <ChatTopupModal
++        isOpen={showChatTopupModal}
++        onClose={() => setShowChatTopupModal(false)}
++        onToppedUp={(result) => {
++          addToast(
++            `Credited ${result.amount} CLOSE to your chat balance`,
++            'success'
++          );
++        }}
++      />
++
+       {showAssetPicker && (
+-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowAssetPicker(false)}>
+-          <div className="glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
+-            <h3 className="text-lg font-display font-bold mb-2 text-[var(--text-primary)]">Send which asset?</h3>
+-            {(closeAsset ? [closeAsset, ...filtered] : filtered).map((a, i) => (
+-              <button key={i} onClick={() => { setSendAsset(a); setShowAssetPicker(false); setShowSendModal(true); }}
+-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]">
+-                <span className="text-[var(--text-primary)]">{a.symbol}</span>
+-                <span className="text-xs font-mono text-[var(--text-muted)]">{a.balance.toFixed(4)}</span>
++        <div
++          className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 z-50"
++          onClick={() => setShowAssetPicker(false)}
++        >
++          <div
++            className="glass-panel rounded-2xl w-full max-w-sm p-5 space-y-2"
++            onClick={(e) => e.stopPropagation()}
++          >
++            <h3 className="text-lg font-display font-bold mb-2 text-[var(--text-primary)]">
++              Send which asset?
++            </h3>
++
++            {allAssets.map((a, i) => (
++              <button
++                key={`${a.symbol}-${a.chain}-${i}`}
++                onClick={() => {
++                  setSendAsset(a);
++                  setShowAssetPicker(false);
++                  setShowSendModal(true);
++                }}
++                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition bg-white/5 border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]"
++              >
++                <span className="text-[var(--text-primary)]">
++                  {a.symbol}
++                </span>
++                <span className="text-xs font-mono text-[var(--text-muted)]">
++                  {Number(a.balance || 0).toFixed(4)}
++                </span>
+               </button>
+             ))}
+           </div>
+@@ -708,10 +715,3 @@
+         inputPlaceholder="Enter a strong password"
+         onConfirm={createWallet}
+         confirmText={creating ? 'Creating...' : 'Create'}
+-        cancelText="Cancel"
+-        confirmDisabled={creating}
+-      />
+-    </div>
+-  );
+-}
+-function SafeWallet() {

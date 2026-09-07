@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── OS Vault theme ── */
+:root {
+  color-scheme: dark;
+  background: #000000;
+  --bg-primary: #000000;
+  --bg-secondary: #F2F0EA;
+  --bg-tertiary: #EAE7DF;
+  --bg-raised-2: #E3DFD5;
+  --text-primary: #1F1E1C;
+  --text-secondary: #5E5A52;
+  --text-muted: #8C8779;
+  --border-color: rgba(31,30,28,0.10);
+  --border-bright: rgba(31,30,28,0.20);
+  --accent-indigo: #F97316;
+  --accent-brass: #F97316;
+  --accent-brass-bright: #FB923C;
+  --accent-brass-dim: #EA580C;
+  --danger: #C1554A;
+  --success: #4B8062;
+  --font-display: 'Chakra Petch', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --glass-bg: var(--bg-secondary);
+  --glass-bg-raised: var(--bg-secondary);
+  --glass-border: var(--border-color);
+  --glass-border-hover: var(--border-bright);
+  --glass-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  --glass-blur: 0px;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #000000;
+  --bg-secondary: #0A0A0A;
+  --bg-tertiary: #141412;
+  --bg-raised-2: #1C1C19;
+  --text-primary: #F5F5F0;
+  --text-secondary: #B5B0A4;
+  --text-muted: #79756A;
+  --border-color: rgba(255,255,255,0.08);
+  --border-bright: rgba(255,255,255,0.16);
+
+  /* Redesign 2026-09-03: dark mode previously had no accent overrides
+     at all and silently inherited the light theme's orange values via
+     CSS cascade. New electric-violet accent, dark-mode-specific. */
+  --accent-indigo: #9B7BFF;
+  --accent-brass: #7C5CFF;
+  --accent-brass-bright: #B9A8FF;
+  --accent-brass-dim: #5B3FE0;
+  --accent-glow: rgba(124,92,255,0.35);
+  --danger: #FF6B6B;
+  --success: #4ADE80;
+
+  --glass-bg: var(--bg-secondary);
+  --glass-bg-raised: var(--bg-secondary);
+  --glass-border: var(--border-color);
+  --glass-border-hover: var(--border-bright);
+  --glass-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--bg-primary);
+}
+
+html {
+  background: #000000;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-display);
+  background: var(--bg-primary);
+}
+
+.glass-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: var(--glass-shadow);
+  transition: border-color 0.15s;
+}
+.glass-card:hover {
+  border-color: var(--border-bright);
+}
+
+.glass-panel {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  box-shadow: none;
+}
+
+.glass-bar {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.input-base {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border 0.15s;
+}
+.input-base:focus {
+  border-color: var(--accent-brass);
+}
+
+.input-glass {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border 0.15s;
+}
+.input-glass:focus {
+  border-color: var(--accent-brass);
+}
+
+.btn-primary {
+  background: var(--accent-brass);
+  color: #fff;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--accent-brass-dim); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 9px 18px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.btn-secondary:hover { background: var(--bg-raised-2); }
+
+.btn-glass-icon {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-glass-icon:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+.btn-glass-icon:disabled { opacity: 0.4; cursor: not-allowed; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fadeIn 0.2s ease-out; }
+.animate-slide-up { animation: slideUp 0.15s ease-out; }
+.animate-pulse-slow { animation: pulse 1.5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-slow, .animate-fade-in, .animate-slide-up {
+    animation: none !important;
+  }
+}
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }

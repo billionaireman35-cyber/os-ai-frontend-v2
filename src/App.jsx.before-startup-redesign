@@ -22,7 +22,6 @@ import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './config/appkit';
 import { AppKitThemeSync } from './components/AppKitThemeSync';
-import { StartupFlow } from './components/startup/StartupFlow';
 
 function Shell() {
   const [expanded, setExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
@@ -71,7 +70,6 @@ function App() {
           <AppKitThemeSync />
           <BrowserRouter>
             <Routes>
-              <Route path="/welcome" element={<StartupFlow />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/recover-password" element={<RecoverPassword />} />

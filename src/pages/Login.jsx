@@ -1,15 +1,28 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Fingerprint } from 'lucide-react';
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Fingerprint,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { OsAiMark } from '../components/ui/OsAiMark';
+
+const GOOGLE_CLIENT_ID =
+  '133012523516-vl47c0e3fn1vbop855g0pbdvhouh08or.apps.googleusercontent.com';
 
 export default function Login() {
   const { login, loginWithGoogle } = useAuth();
   const googleButtonRef = useRef(null);
   const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -18,11 +31,15 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
+
     try {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Check your credentials.');
+      setError(
+        err.response?.data?.detail ||
+          'Login failed. Check your credentials.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -32,14 +49,18 @@ export default function Login() {
     if (!window.google || !googleButtonRef.current) return;
 
     window.google.accounts.id.initialize({
-      client_id: '133012523516-vl47c0e3fn1vbop855g0pbdvhouh08or.apps.googleusercontent.com',
+      client_id: GOOGLE_CLIENT_ID,
       callback: async (response) => {
         setError(null);
+
         try {
           await loginWithGoogle(response.credential);
           navigate('/');
         } catch (err) {
-          setError(err.response?.data?.detail || 'Google sign-in failed.');
+          setError(
+            err.response?.data?.detail ||
+              'Google sign-in failed.'
+          );
         }
       },
     });
@@ -47,99 +68,179 @@ export default function Login() {
     window.google.accounts.id.renderButton(googleButtonRef.current, {
       theme: 'filled_black',
       size: 'large',
-      width: 320,
+      width: 360,
       text: 'continue_with',
+      shape: 'rectangular',
     });
-  }, []);
+  }, [loginWithGoogle, navigate]);
 
   return (
-    <div className="min-h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <OsAiMark size={48} animated={false} />
-          </div>
-          <p className="text-2xl font-display font-bold text-[var(--text-primary)]">Welcome back.</p>
-          <p className="text-sm text-[var(--text-secondary)] mt-2 leading-relaxed max-w-[300px] mx-auto">
-            Sign back in to pick up right where you left off.
-          </p>
-        </div>
+    <main className="auth-page">
+      <div className="auth-background">
+        <div className="auth-orb auth-orb-one" />
+        <div className="auth-orb auth-orb-two" />
+        <div className="auth-grid" />
+      </div>
 
-        {error && (
-          <p className="text-sm text-[var(--danger)] font-mono text-center mb-3">{error}</p>
-        )}
+      <div className="auth-shell">
+        <Link to="/welcome" className="auth-brand">
+          <span className="auth-brand-mark">
+            <OsAiMark size={34} animated={false} />
+          </span>
+          <span>OS AI</span>
+        </Link>
 
-        <div ref={googleButtonRef} className="flex justify-center" />
+        <section className="auth-card">
+          <div className="auth-card-glow" />
 
-        {!showEmailForm && (
-          <p className="text-center text-sm text-[var(--text-muted)] mt-5">
-            <button
-              type="button"
-              onClick={() => setShowEmailForm(true)}
-              className="text-[var(--accent-indigo)] hover:text-[var(--accent-hover)] font-medium"
-            >
-              Sign in with email instead
-            </button>
-          </p>
-        )}
-
-        {showEmailForm && (
-          <>
-            <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 h-px bg-[var(--border-color)]" />
-              <span className="text-xs text-[var(--text-muted)] font-mono uppercase">or</span>
-              <div className="flex-1 h-px bg-[var(--border-color)]" />
+          <div className="auth-header">
+            <div className="auth-icon">
+              <ShieldCheck size={21} />
             </div>
 
-            <form onSubmit={handleSubmit} className="glass-card p-6 space-y-4">
-              <div>
-                <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input-base mt-1"
-                  placeholder="you@domain.com"
-                />
+            <div className="auth-kicker">PRIVATE INTELLIGENCE</div>
+
+            <h1>Welcome back.</h1>
+
+            <p>
+              Sign in to continue your intelligence,
+              workspace and digital services.
+            </p>
+          </div>
+
+          <div className="auth-switch">
+            <div className="auth-switch-active">Log in</div>
+
+            <Link to="/register" className="auth-switch-link">
+              Create account
+            </Link>
+          </div>
+
+          {error && (
+            <div className="auth-error" role="alert">
+              <span />
+              <p>{error}</p>
+            </div>
+          )}
+
+          <div className="google-auth-wrap">
+            <div ref={googleButtonRef} className="google-auth-button" />
+          </div>
+
+          <div className="auth-divider">
+            <span />
+            <b>or continue with email</b>
+            <span />
+          </div>
+
+          {!showEmailForm ? (
+            <button
+              type="button"
+              className="auth-email-trigger"
+              onClick={() => setShowEmailForm(true)}
+            >
+              <span className="auth-email-trigger-left">
+                <Mail size={17} />
+                <span>Continue with email</span>
+              </span>
+              <ArrowRight size={17} />
+            </button>
+          ) : (
+            <form onSubmit={handleSubmit} className="auth-form">
+              <div className="auth-field">
+                <label htmlFor="login-email">Email address</label>
+
+                <div className="auth-input-wrap">
+                  <Mail size={17} />
+                  <input
+                    id="login-email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wide">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-base mt-1"
-                  placeholder="••••••••"
-                />
+
+              <div className="auth-field">
+                <div className="auth-label-row">
+                  <label htmlFor="login-password">Password</label>
+
+                  <Link to="/recover-password">
+                    Forgot password?
+                  </Link>
+                </div>
+
+                <div className="auth-input-wrap">
+                  <LockKeyhole size={17} />
+
+                  <input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                  />
+
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={
+                      showPassword
+                        ? 'Hide password'
+                        : 'Show password'
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff size={17} />
+                    ) : (
+                      <Eye size={17} />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="btn-primary w-full justify-center text-[16px]"
+                className="auth-primary-button"
               >
-                <Fingerprint size={18} />
-                {submitting ? 'Signing in…' : 'Sign in'}
+                {submitting ? (
+                  <>
+                    <span className="auth-spinner" />
+                    Signing in…
+                  </>
+                ) : (
+                  <>
+                    <Fingerprint size={18} />
+                    Sign in securely
+                    <ArrowRight size={17} />
+                  </>
+                )}
               </button>
-
-              <p className="text-center text-xs">
-                <Link to="/recover-password" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)]">
-                  Forgot password?
-                </Link>
-              </p>
             </form>
-          </>
-        )}
+          )}
 
-        <p className="text-center text-sm text-[var(--text-muted)] mt-5">
-          New here?{' '}
-          <Link to="/register" className="text-[var(--accent-indigo)] hover:text-[var(--accent-hover)] font-medium">
-            Create an account
-          </Link>
+          <div className="auth-security-note">
+            <LockKeyhole size={14} />
+            <span>Your session is protected by OS AI security.</span>
+          </div>
+        </section>
+
+        <p className="auth-footer">
+          New to OS AI?{' '}
+          <Link to="/register">Create your account</Link>
+        </p>
+
+        <p className="auth-legal">
+          By continuing, you agree to use OS AI responsibly.
         </p>
       </div>
-    </div>
+    </main>
   );
 }
