@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from '../components/chat/CodeBlock';
+import { OsAiMark } from '../components/ui/OsAiMark';
 import { Copy, Check, Flag, Paperclip, Mic, ArrowUp, X as XIcon, Clock, FileText, Download, Loader2, Share2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ToastContainer, useToast } from '../components/ui/Toast';
@@ -676,45 +677,55 @@ export default function Chat() {
       <div className="flex-1 overflow-y-auto px-3 py-6 sm:px-6 sm:py-8 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         <div className="max-w-3xl mx-auto w-full space-y-6 sm:space-y-8">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4 py-12">
-            <div className="relative mb-7">
-              <div className="absolute inset-0 blur-2xl opacity-20 bg-[var(--accent-brass-bright)] rounded-full scale-150" />
-              <div className="relative w-16 h-16 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/80 backdrop-blur-xl flex items-center justify-center shadow-xl">
-                <span className="text-3xl font-light text-[var(--accent-brass-bright)]">✦</span>
+          <div className="os-ai-chat-home">
+            <div className="os-ai-chat-hero">
+              <div className="os-ai-chat-mark-wrap">
+                <div className="os-ai-chat-mark-glow" />
+                <div className="os-ai-chat-mark">
+                  <OsAiMark size={48} animated />
+                </div>
               </div>
+
+              <p className="os-ai-chat-greeting">
+                {getGreeting()}
+              </p>
+
+              <h1 className="os-ai-chat-title">
+                What are we building today?
+              </h1>
+
+              <p className="os-ai-chat-subtitle">
+                Turn an idea into a plan, a question into clarity,
+                <br className="hidden sm:block" />
+                or a goal into your next move.
+              </p>
             </div>
 
-            <p className="text-3xl sm:text-4xl font-light tracking-tight text-[var(--text-primary)]">
-              {getGreeting()}
-            </p>
-
-            <p className="mt-3 text-base text-[var(--text-muted)] max-w-md leading-relaxed">
-              Your intelligent workspace is ready.
-              <br className="hidden sm:block" />
-              Ask anything, build something, or explore an idea.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-lg">
+            <div className="os-ai-starter-grid">
               {[
                 {
                   title: 'Research',
-                  text: 'Understand a topic deeply',
-                  prompt: 'Research '
+                  text: 'Understand something deeply',
+                  prompt: 'Research ',
+                  label: '01'
                 },
                 {
                   title: 'Build',
-                  text: 'Create, code, or solve',
-                  prompt: 'Code '
+                  text: 'Create, code, and solve',
+                  prompt: 'Code ',
+                  label: '02'
                 },
                 {
                   title: 'Explore',
-                  text: 'Discover ideas and possibilities',
-                  prompt: 'Explore '
+                  text: 'Discover possibilities',
+                  prompt: 'Explore ',
+                  label: '03'
                 },
                 {
-                  title: 'Just ask',
-                  text: 'Start with anything',
-                  prompt: ''
+                  title: 'Make a move',
+                  text: 'Turn thinking into action',
+                  prompt: '',
+                  label: '04'
                 }
               ].map((item) => (
                 <button
@@ -724,22 +735,33 @@ export default function Chat() {
                     setInput(item.prompt)
                     setTimeout(() => inputRef.current?.focus(), 0)
                   }}
-                  className="group text-left rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/45 hover:bg-[var(--bg-secondary)]/75 hover:border-[var(--accent-brass)]/30 backdrop-blur-xl p-4 transition-all duration-200"
+                  className="os-ai-starter-card"
                 >
-                  <div className="flex items-center justify-between px-1 pt-2">
-                    <span className="text-sm font-medium text-[var(--text-primary)]">
-                      {item.title}
+                  <div className="os-ai-starter-top">
+                    <span className="os-ai-starter-number">
+                      {item.label}
                     </span>
                     <ArrowUp
-                      size={14}
-                      className="opacity-30 group-hover:opacity-80 group-hover:-translate-y-0.5 transition-all"
+                      size={15}
+                      className="os-ai-starter-arrow"
                     />
                   </div>
-                  <p className="mt-1.5 text-[11px] text-[var(--text-muted)] leading-relaxed">
+
+                  <div className="os-ai-starter-title">
+                    {item.title}
+                  </div>
+
+                  <p className="os-ai-starter-text">
                     {item.text}
                   </p>
                 </button>
               ))}
+            </div>
+
+            <div className="os-ai-motivation">
+              <span className="os-ai-motivation-line" />
+              <span>Clarity creates momentum. Start anywhere.</span>
+              <span className="os-ai-motivation-line" />
             </div>
           </div>
         )}
@@ -984,7 +1006,7 @@ export default function Chat() {
       )}
 
       <div className="p-4">
-        <form onSubmit={sendMessage} className="relative glass-bar rounded-[24px] sm:rounded-[28px] max-w-3xl mx-auto shadow-2xl border border-[var(--border-color)]/70 backdrop-blur-2xl overflow-hidden transition-all duration-200 focus-within:border-[var(--accent-brass)]/40 focus-within:shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
+        <form onSubmit={sendMessage} className="os-ai-composer relative glass-bar rounded-[24px] sm:rounded-[28px] max-w-3xl mx-auto shadow-2xl border border-[var(--border-color)]/70 backdrop-blur-2xl overflow-hidden transition-all duration-200 focus-within:border-[var(--accent-brass)]/40 focus-within:shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
           {attachedImage && (
             <div className="px-4 pt-3">
               <div className="relative inline-block">
