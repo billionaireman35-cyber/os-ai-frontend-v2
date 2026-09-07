@@ -7209,3 +7209,215 @@ body {
   }
 }
 
+
+/* =========================================================
+   OS AI — AUTHENTICATED SHELL REFINEMENT
+   Presentation only — no product logic changes.
+   ========================================================= */
+
+.os-ai-omnibar {
+  position: relative;
+  z-index: 20;
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--border-color) 82%,
+    var(--accent-brass) 18%
+  ) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.025),
+    0 8px 28px rgba(0,0,0,0.025);
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.os-ai-omnibar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent-brass) 18%, transparent),
+    transparent
+  );
+  opacity: .7;
+  pointer-events: none;
+}
+
+.os-ai-omnibar > div:first-child {
+  min-width: 0;
+}
+
+.os-ai-omnibar-brand {
+  min-height: 36px;
+  padding: 3px 8px 3px 4px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.os-ai-omnibar-brand:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-color);
+}
+
+.os-ai-omnibar-mark {
+  position: relative;
+}
+
+.os-ai-omnibar-mark::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 10px;
+  background: var(--accent-glow);
+  filter: blur(9px);
+  opacity: .55;
+  z-index: -1;
+}
+
+.os-ai-version-pill {
+  letter-spacing: .1em;
+  background: color-mix(
+    in srgb,
+    var(--bg-secondary) 88%,
+    var(--accent-brass) 12%
+  );
+}
+
+.os-ai-profile-button {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--accent-brass) 12%, var(--bg-secondary)),
+      var(--bg-secondary)
+    );
+  box-shadow:
+    0 4px 16px rgba(0,0,0,.04),
+    0 0 0 0 var(--accent-glow);
+}
+
+.os-ai-profile-button::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 10px;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--accent-brass) 10%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.os-ai-profile-button:hover {
+  box-shadow:
+    0 6px 20px rgba(0,0,0,.06),
+    0 0 0 3px color-mix(
+      in srgb,
+      var(--accent-brass) 8%,
+      transparent
+    );
+}
+
+/* Give the authenticated workspace a calmer visual canvas. */
+.os-ai-omnibar + main {
+  position: relative;
+  isolation: isolate;
+}
+
+.os-ai-omnibar + main::before {
+  content: "";
+  position: fixed;
+  top: 60px;
+  left: 380px;
+  width: 420px;
+  height: 260px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent-brass) 5%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+  opacity: .7;
+}
+
+/* Sidebar receives a subtle edge so the two surfaces feel intentional. */
+.os-sidebar-header {
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--border-color) 86%,
+    var(--accent-brass) 14%
+  ) !important;
+}
+
+.os-sidebar-profile {
+  border-top-color: color-mix(
+    in srgb,
+    var(--border-color) 88%,
+    var(--accent-brass) 12%
+  ) !important;
+}
+
+/* Touch targets feel more deliberate without changing their dimensions. */
+.os-ai-omnibar button.touch {
+  border: 1px solid transparent;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.os-ai-omnibar button.touch:hover {
+  border-color: var(--border-color);
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+}
+
+.os-ai-omnibar button.touch:active {
+  transform: translateY(0) scale(.97);
+}
+
+@media (max-width: 1023px) {
+  .os-ai-omnibar {
+    box-shadow: 0 5px 22px rgba(0,0,0,.035);
+  }
+
+  .os-ai-omnibar + main::before {
+    top: 56px;
+    left: 0;
+    width: 300px;
+    height: 200px;
+    opacity: .45;
+  }
+
+  .os-ai-omnibar {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .os-ai-profile-button {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-ai-omnibar,
+  .os-ai-omnibar-brand,
+  .os-ai-profile-button,
+  .os-ai-omnibar button.touch {
+    transition: none;
+  }
+}
+
