@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="512"
+     height="512"
+     viewBox="0 0 512 512">
+
+  <defs>
+    <radialGradient id="bg"
+      cx="18%"
+      cy="82%"
+      r="105%">
+      <stop offset="0%" stop-color="#052c20"/>
+      <stop offset="55%" stop-color="#111418"/>
+      <stop offset="100%" stop-color="#090b0d"/>
+    </radialGradient>
+
+    <linearGradient id="edge"
+      x1="0%"
+      y1="0%"
+      x2="100%"
+      y2="100%">
+      <stop offset="0%" stop-color="#64ffb4" stop-opacity="0.55"/>
+      <stop offset="42%" stop-color="#64ffb4" stop-opacity="0"/>
+      <stop offset="72%" stop-color="#64ffb4" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#64ffb4" stop-opacity="0.30"/>
+    </linearGradient>
+
+    <filter id="shadow"
+      x="-30%"
+      y="-30%"
+      width="160%"
+      height="170%">
+      <feDropShadow
+        dx="0"
+        dy="10"
+        stdDeviation="10"
+        flood-color="#000000"
+        flood-opacity="0.55"/>
+    </filter>
+
+    <linearGradient id="cursor"
+      x1="20%"
+      y1="0%"
+      x2="80%"
+      y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="55%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+
+    <clipPath id="rounded">
+      <rect x="0" y="0"
+            width="512"
+            height="512"
+            rx="112"
+            ry="112"/>
+    </clipPath>
+  </defs>
+
+  <!-- App background -->
+  <rect
+    width="512"
+    height="512"
+    rx="112"
+    fill="url(#bg)"/>
+
+  <!-- Subtle inner highlight -->
+  <rect
+    x="2"
+    y="2"
+    width="508"
+    height="508"
+    rx="110"
+    fill="none"
+    stroke="#ffffff"
+    stroke-opacity="0.10"
+    stroke-width="4"/>
+
+  <!-- Green premium edge -->
+  <rect
+    x="3"
+    y="3"
+    width="506"
+    height="506"
+    rx="109"
+    fill="none"
+    stroke="url(#edge)"
+    stroke-width="4"/>
+
+  <!-- Cursor -->
+  <g filter="url(#shadow)">
+
+    <!-- Main cursor -->
+    <path
+      d="M256 130
+         L157 322
+         L224 293
+         L252 382
+         L285 370
+         L257 281
+         L327 292
+         Z"
+      fill="url(#cursor)"/>
+
+    <!-- Dark/green inner notch -->
+    <path
+      d="M224 293
+         L252 382
+         L266 377
+         L238 288
+         Z"
+      fill="#052c20"/>
+
+  </g>
+
+</svg>

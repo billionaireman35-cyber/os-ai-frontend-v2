@@ -1,18 +1,11 @@
 // Cache name includes a version - bump this on any future manual SW changes
 // so old caches get cleaned up automatically via the 'activate' handler below.
-const CACHE_VERSION = 'osai-v5';
+const CACHE_VERSION = 'osai-v4';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const OFFLINE_URL = '/offline.html';
 
-const PRECACHE_URLS = [
-  '/manifest.json',
-  '/icon-180.png',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-maskable-512.png',
-  OFFLINE_URL
-];
+const PRECACHE_URLS = ['/manifest.json', '/icon-192.png', '/icon-512.png', OFFLINE_URL];
 
 self.addEventListener('install', (e) => {
   // No self.skipWaiting() here on purpose - a new SW stays "waiting" until
