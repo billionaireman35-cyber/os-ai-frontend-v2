@@ -74,7 +74,7 @@ export default function Register() {
 
   const finishSignup = () => {
     localStorage.setItem('token', pendingToken);
-    navigate('/chat');
+    navigate('/');
   };
 
   if (recoveryPhrase) {

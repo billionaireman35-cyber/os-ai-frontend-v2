@@ -81,7 +81,7 @@ function App() {
       <WalletProvider>
         <ThemeProvider>
           <AppKitThemeSync />
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true }}>
             <Routes>
               <Route path="/welcome" element={<StartupFlow />} />
               <Route path="/login" element={<Login />} />

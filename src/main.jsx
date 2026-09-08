@@ -3,6 +3,59 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
+// PERMANENT RUNTIME DIAGNOSTIC
+// Shows browser-side errors instead of leaving the app on a blank screen.
+function showRuntimeError(title, detail) {
+  let panel = document.getElementById('os-ai-runtime-error');
+
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'os-ai-runtime-error';
+    panel.style.cssText = `
+      position: fixed;
+      inset: 12px;
+      z-index: 2147483647;
+      overflow: auto;
+      background: #120d0d;
+      color: #fff;
+      border: 1px solid #ff6b6b;
+      border-radius: 16px;
+      padding: 18px;
+      font-family: system-ui, sans-serif;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      white-space: pre-wrap;
+      word-break: break-word;
+    `;
+    document.body.appendChild(panel);
+  }
+
+  panel.innerHTML = `
+    <div style="font-size:18px;font-weight:700;margin-bottom:10px;">
+      OS AI Runtime Error
+    </div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:8px;">
+      ${String(title).replace(/</g, '&lt;')}
+    </div>
+    <pre style="font-size:12px;line-height:1.5;margin:0;">${String(detail).replace(/</g, '&lt;')}</pre>
+  `;
+}
+
+window.addEventListener('error', (event) => {
+  showRuntimeError(
+    event.message || 'JavaScript error',
+    `${event.filename || ''}:${event.lineno || ''}:${event.colno || ''}\n\n${event.error?.stack || event.message || 'Unknown error'}`
+  );
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason;
+  showRuntimeError(
+    'Unhandled promise rejection',
+    reason?.stack || reason?.message || String(reason)
+  );
+});
+
+
 // Shows a small fixed banner offering to reload once a new service worker
 // has finished installing and is waiting to take over. Plain DOM, not a
 // React component - it needs to work independent of the app's own mount
