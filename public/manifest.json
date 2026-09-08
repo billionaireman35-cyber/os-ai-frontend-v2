@@ -2,7 +2,7 @@
   "id": "/",
   "name": "OS AI",
   "short_name": "OS AI",
-  "description": "OS AI \u2014 intelligent AI, digital services, and the OS ecosystem connected in one place.",
+  "description": "OS AI — intelligent AI, digital services, and the OS ecosystem connected in one place.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -31,6 +31,43 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "OS AI Dashboard"
+    },
+    {
+      "src": "/screenshots/vaults.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "OS Vaults"
+    },
+    {
+      "src": "/screenshots/market-pulse.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "OS AI Market Pulse"
+    },
+    {
+      "src": "/screenshots/market-stories.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "OS AI Market Stories"
+    },
+    {
+      "src": "/screenshots/hustle-hub.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "OS AI Hustle Hub"
     }
   ]
 }
