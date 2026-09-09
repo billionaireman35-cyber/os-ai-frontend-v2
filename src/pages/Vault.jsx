@@ -14,7 +14,6 @@ import { Modal } from '../components/ui/Modal';
 import { WalletAnalytics } from '../components/wallet/WalletAnalytics';
 import { ImportWalletModal } from '../components/wallet/ImportWalletModal';
 import { useAppKit, useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
-import Safe from '@safe-global/protocol-kit';
 import { ToastContainer, useToast } from '../components/ui/Toast';
 import { Dropdown } from '../components/ui/Dropdown';
 

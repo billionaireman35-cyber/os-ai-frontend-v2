@@ -15,6 +15,7 @@
     "@heroicons/react": "^2.0.18",
     "@reown/appkit": "^1.8.23",
     "@reown/appkit-adapter-ethers": "^1.8.23",
+    "@safe-global/api-kit": "^5.0.3",
     "@tailwindcss/typography": "^0.5.20",
     "@tanstack/react-query": "^5.102.8",
     "axios": "^1.18.1",
