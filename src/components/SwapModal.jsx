@@ -5,7 +5,7 @@ import { Modal } from './ui/Modal';
 import { Dropdown } from './ui/Dropdown';
 
 const TOKEN_MAP = {
-  MATIC: '0x0000000000000000000000000000000000001010',
+  MATIC: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
   CLOSE: '0x3c6833cFDdED80fE76474a3Cb2Cc050Daec91fe8',
   OSINA: '0xbaf280b74c264a911b41341a26508eac9e74fd4f',
   USDC: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
