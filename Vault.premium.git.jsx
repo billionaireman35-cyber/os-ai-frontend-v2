@@ -1718,18 +1718,257 @@ function StandardWallet() {
   );
 }
 function SafeWallet() {
+  const { toasts, addToast, removeToast } = useToast();
+  const { user } = useAuth();
+
+  const [safes, setSafes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [showCreate, setShowCreate] = useState(false);
+  const [chain, setChain] = useState('polygon');
+  const [ownersText, setOwnersText] = useState('');
+  const [threshold, setThreshold] = useState(1);
+  const [label, setLabel] = useState('Safe');
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const SAFE_CHAINS = ['polygon', 'ethereum', 'bsc', 'arbitrum', 'base'];
+  const EXPLORERS = {
+    polygon: 'https://polygonscan.com/address/',
+    ethereum: 'https://etherscan.io/address/',
+    bsc: 'https://bscscan.com/address/',
+    arbitrum: 'https://arbiscan.io/address/',
+    base: 'https://basescan.org/address/',
+  };
+
+  const loadSafes = () => {
+    setLoading(true);
+    api.get('/safe/list')
+      .then((res) => setSafes(res.data || []))
+      .catch((e) => addToast(extractErrorMessage(e, 'Failed to load Safes'), 'error'))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { if (user) loadSafes(); }, [user]);
+
+  const owners = ownersText
+    .split(/[\n,]/)
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  const resetCreateForm = () => {
+    setShowCreate(false);
+    setChain('polygon');
+    setOwnersText('');
+    setThreshold(1);
+    setLabel('Safe');
+  };
+
+  const validateForm = () => {
+    if (owners.length === 0) { addToast('Add at least one owner address', 'error'); return false; }
+    for (const o of owners) {
+      if (!/^0x[a-fA-F0-9]{40}$/.test(o)) { addToast(`Invalid address: ${o.slice(0, 12)}...`, 'error'); return false; }
+    }
+    if (threshold < 1 || threshold > owners.length) { addToast(`Threshold must be between 1 and ${owners.length}`, 'error'); return false; }
+    return true;
+  };
+
+  const handleCreate = async (password) => {
+    if (!password) { addToast('Password required', 'error'); return; }
+    setCreating(true);
+    try {
+      const res = await api.post('/safe/create', {
+        chain,
+        owners,
+        threshold: Number(threshold),
+        password,
+        label: label.trim() || 'Safe',
+      });
+      addToast(`Safe deployed: ${res.data.address.slice(0, 10)}...`, 'success', 6000);
+      resetCreateForm();
+      loadSafes();
+    } catch (e) {
+      addToast(extractErrorMessage(e, 'Safe creation failed'), 'error');
+    } finally {
+      setCreating(false);
+      setShowPasswordModal(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
       <div className="glass-card p-5 flex items-start gap-3">
         <ShieldCheck size={24} className="text-[var(--accent-brass)] shrink-0 mt-0.5" />
         <div>
           <p className="text-lg text-[var(--text-primary)] font-bold">Gnosis Safe Multisig</p>
-          <p className="text-sm text-[var(--text-muted)] mt-1">Extra security for larger balances — coming soon.</p>
+          <p className="text-sm text-[var(--text-muted)] mt-1">
+            Deploy a multisig Safe for larger balances. Requires multiple approvals for extra security.
+          </p>
         </div>
       </div>
-      <div className="glass-card p-8 text-center">
-        <p className="text-sm text-[var(--text-muted)]">Safe integration is being prepared.</p>
-      </div>
+
+      {loading && (
+        <div className="space-y-2">
+          {[1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-white/5" />)}
+        </div>
+      )}
+
+      {!loading && (
+        <>
+          <p className="text-xs font-mono uppercase tracking-wide text-[var(--text-muted)]">Your Safes</p>
+
+          {safes.length === 0 ? (
+            <div className="glass-card p-8 text-center">
+              <p className="text-sm text-[var(--text-muted)]">No Safes yet. Deploy one to get started.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {safes.map((s) => (
+                <div key={s.id} className="glass-panel rounded-2xl p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-display font-bold text-base text-[var(--text-primary)]">{s.label}</p>
+                      <p className="text-[10px] font-mono uppercase text-[var(--accent-brass-bright)] mt-0.5">
+                        {s.chain} · {s.threshold}-of-{s.owners.length}
+                      </p>
+                    </div>
+                    {EXPLORERS[s.chain] && (
+                      <a
+                        href={`${EXPLORERS[s.chain]}${s.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[var(--text-muted)] hover:text-[var(--accent-brass-bright)]"
+                        aria-label="View on explorer"
+                      >
+                        <ExternalLink size={15} />
+                      </a>
+                    )}
+                  </div>
+                  <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+                    <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wide mb-1">Safe Address</p>
+                    <p className="text-xs font-mono break-all text-[var(--text-primary)]">{s.address}</p>
+                  </div>
+                  <div className="mt-2.5">
+                    <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wide mb-1.5">Owners</p>
+                    <div className="space-y-1">
+                      {s.owners.map((o, i) => (
+                        <p key={i} className="text-[11px] font-mono text-[var(--text-secondary)] truncate">{o}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={() => { if (!user?.wallet_address) { addToast('Create a wallet first.', 'warning'); return; } setShowCreate(true); }}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold bg-gradient-to-br from-[var(--accent-brass-bright)] to-[var(--accent-brass)] text-[#20190B]"
+          >
+            <Plus size={18} /> Deploy New Safe
+          </button>
+        </>
+      )}
+
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={resetCreateForm}>
+          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Deploy Safe</h3>
+              <button onClick={resetCreateForm} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+            </div>
+
+            <p className="text-sm text-[var(--text-secondary)]">
+              Your primary wallet pays gas and deploys the Safe. It does not need to be an owner.
+            </p>
+
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide mb-2 block">Network</label>
+              <div className="flex gap-2 flex-wrap">
+                {SAFE_CHAINS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setChain(c)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold transition-all ${
+                      chain === c
+                        ? 'bg-[var(--accent-brass)] text-black'
+                        : 'bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    {c.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Label</label>
+              <input type="text" value={label} onChange={(e) => setLabel(e.target.value)} className="input-glass w-full mt-1" placeholder="e.g. Reserve" />
+            </div>
+
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">
+                Owner Addresses <span className="text-[var(--text-muted)] normal-case">(one per line)</span>
+              </label>
+              <textarea
+                value={ownersText}
+                onChange={(e) => setOwnersText(e.target.value)}
+                className="input-glass w-full mt-1 min-h-[100px] font-mono text-xs"
+                placeholder={'0x...\n0x...'}
+              />
+              <p className="text-[10px] text-[var(--text-muted)] mt-1">{owners.length} owner{owners.length === 1 ? '' : 's'} detected</p>
+            </div>
+
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">
+                Threshold <span className="text-[var(--text-muted)] normal-case">(approvals required)</span>
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={owners.length || 1}
+                value={threshold}
+                onChange={(e) => setThreshold(e.target.value)}
+                className="input-glass w-full mt-1"
+              />
+            </div>
+
+            <div className="flex items-start gap-2.5 rounded-2xl border border-amber-400/[0.12] bg-amber-400/[0.035] px-3.5 py-3">
+              <span className="mt-0.5 text-sm">⚠️</span>
+              <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
+                Safe deployment is irreversible. Double-check owner addresses and threshold before confirming — this action cannot be undone.
+              </p>
+            </div>
+
+            <button
+              onClick={() => { if (validateForm()) setShowPasswordModal(true); }}
+              disabled={creating}
+              className="btn-primary w-full justify-center"
+            >
+              {creating ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Continue'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <Modal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        title="Confirm Safe deployment"
+        message={`You're about to deploy a ${threshold}-of-${owners.length} Safe on ${chain}. Enter your wallet password to authorize this transaction.`}
+        inputType="password"
+        inputPlaceholder="Enter password"
+        onConfirm={handleCreate}
+        confirmText={creating ? 'Deploying...' : 'Confirm & Deploy'}
+        cancelText="Cancel"
+        confirmDisabled={creating}
+        variant="transaction"
+        icon={<ShieldCheck size={20} className="text-violet-300" />}
+        eyebrow="SECURE TRANSACTION"
+        securityText="Your password is used locally to authorize the transaction."
+      />
     </div>
   );
 }
