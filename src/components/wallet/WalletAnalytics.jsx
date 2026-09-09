@@ -2,22 +2,26 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useWallet } from '../../context/WalletContext';
 import { api } from '../../utils/api';
 import {
-  BarChart3,
   Activity,
   ArrowDownRight,
   ArrowUpRight,
+  ArrowUpDown,
+  ExternalLink,
+  Coins,
+  History,
   Layers3,
-  Sparkles,
   WalletCards,
+  Sparkles,
+  BarChart3,
 } from 'lucide-react';
 
 const HOLDING_COLORS = [
-  '#8B5CF6',
-  '#E8C877',
-  '#6E9B79',
-  '#8A9BA8',
-  '#C1554A',
-  '#5C5646',
+  '#4ADE80',
+  '#A3E635',
+  '#6EE7B7',
+  '#94A3B8',
+  '#64748B',
+  '#475569',
 ];
 
 const KIND_META = {
@@ -85,56 +89,43 @@ function HoldingsDonut({ assets, totalUsd }) {
     });
   }
 
-  let cumulative = 0;
-  const stops = slices.map((slice) => {
-    const start = cumulative;
-    cumulative += slice.pct;
-    return `${slice.color} ${start}% ${cumulative}%`;
-  }).join(', ');
-
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-7">
-      <div
-        className="relative w-40 h-40 rounded-full shrink-0"
-        style={{
-          background: `conic-gradient(${stops})`,
-          filter: 'drop-shadow(0 12px 28px rgba(0,0,0,0.25))',
-        }}
-      >
-        <div className="absolute inset-[18px] rounded-full bg-[var(--bg-secondary)] border border-white/[0.05] flex flex-col items-center justify-center">
-          <p className="text-[9px] uppercase tracking-[2px] text-[var(--text-muted)]">
-            Allocation
-          </p>
-          <p className="text-xl font-display font-bold text-[var(--text-primary)] mt-1">
-            100%
-          </p>
-        </div>
-      </div>
-
-      <div className="flex-1 w-full space-y-2.5">
+    <div>
+      {/* Proportional stacked bar - replaces the donut+overlapping-legend
+          layout, which crowded badly on narrow screens. A single bar with
+          segments is unambiguous at any width and needs no side-by-side
+          companion element to make sense. */}
+      <div className="flex w-full h-3 rounded-full overflow-hidden bg-white/[0.04]">
         {slices.map((slice) => (
           <div
             key={slice.symbol}
-            className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-white/[0.025] border border-white/[0.04]"
+            style={{ width: `${slice.pct}%`, background: slice.color }}
+            className="h-full first:rounded-l-full last:rounded-r-full"
+          />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 mt-4">
+        {slices.map((slice) => (
+          <div
+            key={slice.symbol}
+            className="rounded-xl px-3 py-2.5 bg-white/[0.025] border border-white/[0.04]"
           >
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2">
               <span
                 className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ background: slice.color }}
               />
-              <span className="text-sm font-semibold text-[var(--text-primary)]">
+              <span className="text-sm font-semibold text-[var(--text-primary)] truncate">
                 {slice.symbol}
               </span>
             </div>
-
-            <div className="text-right">
-              <p className="text-xs font-mono text-[var(--text-primary)]">
-                {formatUsd(slice.usd)}
-              </p>
-              <p className="text-[9px] font-mono text-[var(--text-muted)] mt-0.5">
-                {slice.pct.toFixed(1)}%
-              </p>
-            </div>
+            <p className="text-xs font-mono text-[var(--text-primary)] mt-1.5">
+              {formatUsd(slice.usd)}
+            </p>
+            <p className="text-[9px] font-mono text-[var(--text-muted)] mt-0.5">
+              {slice.pct.toFixed(1)}% of portfolio
+            </p>
           </div>
         ))}
       </div>
@@ -165,7 +156,9 @@ function ActivityBreakdown({ history, loading }) {
 
   if (loading) {
     return (
-      <div className="h-36 rounded-2xl bg-white/[0.025] animate-pulse" />
+      <div className="grid grid-cols-2 gap-3">
+        {[1, 2, 3, 4].map((i) => <div key={i} className="h-28 rounded-2xl bg-white/[0.025] animate-pulse" />)}
+      </div>
     );
   }
 
@@ -183,35 +176,32 @@ function ActivityBreakdown({ history, loading }) {
   const max = Math.max(...breakdown.map((item) => item.count));
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+    <div className="grid grid-cols-2 gap-3">
       {breakdown.map((item) => {
         const Icon = item.icon;
         const percentage = (item.count / max) * 100;
-
         return (
           <div
             key={item.kind}
-            className="rounded-2xl p-3.5 bg-white/[0.025] border border-white/[0.05]"
+            className="rounded-2xl p-5 bg-white/[0.025] border border-white/[0.05]"
           >
-            <div className="flex items-center justify-between">
-              <div className="w-8 h-8 rounded-xl bg-violet-500/[0.08] border border-violet-400/[0.10] flex items-center justify-center">
-                <Icon size={15} className="text-violet-300/80" />
-              </div>
-              <span className="font-mono text-lg font-bold text-[var(--text-primary)]">
-                {item.count}
-              </span>
+            <div className="w-11 h-11 rounded-2xl bg-emerald-400/[0.08] border border-emerald-400/[0.14] flex items-center justify-center">
+              <Icon size={20} className="text-emerald-300/90" />
             </div>
 
-            <p className="text-[10px] uppercase tracking-[1.5px] text-[var(--text-muted)] mt-3">
+            <p className="font-mono text-3xl font-bold text-[var(--text-primary)] mt-4">
+              {item.count}
+            </p>
+            <p className="text-[11px] uppercase tracking-[1.5px] text-[var(--text-muted)] mt-1.5">
               {item.label}
             </p>
 
-            <div className="h-1 rounded-full bg-white/[0.05] mt-2 overflow-hidden">
+            <div className="h-1.5 rounded-full bg-white/[0.06] mt-4 overflow-hidden">
               <div
                 className="h-full rounded-full"
                 style={{
                   width: `${percentage}%`,
-                  background: 'linear-gradient(90deg, var(--accent-brass), var(--accent-brass-bright))',
+                  background: 'linear-gradient(90deg, #4ADE80, #22C55E)',
                 }}
               />
             </div>
@@ -273,17 +263,17 @@ export function WalletAnalytics() {
         className="relative overflow-hidden rounded-[30px] p-5 sm:p-7"
         style={{
           background:
-            'radial-gradient(circle at 85% 10%, rgba(124,58,237,0.18), transparent 34%), linear-gradient(135deg, #060607 0%, #0b0b10 58%, #060607 100%)',
-          border: '1px solid rgba(139,92,246,0.14)',
-          boxShadow: '0 24px 70px rgba(0,0,0,0.25)',
+            'radial-gradient(circle at 85% 10%, rgba(74,222,128,0.035), transparent 34%), linear-gradient(135deg, #060607 0%, #0b0b10 58%, #060607 100%)',
+          border: '1px solid rgba(74,222,128,0.10)',
+          boxShadow: '0 20px 55px rgba(0,0,0,0.20)',
         }}
       >
-        <div className="absolute -right-20 -top-20 w-56 h-56 rounded-full bg-violet-600/[0.08] blur-3xl pointer-events-none" />
+        <div className="absolute -right-20 -top-20 w-56 h-56 rounded-full bg-emerald-400/[0.025] blur-3xl pointer-events-none" />
 
         <div className="relative">
           <div className="flex items-center gap-2 mb-5">
-            <Sparkles size={13} className="text-violet-300" />
-            <p className="text-[9px] uppercase font-semibold tracking-[3px] text-violet-200/80">
+            <Sparkles size={13} className="text-emerald-300/80" />
+            <p className="text-[9px] uppercase font-semibold tracking-[3px] text-emerald-200/70">
               Portfolio Intelligence
             </p>
           </div>
@@ -331,7 +321,7 @@ export function WalletAnalytics() {
       <section>
         <div className="flex items-end justify-between mb-2.5 px-1">
           <div>
-            <p className="text-[9px] uppercase tracking-[2.5px] text-violet-300/70">
+            <p className="text-[9px] uppercase tracking-[2.5px] text-emerald-300/60">
               Portfolio
             </p>
             <h3 className="text-lg font-display font-bold text-[var(--text-primary)] mt-0.5">
@@ -350,7 +340,7 @@ export function WalletAnalytics() {
       <section>
         <div className="flex items-end justify-between mb-2.5 px-1">
           <div>
-            <p className="text-[9px] uppercase tracking-[2.5px] text-violet-300/70">
+            <p className="text-[9px] uppercase tracking-[2.5px] text-emerald-300/60">
               Wallet activity
             </p>
             <h3 className="text-lg font-display font-bold text-[var(--text-primary)] mt-0.5">
