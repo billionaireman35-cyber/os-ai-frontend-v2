@@ -1776,6 +1776,7 @@ function SafeWallet() {
   const { user } = useAuth();
 
   const [safes, setSafes] = useState([]);
+  const [balances, setBalances] = useState({});
   const [loading, setLoading] = useState(true);
 
   const [showCreate, setShowCreate] = useState(false);
@@ -1798,7 +1799,15 @@ function SafeWallet() {
   const loadSafes = () => {
     setLoading(true);
     api.get('/safe/list')
-      .then((res) => setSafes(res.data || []))
+      .then((res) => {
+        const list = res.data || [];
+        setSafes(list);
+        list.forEach((s) => {
+          api.get(`/safe/${s.id}/balance`)
+            .then((balRes) => setBalances((prev) => ({ ...prev, [s.id]: balRes.data })))
+            .catch(() => setBalances((prev) => ({ ...prev, [s.id]: null })));
+        });
+      })
       .catch((e) => addToast(extractErrorMessage(e, 'Failed to load Safes'), 'error'))
       .finally(() => setLoading(false));
   };
@@ -1903,6 +1912,30 @@ function SafeWallet() {
                   <div className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
                     <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wide mb-1">Safe Address</p>
                     <p className="text-xs font-mono break-all text-[var(--text-primary)]">{s.address}</p>
+                  </div>
+                  <div className="mt-2.5 rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+                    <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wide mb-1.5">Balance</p>
+                    {balances[s.id] === undefined ? (
+                      <p className="text-xs text-[var(--text-muted)]">Loading...</p>
+                    ) : balances[s.id] === null ? (
+                      <p className="text-xs text-[var(--text-muted)]">Unable to load balance</p>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-[var(--text-secondary)]">{balances[s.id].native.symbol}</span>
+                          <span className="text-xs font-mono text-[var(--text-primary)]">{balances[s.id].native.balance.toFixed(4)}</span>
+                        </div>
+                        {Object.entries(balances[s.id].tokens || {}).map(([symbol, t]) => (
+                          <div key={symbol} className="flex items-center justify-between">
+                            <span className="text-xs text-[var(--text-secondary)]">{symbol}</span>
+                            <span className="text-xs font-mono text-[var(--text-primary)]">{t.balance.toFixed(4)}</span>
+                          </div>
+                        ))}
+                        {balances[s.id].native.balance === 0 && Object.keys(balances[s.id].tokens || {}).length === 0 && (
+                          <p className="text-xs text-[var(--text-muted)]">No funds yet</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="mt-2.5">
                     <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wide mb-1.5">Owners</p>
