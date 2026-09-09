@@ -1102,56 +1102,15 @@ function StandardWallet() {
           className="relative overflow-hidden rounded-[32px] min-h-[320px] shadow-[0_30px_90px_rgba(0,0,0,0.35)]"
           style={{
             background:
-              'radial-gradient(circle at 78% 18%, rgba(124,58,237,0.20), transparent 34%), var(--glass-bg)',
-            border: '1px solid rgba(124,58,237,0.16)',
+              'radial-gradient(circle at 78% 18%, rgba(74,222,128,0.035), transparent 34%), var(--glass-bg)',
+            border: '1px solid rgba(74,222,128,0.10)',
           }}
         >
-          {/* Violet edge accent */}
-          <div
-            className="absolute left-0 top-7 bottom-7 w-1.5 rounded-r-full"
-            style={{
-              background: 'linear-gradient(180deg, #8b5cf6, #6d28d9)',
-              boxShadow: '0 0 18px rgba(139,92,246,0.85)',
-            }}
-          />
-
-          {/* Official OS Vault triangle — signature watermark */}
-          <div
-            className="absolute -right-14 -top-16 w-[310px] h-[310px] pointer-events-none opacity-90"
-            style={{
-              filter: 'drop-shadow(0 0 22px rgba(139,92,246,0.58)) drop-shadow(0 0 70px rgba(109,40,217,0.26))',
-            }}
-          >
-            <svg
-              viewBox="0 0 100 100"
-              width="100%"
-              height="100%"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-label="OS Vault"
-            >
-              <path
-                d="M50 12 L90 84 L10 84 Z"
-                stroke="url(#vaultTriangleGradient)"
-                strokeWidth="3.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <defs>
-                <linearGradient id="vaultTriangleGradient" x1="20" y1="15" x2="80" y2="90" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#c4b5fd" />
-                  <stop offset="45%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#6d28d9" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-
           {/* Subtle atmosphere */}
           <div
             className="absolute right-10 top-16 w-52 h-52 rounded-full pointer-events-none"
             style={{
-              background: 'rgba(124,58,237,0.11)',
+              background: 'rgba(74,222,128,0.025)',
               filter: 'blur(65px)',
             }}
           />
@@ -1159,7 +1118,7 @@ function StandardWallet() {
           <div
             className="absolute left-[42%] bottom-[-80px] w-72 h-40 rounded-full pointer-events-none"
             style={{
-              background: 'rgba(196,181,253,0.035)',
+              background: 'rgba(255,255,255,0.018)',
               filter: 'blur(60px)',
             }}
           />
@@ -1176,7 +1135,7 @@ function StandardWallet() {
                     }}
                   />
                   <p
-                    className="text-[10px] uppercase font-semibold text-violet-100/90"
+                    className="text-[10px] uppercase font-semibold text-white/80"
                     style={{ letterSpacing: '4px' }}
                   >
                     OS VAULT
@@ -1777,6 +1736,15 @@ function SafeWallet() {
 
   const [safes, setSafes] = useState([]);
   const [balances, setBalances] = useState({});
+  const [pendingTx, setPendingTx] = useState({});
+  const [showProposeFor, setShowProposeFor] = useState(null);
+  const [proposeTo, setProposeTo] = useState('');
+  const [proposeAmount, setProposeAmount] = useState('');
+  const [proposeToken, setProposeToken] = useState('POL');
+  const [showProposePassword, setShowProposePassword] = useState(false);
+  const [proposing, setProposing] = useState(false);
+  const [actionLoading, setActionLoading] = useState({});
+  const [showActionPassword, setShowActionPassword] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [showCreate, setShowCreate] = useState(false);
@@ -1806,10 +1774,17 @@ function SafeWallet() {
           api.get(`/safe/${s.id}/balance`)
             .then((balRes) => setBalances((prev) => ({ ...prev, [s.id]: balRes.data })))
             .catch(() => setBalances((prev) => ({ ...prev, [s.id]: null })));
+          loadPendingTx(s.id);
         });
       })
       .catch((e) => addToast(extractErrorMessage(e, 'Failed to load Safes'), 'error'))
       .finally(() => setLoading(false));
+  };
+
+  const loadPendingTx = (safeId) => {
+    api.get(`/safe/${safeId}/transactions`)
+      .then((res) => setPendingTx((prev) => ({ ...prev, [safeId]: (res.data || []).filter((t) => t.status === 'pending') })))
+      .catch(() => setPendingTx((prev) => ({ ...prev, [safeId]: [] })));
   };
 
   useEffect(() => { if (user) loadSafes(); }, [user]);
@@ -1855,6 +1830,79 @@ function SafeWallet() {
     } finally {
       setCreating(false);
       setShowPasswordModal(false);
+    }
+  };
+
+  const resetProposeForm = () => {
+    setShowProposeFor(null);
+    setProposeTo('');
+    setProposeAmount('');
+    setProposeToken('POL');
+  };
+
+  const handlePropose = async (password) => {
+    if (!password) { addToast('Password required', 'error'); return; }
+    if (!proposeTo || !/^0x[a-fA-F0-9]{40}$/.test(proposeTo)) { addToast('Enter a valid destination address', 'error'); return; }
+    const amt = parseFloat(proposeAmount);
+    if (!amt || amt <= 0) { addToast('Enter a valid amount', 'error'); return; }
+
+    setProposing(true);
+    try {
+      let body;
+      if (proposeToken === 'POL') {
+        body = { to_address: proposeTo, value_wei: toWeiString(proposeAmount, 18), data: '0x', password };
+      } else {
+        // ERC20 transfer(address,uint256) calldata - CLOSE is the only
+        // token this app tracks for Safe balances today, so this covers
+        // the real case without a generic multi-token picker yet.
+        const tokenAddr = '0x3c6833cFDdED80fE76474a3Cb2Cc050Daec91fe8';
+        const amountWei = BigInt(toWeiString(proposeAmount, 18));
+        const paddedTo = proposeTo.slice(2).padStart(64, '0');
+        const paddedAmount = amountWei.toString(16).padStart(64, '0');
+        const data = '0xa9059cbb' + paddedTo + paddedAmount;
+        body = { to_address: tokenAddr, value_wei: '0', data, password };
+      }
+
+      const res = await api.post(`/safe/${showProposeFor}/propose`, body);
+      addToast(`Proposal created (${res.data.signatures_collected}/${res.data.threshold} signatures)`, 'success', 6000);
+      resetProposeForm();
+      loadPendingTx(res.data.safe_id);
+    } catch (e) {
+      addToast(extractErrorMessage(e, 'Failed to propose transaction'), 'error');
+    } finally {
+      setProposing(false);
+      setShowProposePassword(false);
+    }
+  };
+
+  const handleSign = async (txId, safeId, password) => {
+    if (!password) { addToast('Password required', 'error'); return; }
+    setActionLoading((prev) => ({ ...prev, [txId]: 'sign' }));
+    try {
+      const res = await api.post(`/safe/transactions/${txId}/sign`, { password });
+      addToast(`Signed (${res.data.signatures_collected}/${res.data.threshold})`, 'success');
+      loadPendingTx(safeId);
+    } catch (e) {
+      addToast(extractErrorMessage(e, 'Failed to sign'), 'error');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [txId]: null }));
+      setShowActionPassword(null);
+    }
+  };
+
+  const handleExecute = async (txId, safeId, password) => {
+    if (!password) { addToast('Password required', 'error'); return; }
+    setActionLoading((prev) => ({ ...prev, [txId]: 'execute' }));
+    try {
+      const res = await api.post(`/safe/transactions/${txId}/execute`, { password });
+      addToast(`Executed: ${res.data.exec_tx_hash.slice(0, 12)}...`, 'success', 6000);
+      loadPendingTx(safeId);
+      loadSafes();
+    } catch (e) {
+      addToast(extractErrorMessage(e, 'Failed to execute'), 'error');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [txId]: null }));
+      setShowActionPassword(null);
     }
   };
 
@@ -1945,6 +1993,59 @@ function SafeWallet() {
                       ))}
                     </div>
                   </div>
+
+                  {(pendingTx[s.id] || []).length > 0 && (
+                    <div className="mt-2.5">
+                      <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wide mb-1.5">Pending Proposals</p>
+                      <div className="space-y-2">
+                        {pendingTx[s.id].map((tx) => {
+                          const alreadySigned = tx.signers.some((addr) => addr.toLowerCase() === user?.wallet_address?.toLowerCase());
+                          const readyToExecute = tx.signatures_collected >= tx.threshold;
+                          const loadingState = actionLoading[tx.id];
+                          return (
+                            <div key={tx.id} className="rounded-xl p-3 bg-white/5 border border-[var(--glass-border)]">
+                              <p className="text-[11px] text-[var(--text-secondary)]">
+                                To: <span className="font-mono text-[var(--text-primary)]">{tx.to_address.slice(0, 8)}...{tx.to_address.slice(-6)}</span>
+                              </p>
+                              <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                                {tx.signatures_collected}/{tx.threshold} signatures
+                              </p>
+                              <div className="flex gap-2 mt-2">
+                                {!alreadySigned && !readyToExecute && (
+                                  <button
+                                    onClick={() => setShowActionPassword({ type: 'sign', txId: tx.id, safeId: s.id })}
+                                    disabled={!!loadingState}
+                                    className="flex-1 py-2 rounded-lg text-[11px] font-semibold bg-[var(--accent-brass)] text-black"
+                                  >
+                                    {loadingState === 'sign' ? <Loader2 size={13} className="animate-spin mx-auto" /> : 'Sign'}
+                                  </button>
+                                )}
+                                {readyToExecute && (
+                                  <button
+                                    onClick={() => setShowActionPassword({ type: 'execute', txId: tx.id, safeId: s.id })}
+                                    disabled={!!loadingState}
+                                    className="flex-1 py-2 rounded-lg text-[11px] font-semibold bg-[var(--success)] text-black"
+                                  >
+                                    {loadingState === 'execute' ? <Loader2 size={13} className="animate-spin mx-auto" /> : 'Execute'}
+                                  </button>
+                                )}
+                                {alreadySigned && !readyToExecute && (
+                                  <p className="flex-1 text-center py-2 text-[11px] text-[var(--text-muted)]">Waiting for more signatures</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setShowProposeFor(s.id)}
+                    className="mt-2.5 w-full py-2.5 rounded-xl text-xs font-semibold bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]"
+                  >
+                    Propose Withdrawal
+                  </button>
                 </div>
               ))}
             </div>
@@ -2051,6 +2152,95 @@ function SafeWallet() {
         confirmText={creating ? 'Deploying...' : 'Confirm & Deploy'}
         cancelText="Cancel"
         confirmDisabled={creating}
+        variant="transaction"
+        icon={<ShieldCheck size={20} className="text-violet-300" />}
+        eyebrow="SECURE TRANSACTION"
+        securityText="Your password is used locally to authorize the transaction."
+      />
+
+      {showProposeFor && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={resetProposeForm}>
+          <div className="glass-panel rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-display font-bold text-[var(--text-primary)]">Propose Withdrawal</h3>
+              <button onClick={resetProposeForm} className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={20} /></button>
+            </div>
+            <p className="text-sm text-[var(--text-secondary)]">
+              This creates a proposal. It won't move funds until enough owners sign and someone executes it.
+            </p>
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide mb-2 block">Asset</label>
+              <div className="flex gap-2">
+                {['POL', 'CLOSE'].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setProposeToken(t)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold transition-all ${
+                      proposeToken === t
+                        ? 'bg-[var(--accent-brass)] text-black'
+                        : 'bg-white/5 border border-[var(--glass-border)] text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Destination Address</label>
+              <input type="text" value={proposeTo} onChange={(e) => setProposeTo(e.target.value)} className="input-glass w-full mt-1" placeholder="0x..." />
+            </div>
+            <div>
+              <label className="text-sm text-[var(--text-muted)] font-mono uppercase tracking-wide">Amount</label>
+              <input type="text" inputMode="decimal" value={proposeAmount} onChange={(e) => setProposeAmount(e.target.value)} className="input-glass w-full mt-1" placeholder="0.0" />
+            </div>
+            <button
+              onClick={() => setShowProposePassword(true)}
+              disabled={proposing}
+              className="btn-primary w-full justify-center"
+            >
+              {proposing ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Continue'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <Modal
+        isOpen={showProposePassword}
+        onClose={() => setShowProposePassword(false)}
+        title="Confirm proposal"
+        message={`Propose sending ${proposeAmount || '0'} ${proposeToken} to ${proposeTo ? proposeTo.slice(0, 10) + '...' : 'this address'}. Enter your password to sign this proposal.`}
+        inputType="password"
+        inputPlaceholder="Enter password"
+        onConfirm={handlePropose}
+        confirmText={proposing ? 'Proposing...' : 'Confirm & Sign'}
+        cancelText="Cancel"
+        confirmDisabled={proposing}
+        variant="transaction"
+        icon={<ShieldCheck size={20} className="text-violet-300" />}
+        eyebrow="SECURE TRANSACTION"
+        securityText="Your password is used locally to authorize the transaction."
+      />
+
+      <Modal
+        isOpen={!!showActionPassword}
+        onClose={() => setShowActionPassword(null)}
+        title={showActionPassword?.type === 'execute' ? 'Confirm execution' : 'Confirm signature'}
+        message={showActionPassword?.type === 'execute'
+          ? "This will submit the transaction on-chain. Enter your password to execute."
+          : "Enter your password to add your signature to this proposal."}
+        inputType="password"
+        inputPlaceholder="Enter password"
+        onConfirm={(password) => {
+          if (!showActionPassword) return;
+          if (showActionPassword.type === 'execute') {
+            handleExecute(showActionPassword.txId, showActionPassword.safeId, password);
+          } else {
+            handleSign(showActionPassword.txId, showActionPassword.safeId, password);
+          }
+        }}
+        confirmText="Confirm"
+        cancelText="Cancel"
         variant="transaction"
         icon={<ShieldCheck size={20} className="text-violet-300" />}
         eyebrow="SECURE TRANSACTION"
