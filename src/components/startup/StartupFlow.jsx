@@ -37,7 +37,7 @@ export function StartupFlow() {
       <div className="startup-screen startup-splash">
         <div className="startup-center">
           <div className="startup-logo-shell startup-logo-large">
-            <OsAiMark size={82} animated />
+            <OsAiMark size={82} />
           </div>
         </div>
       </div>
@@ -47,12 +47,10 @@ export function StartupFlow() {
   if (phase === 'splash') {
     return (
       <div className="startup-screen startup-splash">
-        <div className="startup-orb startup-orb-one" />
-        <div className="startup-orb startup-orb-two" />
 
         <div className="startup-center">
           <div className="startup-logo-shell startup-logo-large">
-            <OsAiMark size={116} animated />
+            <OsAiMark size={116} />
           </div>
 
           <div className="startup-wordmark">OS AI</div>
@@ -78,12 +76,11 @@ export function StartupFlow() {
 
   return (
     <div className="startup-screen startup-welcome">
-      <div className="welcome-glow" />
 
       <div className="welcome-content">
         <div className="welcome-brand">
           <div className="startup-logo-shell">
-            <OsAiMark size={48} animated={false} />
+            <OsAiMark size={48} />
           </div>
           <span>OS AI</span>
         </div>
@@ -108,7 +105,7 @@ export function StartupFlow() {
 
             <div className="welcome-feature">
               <div className="welcome-feature-icon">
-                <OsAiMark size={22} animated={false} />
+                <OsAiMark size={22} />
               </div>
 
               <div>
