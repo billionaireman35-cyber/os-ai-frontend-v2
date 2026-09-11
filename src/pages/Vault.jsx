@@ -45,8 +45,9 @@ function toWeiString(amountStr, decimals = 18) {
   return BigInt(combined || '0').toString();
 }
 
-function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wallets = [], defaultWalletAddress = '' }) {
+function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wallets = [], defaultWalletAddress = '', defaultWalletId = null }) {
   const [fromWallet, setFromWallet] = useState(defaultWalletAddress);
+  const [fromWalletId, setFromWalletId] = useState(defaultWalletId);
   // _prefillTo/_prefillAmount are optional extra fields a caller can set
   // on the asset object to pre-populate the form (e.g. Staking's "Send
   // from OS Vaults" shortcut, which pre-fills the treasury address and
@@ -61,6 +62,12 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
   const [copiedHash, setCopiedHash] = useState(false);
 
   // Re-sync if the modal is reopened with a different prefilled asset
+  useEffect(() => {
+    if (isOpen) {
+      setFromWallet(defaultWalletAddress);
+      setFromWalletId(defaultWalletId);
+    }
+  }, [isOpen, defaultWalletAddress, defaultWalletId]);
   // while already mounted (useState's initial value only applies once).
   useEffect(() => {
     if (isOpen && asset?._prefillTo) setTo(asset._prefillTo);
@@ -114,6 +121,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
           amount: parseFloat(amount),
           password,
           wallet_address: fromWallet || undefined,
+wallet_id: fromWalletId || undefined,
         });
         // Backend returns { fee_tx, send_tx } - send_tx is the user-facing
         // transaction, fee_tx is the relayer's internal fee pull. Both are
@@ -131,6 +139,7 @@ function SendModal({ isOpen, onClose, asset, assets, onSent, refreshBalances, wa
         password,
         token_address: asset.address || null,
         wallet_address: fromWallet || undefined,
+wallet_id: fromWalletId || undefined,
       });
       onSent?.(res.data.tx_hash);
       setSentResult({ txHash: res.data.tx_hash });
@@ -1730,9 +1739,10 @@ function StandardWallet() {
     </div>
   );
 }
-function SafeWallet() {
+function SafeWallet({ walletId, walletAddress, walletType }) {
   const { toasts, addToast, removeToast } = useToast();
   const { user } = useAuth();
+  const { walletProvider } = useAppKitProvider('eip155');
 
   const [safes, setSafes] = useState([]);
   const [balances, setBalances] = useState({});
@@ -1766,7 +1776,7 @@ function SafeWallet() {
 
   const loadSafes = () => {
     setLoading(true);
-    api.get('/safe/list')
+    api.get('/safe/list', { params: { wallet_id: walletId } })
       .then((res) => {
         const list = res.data || [];
         setSafes(list);
@@ -1782,12 +1792,21 @@ function SafeWallet() {
   };
 
   const loadPendingTx = (safeId) => {
-    api.get(`/safe/${safeId}/transactions`)
+    api.get(`/safe/${safeId}/transactions`, { params: { wallet_id: walletId } })
       .then((res) => setPendingTx((prev) => ({ ...prev, [safeId]: (res.data || []).filter((t) => t.status === 'pending') })))
       .catch(() => setPendingTx((prev) => ({ ...prev, [safeId]: [] })));
   };
 
-  useEffect(() => { if (user) loadSafes(); }, [user]);
+  useEffect(() => {
+    if (user && walletId) {
+      loadSafes();
+    } else {
+      setSafes([]);
+      setPendingTx({});
+      setBalances({});
+      setLoading(false);
+    }
+  }, [user, walletId]);
 
   const owners = ownersText
     .split(/[\n,]/)
@@ -1820,6 +1839,7 @@ function SafeWallet() {
         owners,
         threshold: Number(threshold),
         password,
+        wallet_id: walletId,
         label: label.trim() || 'Safe',
       });
       addToast(`Safe deployed: ${res.data.address.slice(0, 10)}...`, 'success', 6000);
@@ -1850,7 +1870,7 @@ function SafeWallet() {
     try {
       let body;
       if (proposeToken === 'POL') {
-        body = { to_address: proposeTo, value_wei: toWeiString(proposeAmount, 18), data: '0x', password };
+        body = { to_address: proposeTo, value_wei: toWeiString(proposeAmount, 18), data: '0x', password, wallet_id: walletId };
       } else {
         // ERC20 transfer(address,uint256) calldata - CLOSE is the only
         // token this app tracks for Safe balances today, so this covers
@@ -1860,7 +1880,7 @@ function SafeWallet() {
         const paddedTo = proposeTo.slice(2).padStart(64, '0');
         const paddedAmount = amountWei.toString(16).padStart(64, '0');
         const data = '0xa9059cbb' + paddedTo + paddedAmount;
-        body = { to_address: tokenAddr, value_wei: '0', data, password };
+        body = { to_address: tokenAddr, value_wei: '0', data, password, wallet_id: walletId };
       }
 
       const res = await api.post(`/safe/${showProposeFor}/propose`, body);
@@ -1875,11 +1895,59 @@ function SafeWallet() {
     }
   };
 
+  const handleConnectedSign = async (txId, safeId, safeTxHash) => {
+    if (!walletAddress) {
+      addToast('Connected wallet address unavailable', 'error');
+      return;
+    }
+
+    if (!walletProvider) {
+      addToast('Connect your wallet first', 'error');
+      return;
+    }
+
+    if (!safeTxHash) {
+      addToast('Safe transaction hash unavailable', 'error');
+      return;
+    }
+
+    setActionLoading((prev) => ({ ...prev, [txId]: 'sign' }));
+
+    try {
+      const signature = await walletProvider.request({
+        method: 'eth_sign',
+        params: [walletAddress, safeTxHash],
+      });
+
+      const res = await api.post(
+        `/safe/transactions/${txId}/sign-connected`,
+        {
+          wallet_id: walletId,
+          signature,
+        }
+      );
+
+      addToast(
+        `Signed (${res.data.signatures_collected}/${res.data.threshold})`,
+        'success'
+      );
+
+      loadPendingTx(safeId);
+    } catch (e) {
+      addToast(
+        extractErrorMessage(e, 'Failed to sign with connected wallet'),
+        'error'
+      );
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [txId]: null }));
+    }
+  };
+
   const handleSign = async (txId, safeId, password) => {
     if (!password) { addToast('Password required', 'error'); return; }
     setActionLoading((prev) => ({ ...prev, [txId]: 'sign' }));
     try {
-      const res = await api.post(`/safe/transactions/${txId}/sign`, { password });
+      const res = await api.post(`/safe/transactions/${txId}/sign`, { password, wallet_id: walletId });
       addToast(`Signed (${res.data.signatures_collected}/${res.data.threshold})`, 'success');
       loadPendingTx(safeId);
     } catch (e) {
@@ -1894,7 +1962,7 @@ function SafeWallet() {
     if (!password) { addToast('Password required', 'error'); return; }
     setActionLoading((prev) => ({ ...prev, [txId]: 'execute' }));
     try {
-      const res = await api.post(`/safe/transactions/${txId}/execute`, { password });
+      const res = await api.post(`/safe/transactions/${txId}/execute`, { password, wallet_id: walletId });
       addToast(`Executed: ${res.data.exec_tx_hash.slice(0, 12)}...`, 'success', 6000);
       loadPendingTx(safeId);
       loadSafes();
@@ -1999,7 +2067,7 @@ function SafeWallet() {
                       <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wide mb-1.5">Pending Proposals</p>
                       <div className="space-y-2">
                         {pendingTx[s.id].map((tx) => {
-                          const alreadySigned = tx.signers.some((addr) => addr.toLowerCase() === user?.wallet_address?.toLowerCase());
+                          const alreadySigned = tx.signers.some((addr) => addr.toLowerCase() === walletAddress?.toLowerCase());
                           const readyToExecute = tx.signatures_collected >= tx.threshold;
                           const loadingState = actionLoading[tx.id];
                           return (
@@ -2012,13 +2080,31 @@ function SafeWallet() {
                               </p>
                               <div className="flex gap-2 mt-2">
                                 {!alreadySigned && !readyToExecute && (
-                                  <button
-                                    onClick={() => setShowActionPassword({ type: 'sign', txId: tx.id, safeId: s.id })}
-                                    disabled={!!loadingState}
-                                    className="flex-1 py-2 rounded-lg text-[11px] font-semibold bg-[var(--accent-brass)] text-black"
-                                  >
-                                    {loadingState === 'sign' ? <Loader2 size={13} className="animate-spin mx-auto" /> : 'Sign'}
-                                  </button>
+                                  walletType === 'connected' ? (
+                                    <button
+                                      onClick={() => handleConnectedSign(tx.id, s.id, tx.safe_tx_hash)}
+                                      disabled={!!loadingState}
+                                      className="flex-1 py-2 rounded-lg text-[11px] font-semibold bg-[var(--accent-brass)] text-black"
+                                    >
+                                      {loadingState === 'sign'
+                                        ? <Loader2 size={13} className="animate-spin mx-auto" />
+                                        : 'Sign with Wallet'}
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => setShowActionPassword({
+                                        type: 'sign',
+                                        txId: tx.id,
+                                        safeId: s.id
+                                      })}
+                                      disabled={!!loadingState}
+                                      className="flex-1 py-2 rounded-lg text-[11px] font-semibold bg-[var(--accent-brass)] text-black"
+                                    >
+                                      {loadingState === 'sign'
+                                        ? <Loader2 size={13} className="animate-spin mx-auto" />
+                                        : 'Sign'}
+                                    </button>
+                                  )
                                 )}
                                 {readyToExecute && (
                                   <button
@@ -2069,7 +2155,7 @@ function SafeWallet() {
             </div>
 
             <p className="text-sm text-[var(--text-secondary)]">
-              Your primary wallet pays gas and deploys the Safe. It does not need to be an owner.
+              The selected wallet deploys the Safe and signs gas transactions. It must be a custodial wallet with signing capability.
             </p>
 
             <div>
@@ -3108,11 +3194,10 @@ function Governance() {
   );
 }
 
-function WalletsTab() {
+function WalletsTab({ importedWallets, setImportedWallets, selectedWalletId, setSelectedWalletId, allWallets, activeWallet, activeAddress, activeWalletId, fetchImportedWallets }) {
   const { user } = useAuth();
   const { toasts, addToast, removeToast } = useToast();
-  const [importedWallets, setImportedWallets] = useState([]);
-  const [selectedAddress, setSelectedAddress] = useState(null); // null = primary
+
   const [walletAssets, setWalletAssets] = useState([]);
   const [walletTotalUsd, setWalletTotalUsd] = useState(0);
   const [balanceLoading, setBalanceLoading] = useState(false);
@@ -3162,28 +3247,12 @@ function WalletsTab() {
     setTimeout(() => setCopiedAddress(false), 2000);
   };
 
-  const fetchImportedWallets = () => {
-    api.get('/wallet/import/list')
-      .then((res) => setImportedWallets(res.data || []))
-      .catch((e) => console.error('Failed to fetch imported wallets', e));
-  };
 
-  useEffect(() => { if (user) fetchImportedWallets(); }, [user]);
-
-  const allWallets = user?.wallet_address
-    ? [
-        { id: 'primary', address: user.wallet_address, label: 'Primary', isPrimary: true },
-        ...importedWallets.filter((w) => w.address.toLowerCase() !== user.wallet_address.toLowerCase()),
-      ]
-    : [];
-
-  const activeAddress = selectedAddress || user?.wallet_address;
-  const activeWallet = allWallets.find((w) => w.address === activeAddress);
 
   const fetchWalletBalance = (address) => {
     if (!address) return;
     setBalanceLoading(true);
-    const params = address.toLowerCase() !== user?.wallet_address?.toLowerCase() ? { wallet_address: address } : {};
+    const params = { wallet_address: address, wallet_id: activeWalletId || undefined };
     api.get('/wallet/balance', { params })
       .then((res) => {
         const data = res.data.balances || {};
@@ -3218,7 +3287,7 @@ function WalletsTab() {
   const fetchWalletHistory = (address) => {
     if (!address) return;
     setHistoryLoading(true);
-    const params = { wallet_address: address };
+    const params = { wallet_address: address, wallet_id: activeWalletId || undefined };
     api.get('/wallet/transactions/history', { params })
       .then((res) => setHistory(res.data.history || []))
       .catch((e) => { console.error('Failed to fetch wallet history', e); setHistory([]); })
@@ -3229,7 +3298,7 @@ function WalletsTab() {
     if (!activeAddress) return;
     fetchWalletBalance(activeAddress);
     fetchWalletHistory(activeAddress);
-  }, [activeAddress]);
+  }, [activeAddress, activeWalletId]);
 
   return (
     <div className="os-vault-wallets-tab space-y-6">
@@ -3265,7 +3334,7 @@ function WalletsTab() {
         {allWallets.map((w) => (
           <button
             key={w.address}
-            onClick={() => setSelectedAddress(w.isPrimary ? null : w.address)}
+            onClick={() => setSelectedWalletId(w.id)}
             className={`os-vault-wallet-card w-full flex items-center justify-between px-4 py-3.5 rounded-[18px] border transition-all duration-200 text-left hover:bg-[var(--surface-active)] ${activeAddress === w.address ? 'is-active' : ''}`}
             style={activeAddress === w.address
               ? { background: 'rgba(249,115,22,0.10)', borderColor: 'var(--accent-brass)' }
@@ -3302,7 +3371,7 @@ function WalletsTab() {
                 </div>
               </div>
             </div>
-            {activeAddress === w.address && (
+            {activeWalletId === w.id && (
               <span className="os-vault-wallet-active">
                 <span />
                 Active
@@ -3473,7 +3542,8 @@ function WalletsTab() {
         asset={sendAsset}
         assets={walletAssets}
         wallets={[]}
-        defaultWalletAddress={activeWallet && !activeWallet.isPrimary ? activeWallet.address : ''}
+        defaultWalletAddress={activeAddress || ''}
+        defaultWalletId={activeWalletId || null}
         refreshBalances={() => fetchWalletBalance(activeAddress)}
         onSent={(txHash) => { addToast(`Sent: ${txHash.slice(0, 12)}...`, 'success'); fetchWalletBalance(activeAddress); fetchWalletHistory(activeAddress); }}
       />
@@ -3483,7 +3553,8 @@ function WalletsTab() {
         userWalletAddress={activeAddress}
         assets={walletAssets}
         wallets={[]}
-        defaultWalletAddress={activeWallet && !activeWallet.isPrimary ? activeWallet.address : ''}
+        defaultWalletAddress={activeAddress || ''}
+        defaultWalletId={activeWalletId || null}
         onSwap={(txHash) => { addToast(`Swap: ${txHash.slice(0, 12)}...`, 'success'); fetchWalletBalance(activeAddress); fetchWalletHistory(activeAddress); }}
       />
       <ImportWalletModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} onImported={() => { addToast('Wallet imported!', 'success'); fetchImportedWallets(); }} />
@@ -3492,9 +3563,39 @@ function WalletsTab() {
 }
 
 export default function Vault() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'staking' ? 'staking' : 'standard';
   const [tab, setTab] = useState(initialTab);
+
+  const [importedWallets, setImportedWallets] = useState([]);
+  const [selectedWalletId, setSelectedWalletId] = useState(null);
+
+  const fetchImportedWallets = () => {
+    api.get('/wallet/import/list')
+      .then((res) => setImportedWallets(res.data || []))
+      .catch((e) => console.error('Failed to fetch imported wallets', e));
+  };
+
+  useEffect(() => {
+    if (user) fetchImportedWallets();
+  }, [user]);
+
+  const allWallets = (importedWallets || []).map((w) => ({
+    ...w,
+    isPrimary: Boolean(
+      user?.wallet_address &&
+      w.address?.toLowerCase() === user.wallet_address.toLowerCase()
+    ),
+  }));
+
+  const primaryWallet = allWallets.find((w) => w.isPrimary) || null;
+  const activeWallet = selectedWalletId
+    ? allWallets.find((w) => String(w.id) === String(selectedWalletId)) || primaryWallet
+    : primaryWallet;
+  const activeAddress = activeWallet?.address || user?.wallet_address;
+  const activeWalletId = activeWallet?.id || null;
+
   return (
     <div className="os-vault-page p-4 tablet:p-6 space-y-6 max-w-6xl mx-auto w-full">
       <div className="os-vault-header relative overflow-hidden rounded-[28px] border border-[var(--glass-border)] bg-[var(--bg-secondary)] p-5 sm:p-7 shadow-[0_20px_70px_rgba(0,0,0,0.08)]">
@@ -3537,10 +3638,28 @@ export default function Vault() {
       </div>
       {tab === 'standard' && <StandardWallet />}
       {tab === 'analytics' && <WalletAnalytics />}
-      {tab === 'safe' && <SafeWallet />}
+      {tab === 'safe' && (
+        <SafeWallet
+          walletId={activeWalletId}
+          walletAddress={activeAddress}
+          walletType={activeWallet?.wallet_type}
+        />
+      )}
       {tab === 'staking' && <Staking />}
       {tab === 'governance' && <Governance />}
-      {tab === 'wallets' && <WalletsTab />}
+      {tab === 'wallets' && (
+        <WalletsTab
+          importedWallets={importedWallets}
+          setImportedWallets={setImportedWallets}
+          selectedWalletId={selectedWalletId}
+          setSelectedWalletId={setSelectedWalletId}
+          allWallets={allWallets}
+          activeWallet={activeWallet}
+          activeAddress={activeAddress}
+          activeWalletId={activeWalletId}
+          fetchImportedWallets={fetchImportedWallets}
+        />
+      )}
     </div>
   );
 }
