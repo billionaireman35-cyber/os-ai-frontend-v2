@@ -3,6 +3,54 @@ import { api } from '../utils/api';
 
 const PROMPTED_KEY = 'os-ai-push-prompted';
 
+const DEBUG_ID = 'os-ai-push-debug';
+
+function pushDebug(message, data) {
+  const detail = data === undefined
+    ? ''
+    : ` ${JSON.stringify(data, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      )}`;
+
+  const line = `${message}${detail}`;
+  console.info('[OS AI Push]', line);
+
+  try {
+    let panel = document.getElementById(DEBUG_ID);
+
+    if (!panel) {
+      panel = document.createElement('pre');
+      panel.id = DEBUG_ID;
+      panel.style.cssText = [
+        'position:fixed',
+        'left:10px',
+        'right:10px',
+        'bottom:10px',
+        'z-index:2147483647',
+        'max-height:45vh',
+        'overflow:auto',
+        'padding:12px',
+        'background:#111',
+        'color:#00ff88',
+        'border:2px solid #00ff88',
+        'border-radius:10px',
+        'font:12px/1.45 monospace',
+        'white-space:pre-wrap',
+        'box-sizing:border-box'
+      ].join(';');
+
+      document.body.appendChild(panel);
+    }
+
+    const existing = panel.textContent || '';
+    panel.textContent =
+      `${existing}${existing ? '\n' : ''}${line}`.slice(-12000);
+  } catch (error) {
+    console.warn('[OS AI Push] debug display failed', error);
+  }
+}
+
+
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
@@ -18,7 +66,7 @@ function urlBase64ToUint8Array(base64String) {
 
 export function usePushSubscription(user) {
   useEffect(() => {
-    console.info('[OS AI Push] effect started', {
+    pushDebug('[OS AI Push] effect started', {
       hasUser: Boolean(user),
       notification: 'Notification' in window,
       serviceWorker: 'serviceWorker' in navigator,
@@ -26,40 +74,40 @@ export function usePushSubscription(user) {
     });
 
     if (!user) {
-      console.info('[OS AI Push] STOP: no authenticated user');
+      pushDebug('[OS AI Push] STOP: no authenticated user');
       return;
     }
 
     if (typeof window === 'undefined') {
-      console.info('[OS AI Push] STOP: window unavailable');
+      pushDebug('[OS AI Push] STOP: window unavailable');
       return;
     }
 
     if (!('Notification' in window)) {
-      console.info('[OS AI Push] STOP: Notification API unavailable');
+      pushDebug('[OS AI Push] STOP: Notification API unavailable');
       return;
     }
 
     if (!('serviceWorker' in navigator)) {
-      console.info('[OS AI Push] STOP: Service Worker API unavailable');
+      pushDebug('[OS AI Push] STOP: Service Worker API unavailable');
       return;
     }
 
     if (!('PushManager' in window)) {
-      console.info('[OS AI Push] STOP: PushManager unavailable');
+      pushDebug('[OS AI Push] STOP: PushManager unavailable');
       return;
     }
 
     const prompted = localStorage.getItem(PROMPTED_KEY);
 
-    console.info('[OS AI Push] prompted flag:', prompted);
+    pushDebug('[OS AI Push] prompted flag:', prompted);
     console.info(
       '[OS AI Push] notification permission:',
       Notification.permission
     );
 
     if (prompted === '1') {
-      console.info('[OS AI Push] STOP: prompted flag already set');
+      pushDebug('[OS AI Push] STOP: prompted flag already set');
       return;
     }
 
@@ -74,10 +122,10 @@ export function usePushSubscription(user) {
 
     const setupPush = async () => {
       try {
-        console.info('[OS AI Push] setup started');
+        pushDebug('[OS AI Push] setup started');
 
         localStorage.setItem(PROMPTED_KEY, '1');
-        console.info('[OS AI Push] prompted flag set');
+        pushDebug('[OS AI Push] prompted flag set');
 
         const permission = await Notification.requestPermission();
 
@@ -102,7 +150,7 @@ export function usePushSubscription(user) {
         const keyResponse =
           await api.get('/push/vapid-public-key');
 
-        console.info('[OS AI Push] VAPID response received', {
+        pushDebug('[OS AI Push] VAPID response received', {
           hasPublicKey: Boolean(keyResponse.data?.publicKey),
         });
 
@@ -161,9 +209,9 @@ export function usePushSubscription(user) {
           '[OS AI Push] SUCCESS: backend registration complete'
         );
       } catch (error) {
-        console.warn(
+        pushDebug(
           '[OS AI Push] FAILED:',
-          error?.response?.data || error
+          error?.response?.data || error?.message || error
         );
       }
     };
@@ -172,7 +220,7 @@ export function usePushSubscription(user) {
 
     return () => {
       cancelled = true;
-      console.info('[OS AI Push] effect cleanup');
+      pushDebug('[OS AI Push] effect cleanup');
     };
   }, [user]);
 }
