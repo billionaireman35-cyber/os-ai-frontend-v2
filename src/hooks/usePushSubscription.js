@@ -107,8 +107,9 @@ export function usePushSubscription(user) {
     );
 
     if (prompted === '1') {
-      pushDebug('[OS AI Push] STOP: prompted flag already set');
-      return;
+      pushDebug(
+        '[OS AI Push] registration flag already set; verifying backend registration'
+      );
     }
 
     if (Notification.permission === 'denied') {
@@ -124,10 +125,11 @@ export function usePushSubscription(user) {
       try {
         pushDebug('[OS AI Push] setup started');
 
-        localStorage.setItem(PROMPTED_KEY, '1');
-        pushDebug('[OS AI Push] prompted flag set');
+          let permission = Notification.permission;
 
-        const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            permission = await Notification.requestPermission();
+          }
 
         console.info(
           '[OS AI Push] permission result:',
@@ -205,9 +207,11 @@ export function usePushSubscription(user) {
           subscription.toJSON()
         );
 
-        console.info(
-          '[OS AI Push] SUCCESS: backend registration complete'
-        );
+          localStorage.setItem(PROMPTED_KEY, '1');
+
+          pushDebug(
+            '[OS AI Push] SUCCESS: backend registration complete'
+          );
       } catch (error) {
         pushDebug(
           '[OS AI Push] FAILED:',
