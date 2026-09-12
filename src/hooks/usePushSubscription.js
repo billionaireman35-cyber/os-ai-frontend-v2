@@ -18,60 +18,151 @@ function urlBase64ToUint8Array(base64String) {
 
 export function usePushSubscription(user) {
   useEffect(() => {
-    if (!user) return;
-    if (typeof window === 'undefined') return;
-    if (!('Notification' in window)) return;
-    if (!('serviceWorker' in navigator)) return;
-    if (!('PushManager' in window)) return;
+    console.info('[OS AI Push] effect started', {
+      hasUser: Boolean(user),
+      notification: 'Notification' in window,
+      serviceWorker: 'serviceWorker' in navigator,
+      pushManager: 'PushManager' in window,
+    });
 
-    // Only attempt the automatic prompt once.
-    if (localStorage.getItem(PROMPTED_KEY) === '1') return;
+    if (!user) {
+      console.info('[OS AI Push] STOP: no authenticated user');
+      return;
+    }
 
-    // Don't repeatedly bother users who have explicitly denied notifications.
-    if (Notification.permission === 'denied') return;
+    if (typeof window === 'undefined') {
+      console.info('[OS AI Push] STOP: window unavailable');
+      return;
+    }
+
+    if (!('Notification' in window)) {
+      console.info('[OS AI Push] STOP: Notification API unavailable');
+      return;
+    }
+
+    if (!('serviceWorker' in navigator)) {
+      console.info('[OS AI Push] STOP: Service Worker API unavailable');
+      return;
+    }
+
+    if (!('PushManager' in window)) {
+      console.info('[OS AI Push] STOP: PushManager unavailable');
+      return;
+    }
+
+    const prompted = localStorage.getItem(PROMPTED_KEY);
+
+    console.info('[OS AI Push] prompted flag:', prompted);
+    console.info(
+      '[OS AI Push] notification permission:',
+      Notification.permission
+    );
+
+    if (prompted === '1') {
+      console.info('[OS AI Push] STOP: prompted flag already set');
+      return;
+    }
+
+    if (Notification.permission === 'denied') {
+      console.info(
+        '[OS AI Push] STOP: notification permission denied'
+      );
+      return;
+    }
 
     let cancelled = false;
 
     const setupPush = async () => {
       try {
-        // Set immediately so React re-renders or duplicate mounts
-        // cannot trigger multiple permission prompts.
+        console.info('[OS AI Push] setup started');
+
         localStorage.setItem(PROMPTED_KEY, '1');
+        console.info('[OS AI Push] prompted flag set');
 
         const permission = await Notification.requestPermission();
 
+        console.info(
+          '[OS AI Push] permission result:',
+          permission,
+          'cancelled:',
+          cancelled
+        );
+
         if (cancelled || permission !== 'granted') {
+          console.info(
+            '[OS AI Push] STOP: permission not granted'
+          );
           return;
         }
 
-        const keyResponse = await api.get('/push/vapid-public-key');
+        console.info(
+          '[OS AI Push] requesting VAPID public key'
+        );
+
+        const keyResponse =
+          await api.get('/push/vapid-public-key');
+
+        console.info('[OS AI Push] VAPID response received', {
+          hasPublicKey: Boolean(keyResponse.data?.publicKey),
+        });
+
         const { publicKey } = keyResponse.data;
 
         if (!publicKey) {
           throw new Error('VAPID public key missing');
         }
 
-        const registration = await navigator.serviceWorker.ready;
+        console.info(
+          '[OS AI Push] waiting for service worker'
+        );
+
+        const registration =
+          await navigator.serviceWorker.ready;
+
+        console.info(
+          '[OS AI Push] service worker ready'
+        );
 
         let subscription =
           await registration.pushManager.getSubscription();
 
+        console.info(
+          '[OS AI Push] existing subscription:',
+          Boolean(subscription)
+        );
+
         if (!subscription) {
-          subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey),
-          });
+          console.info(
+            '[OS AI Push] creating PushSubscription'
+          );
+
+          subscription =
+            await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey:
+                urlBase64ToUint8Array(publicKey),
+            });
+
+          console.info(
+            '[OS AI Push] PushSubscription created'
+          );
         }
+
+        console.info(
+          '[OS AI Push] registering subscription with backend'
+        );
 
         await api.post(
           '/push/subscribe',
           subscription.toJSON()
         );
 
-        console.info('[OS AI] Push notifications subscribed');
+        console.info(
+          '[OS AI Push] SUCCESS: backend registration complete'
+        );
       } catch (error) {
         console.warn(
-          '[OS AI] Push subscription setup failed:',
+          '[OS AI Push] FAILED:',
           error?.response?.data || error
         );
       }
@@ -81,6 +172,7 @@ export function usePushSubscription(user) {
 
     return () => {
       cancelled = true;
+      console.info('[OS AI Push] effect cleanup');
     };
   }, [user]);
 }
