@@ -25,15 +25,6 @@ export const decryptSeed = async (encryptedSeed, password) => {
   }
 };
 
-export const signBurn = async (encryptedSeed, password, contractAddress, amount, chain = 'polygon') => {
-  const wallet = await decryptSeed(encryptedSeed, password);
-  const provider = getProvider(chain);
-  const signer = wallet.connect(provider);
-  const contract = new ethers.Contract(contractAddress, CLOSE_ABI, signer);
-  const tx = await contract.populateTransaction.burn(amount);
-  const signedTx = await signer.signTransaction(tx);
-  return signedTx;
-};
 
 export const signSend = async (encryptedSeed, password, to, amount, tokenAddress = null, chain = 'polygon') => {
   const wallet = await decryptSeed(encryptedSeed, password);
