@@ -368,16 +368,84 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
   const [chain, setChain] = useState('polygon');
   const [txHash, setTxHash] = useState('');
   const [loading, setLoading] = useState(false);
+  const [infoLoading, setInfoLoading] = useState(false);
+  const [quoteLoading, setQuoteLoading] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [depositInfo, setDepositInfo] = useState(null);
+  const [currency, setCurrency] = useState('USD');
+  const [quote, setQuote] = useState(null);
+  const [currencyQuotes, setCurrencyQuotes] = useState([]);
 
-  const DEPOSIT_ADDRESS = '0x52b6e0aeD9511A4bCD0c5D454ccBe0EcF4308B7F';
-  const MINIMUMS = { polygon: 4, bsc: 4, ethereum: 15 };
+  const CURRENCIES = ['USD','EUR','GBP','NGN','GHS','CAD','AUD','CHF','JPY','CNY','AED'];
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setInfoLoading(true);
+    setError(null);
+    api.get('/wallet/deposit/info')
+      .then((res) => {
+        if (!cancelled) setDepositInfo(res.data);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(extractErrorMessage(e, 'Unable to load payment details'));
+      })
+      .finally(() => {
+        if (!cancelled) setInfoLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setQuoteLoading(true);
+    api.get('/wallet/close/quote', { params: { currency } })
+      .then((res) => {
+        if (!cancelled) setQuote(res.data);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setQuote(null);
+          setError(extractErrorMessage(e, 'Live CLOSE pricing is temporarily unavailable'));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setQuoteLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [isOpen, currency]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    Promise.all(
+      CURRENCIES.map((c) =>
+        api.get('/wallet/close/quote', { params: { currency: c } })
+          .then((res) => res.data)
+          .catch(() => null)
+      )
+    ).then((rows) => {
+      if (!cancelled) setCurrencyQuotes(rows.filter(Boolean));
+    });
+    return () => { cancelled = true; };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
+  const addresses = depositInfo?.addresses || {};
+  const minimums = depositInfo?.minimums || {};
+  const depositAddress = addresses[chain];
+  const minimum = minimums[chain];
+  const canPay = Boolean(depositAddress);
+  const chartQuotes = currencyQuotes.length
+    ? currencyQuotes
+    : quote ? [quote] : [];
+
   const copyAddress = () => {
-    navigator.clipboard.writeText(DEPOSIT_ADDRESS);
+    if (!depositAddress) return;
+    navigator.clipboard.writeText(depositAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -387,16 +455,17 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
       setError('Enter your transaction hash');
       return;
     }
-
+    if (!depositAddress) {
+      setError('Deposits are temporarily unavailable on this network. Please select another network.');
+      return;
+    }
     setLoading(true);
     setError(null);
-
     try {
       const res = await api.post('/wallet/deposit/verify', {
         chain,
         tx_hash: txHash.trim(),
       });
-
       onDeposited?.(res.data);
       onClose();
     } catch (e) {
@@ -412,55 +481,43 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
       onClick={onClose}
     >
       <div
-        className="relative overflow-hidden rounded-[30px] w-full max-w-md border border-violet-400/[0.14] bg-[var(--glass-bg)] shadow-[0_35px_120px_rgba(0,0,0,0.65)]"
+        className="relative overflow-hidden rounded-[30px] w-full max-w-md max-h-[92vh] overflow-y-auto border border-violet-400/[0.14] bg-[var(--glass-bg)] shadow-[0_35px_120px_rgba(0,0,0,0.65)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Ambient lighting */}
         <div
           className="pointer-events-none absolute -top-32 -right-24 w-72 h-72 rounded-full"
-          style={{
-            background: 'rgba(139,92,246,0.12)',
-            filter: 'blur(70px)',
-          }}
+          style={{ background:'rgba(139,92,246,0.12)', filter:'blur(70px)' }}
         />
         <div
           className="pointer-events-none absolute -bottom-32 -left-24 w-64 h-64 rounded-full"
-          style={{
-            background: 'rgba(217,164,65,0.055)',
-            filter: 'blur(70px)',
-          }}
+          style={{ background:'rgba(217,164,65,0.055)', filter:'blur(70px)' }}
         />
 
         <div className="relative p-5 sm:p-6 space-y-5">
-          {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div
                   className="flex h-10 w-10 items-center justify-center rounded-xl border"
                   style={{
-                    background: 'linear-gradient(145deg, rgba(139,92,246,0.18), rgba(217,164,65,0.08))',
-                    borderColor: 'rgba(139,92,246,0.24)',
-                    boxShadow: '0 8px 28px rgba(124,58,237,0.14)',
+                    background:'linear-gradient(145deg, rgba(139,92,246,0.18), rgba(217,164,65,0.08))',
+                    borderColor:'rgba(139,92,246,0.24)',
+                    boxShadow:'0 8px 28px rgba(124,58,237,0.14)'
                   }}
                 >
                   <Coins size={19} className="text-violet-300" />
                 </div>
-
                 <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-violet-200/75">
                   OS VAULT · ACQUIRE
                 </span>
               </div>
-
               <h3 className="text-2xl sm:text-[28px] font-display font-bold tracking-tight text-[var(--text-primary)]">
                 Buy CLOSE
               </h3>
-
               <p className="text-xs text-[var(--text-muted)] mt-1.5">
                 Acquire CLOSE using crypto from any supported network.
               </p>
             </div>
-
             <button
               onClick={onClose}
               className="btn-glass-icon w-9 h-9 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-active)] transition-all duration-200"
@@ -470,46 +527,112 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
             </button>
           </div>
 
-          {/* Purchase explanation */}
           <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-hover)] p-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/[0.10] border border-violet-400/[0.12]">
                 <ArrowDownRight size={14} className="text-violet-300" />
               </div>
-
               <div>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">
-                  How it works
-                </p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">How it works</p>
                 <p className="text-[11px] leading-5 text-[var(--text-muted)] mt-1">
-                  Send crypto to the OS Vault payment address, then submit the
-                  transaction hash. Your CLOSE is credited after the payment
-                  is verified on-chain.
+                  Send crypto to the payment address, then submit the transaction hash.
+                  CLOSE is credited only after on-chain verification.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Network selector */}
+          <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-active)]/60 p-4">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                  Commercial price
+                </p>
+                <p className="text-2xl font-display font-bold text-[var(--text-primary)] mt-1">
+                  {quote ? `${quote.currency} ${Number(quote.price).toLocaleString(undefined,{maximumFractionDigits:8})}` : '—'}
+                </p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                  1 CLOSE · $3.50 USD
+                </p>
+              </div>
+
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="min-h-10 rounded-xl border border-[var(--glass-border)] bg-[var(--surface-active)] px-3 text-xs font-mono font-bold text-[var(--text-primary)] outline-none"
+              >
+                {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            {quote && (
+              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-[var(--text-muted)]">
+                <span>FX: {Number(quote.fx_rate).toLocaleString(undefined,{maximumFractionDigits:8})} USD/{quote.currency}</span>
+                <span>Reference: {quote.rate_timestamp ? quote.rate_timestamp.slice(0,10) : 'USD'}</span>
+                <span>Source: {quote.rate_source}</span>
+              </div>
+            )}
+
+            {quoteLoading && (
+              <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
+                <Loader2 size={12} className="animate-spin" /> Updating FX quote...
+              </div>
+            )}
+          </div>
+
+          {chartQuotes.length > 1 && (
+            <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-active)]/40 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                    1 CLOSE · Currency comparison
+                  </p>
+                  <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+                    Fixed $3.50 commercial price converted at the latest reference FX rate.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {chartQuotes.map((q) => {
+                  const max = Math.max(...chartQuotes.map((x) => Number(x.price) || 0));
+                  const width = max ? Math.max(4, (Number(q.price) / max) * 100) : 4;
+                  return (
+                    <div key={q.currency} className="grid grid-cols-[38px_1fr_auto] items-center gap-2">
+                      <span className="text-[9px] font-mono font-bold text-[var(--text-secondary)]">{q.currency}</span>
+                      <div className="h-2 rounded-full bg-[var(--surface-active)] overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[var(--accent-brass)] transition-all duration-500"
+                          style={{ width:`${width}%` }}
+                        />
+                      </div>
+                      <span className="text-[9px] font-mono text-[var(--text-muted)]">
+                        {Number(q.price).toLocaleString(undefined,{maximumFractionDigits:4})}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
                 Payment Network
               </label>
               <span className="text-[9px] uppercase tracking-[1.5px] text-emerald-300/70">
-                Supported
+                {infoLoading ? 'Loading' : 'Payment'}
               </span>
             </div>
-
             <div className="grid grid-cols-3 gap-2">
-              {Object.keys(MINIMUMS).map((c) => (
+              {['polygon','bsc','ethereum'].map((c) => (
                 <button
                   key={c}
-                  onClick={() => setChain(c)}
+                  onClick={() => { setChain(c); setCopied(false); }}
                   className={`min-h-11 rounded-xl text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-200 active:scale-[0.98] ${
                     chain === c
                       ? 'bg-[var(--accent-brass)] text-black shadow-[0_8px_24px_rgba(217,164,65,0.16)]'
-                      : 'bg-[var(--surface-active)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--surface-active)] hover:border-[var(--glass-border-hover)]'
+                      : 'bg-[var(--surface-active)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[var(--glass-border-hover)]'
                   }`}
                 >
                   {c}
@@ -518,13 +641,11 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
             </div>
           </div>
 
-          {/* Payment destination */}
           <div
             className="relative overflow-hidden rounded-2xl p-4 border"
             style={{
-              background:
-                'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.10), transparent 42%), linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))',
-              borderColor: 'rgba(139,92,246,0.16)',
+              background:'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.10), transparent 42%), linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))',
+              borderColor:'rgba(139,92,246,0.16)'
             }}
           >
             <div className="flex items-center justify-between mb-2.5">
@@ -533,50 +654,40 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
                   Payment destination
                 </p>
                 <p className="text-xs font-semibold text-[var(--text-primary)] mt-1">
-                  {chain.toUpperCase()} Network
+                  Payment · {chain.toUpperCase()}
                 </p>
               </div>
-
               <button
                 onClick={copyAddress}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--glass-border)] bg-[var(--surface-active)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.07] transition-all duration-200 active:scale-[0.96]"
+                disabled={!depositAddress}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--glass-border)] bg-[var(--surface-active)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.07] transition-all duration-200 active:scale-[0.96] disabled:opacity-40"
                 aria-label="Copy payment address"
               >
-                {copied ? (
-                  <CheckCircle size={16} className="text-emerald-400" />
-                ) : (
-                  <Copy size={16} />
-                )}
+                {copied ? <CheckCircle size={16} className="text-emerald-400" /> : <Copy size={16} />}
               </button>
             </div>
 
             <div className="rounded-xl bg-[var(--bg-primary)]/25 border border-[var(--glass-border)] px-3 py-2.5">
               <p className="text-[11px] font-mono leading-5 break-all text-[var(--text-primary)]">
-                {DEPOSIT_ADDRESS}
+                {infoLoading ? 'Loading payment address...' : (depositAddress || 'Deposits are temporarily unavailable on this network. Please select another network.')}
               </p>
             </div>
 
             <div className="flex items-center justify-between mt-3">
-              <span className="text-[10px] text-[var(--text-muted)]">
-                Minimum purchase
-              </span>
+              <span className="text-[10px] text-[var(--text-muted)]">Minimum purchase</span>
               <span className="text-[10px] font-semibold text-[var(--accent-brass)]">
-                ${MINIMUMS[chain]}
+                {minimum != null ? `$${minimum}` : 'Unavailable'}
               </span>
             </div>
           </div>
 
-          {/* Verification */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
                 Transaction Hash
               </label>
-              <span className="text-[9px] uppercase tracking-[1.4px] text-[var(--text-muted)]">
-                On-chain proof
-              </span>
+              <span className="text-[9px] uppercase tracking-[1.4px] text-[var(--text-muted)]">On-chain proof</span>
             </div>
-
             <input
               type="text"
               value={txHash}
@@ -586,35 +697,24 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
             />
           </div>
 
-          {/* Error */}
           {error && (
             <div className="rounded-2xl border border-red-400/[0.14] bg-red-500/[0.05] px-4 py-3">
-              <p className="text-xs text-red-300">
-                {String(error)}
-              </p>
+              <p className="text-xs text-red-300">{String(error)}</p>
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex gap-2 pt-1">
             <button
               onClick={handleVerify}
-              disabled={loading}
+              disabled={loading || infoLoading || !canPay}
               className="btn-primary flex-1 justify-center min-h-12 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.985] disabled:opacity-60"
             >
               {loading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Verifying...
-                </>
+                <><Loader2 size={18} className="animate-spin" /> Verifying...</>
               ) : (
-                <>
-                  <ShieldCheck size={17} />
-                  Verify & Credit
-                </>
+                <><ShieldCheck size={17} /> Verify & Credit</>
               )}
             </button>
-
             <button
               onClick={onClose}
               className="btn-secondary min-h-12 px-5 rounded-2xl transition-all duration-200 hover:-translate-y-px active:scale-[0.985]"
@@ -623,7 +723,6 @@ function DepositModal({ isOpen, onClose, onDeposited }) {
             </button>
           </div>
 
-          {/* Trust footer */}
           <div className="flex items-center justify-center gap-2 pt-1 text-[9px] uppercase tracking-[1.5px] text-[var(--text-muted)]">
             <ShieldCheck size={12} className="text-violet-300/65" />
             Non-custodial · Verified on-chain
@@ -1739,7 +1838,7 @@ function StandardWallet() {
     </div>
   );
 }
-function SafeWallet({ walletId, walletAddress, walletType }) {
+function SafeWallet({ walletId, walletAddress, walletType, allWallets }) {
   const { toasts, addToast, removeToast } = useToast();
   const { user } = useAuth();
   const { walletProvider } = useAppKitProvider('eip155');
@@ -1774,6 +1873,25 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
     base: 'https://basescan.org/address/',
   };
 
+  const getSafeOwnerWallet = (safe) => {
+    if (!safe?.owners || !Array.isArray(allWallets)) return null;
+
+    const isOwner = (w) =>
+      safe.owners.some(
+        (owner) => owner?.toLowerCase() === w.address?.toLowerCase()
+      );
+
+    const selectedWallet = allWallets.find(
+      (w) => String(w.id) === String(walletId)
+    );
+
+    if (selectedWallet && isOwner(selectedWallet)) {
+      return selectedWallet;
+    }
+
+    return allWallets.find(isOwner) || null;
+  };
+
   const loadSafes = () => {
     setLoading(true);
     api.get('/safe/list', { params: { wallet_id: walletId } })
@@ -1784,17 +1902,31 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
           api.get(`/safe/${s.id}/balance`)
             .then((balRes) => setBalances((prev) => ({ ...prev, [s.id]: balRes.data })))
             .catch(() => setBalances((prev) => ({ ...prev, [s.id]: null })));
-          loadPendingTx(s.id);
+          loadPendingTx(s);
         });
       })
       .catch((e) => addToast(extractErrorMessage(e, 'Failed to load Safes'), 'error'))
       .finally(() => setLoading(false));
   };
 
-  const loadPendingTx = (safeId) => {
-    api.get(`/safe/${safeId}/transactions`, { params: { wallet_id: walletId } })
-      .then((res) => setPendingTx((prev) => ({ ...prev, [safeId]: (res.data || []).filter((t) => t.status === 'pending') })))
-      .catch(() => setPendingTx((prev) => ({ ...prev, [safeId]: [] })));
+  const getSafeById = (safeId) =>
+    safes.find((s) => s.id === safeId) || null;
+
+  const loadPendingTx = (safe) => {
+    const safeOwnerWallet = getSafeOwnerWallet(safe);
+    if (!safeOwnerWallet) {
+      setPendingTx((prev) => ({ ...prev, [safe.id]: [] }));
+      return;
+    }
+
+    api.get(`/safe/${safe.id}/transactions`, {
+      params: { wallet_id: safeOwnerWallet.id }
+    })
+      .then((res) => setPendingTx((prev) => ({
+        ...prev,
+        [safe.id]: (res.data || []).filter((t) => t.status === 'pending')
+      })))
+      .catch(() => setPendingTx((prev) => ({ ...prev, [safe.id]: [] })));
   };
 
   useEffect(() => {
@@ -1806,7 +1938,7 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
       setBalances({});
       setLoading(false);
     }
-  }, [user, walletId]);
+  }, [user, walletId, allWallets]);
 
   const owners = ownersText
     .split(/[\n,]/)
@@ -1866,11 +1998,18 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
     const amt = parseFloat(proposeAmount);
     if (!amt || amt <= 0) { addToast('Enter a valid amount', 'error'); return; }
 
+    const safe = getSafeById(showProposeFor);
+    const safeOwnerWallet = getSafeOwnerWallet(safe);
+    if (!safeOwnerWallet) {
+      addToast('No wallet you control is an owner of this Safe', 'error');
+      return;
+    }
+
     setProposing(true);
     try {
       let body;
       if (proposeToken === 'POL') {
-        body = { to_address: proposeTo, value_wei: toWeiString(proposeAmount, 18), data: '0x', password, wallet_id: walletId };
+        body = { to_address: proposeTo, value_wei: toWeiString(proposeAmount, 18), data: '0x', password, wallet_id: safeOwnerWallet.id };
       } else {
         // ERC20 transfer(address,uint256) calldata - CLOSE is the only
         // token this app tracks for Safe balances today, so this covers
@@ -1880,13 +2019,13 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
         const paddedTo = proposeTo.slice(2).padStart(64, '0');
         const paddedAmount = amountWei.toString(16).padStart(64, '0');
         const data = '0xa9059cbb' + paddedTo + paddedAmount;
-        body = { to_address: tokenAddr, value_wei: '0', data, password, wallet_id: walletId };
+        body = { to_address: tokenAddr, value_wei: '0', data, password, wallet_id: safeOwnerWallet.id };
       }
 
       const res = await api.post(`/safe/${showProposeFor}/propose`, body);
       addToast(`Proposal created (${res.data.signatures_collected}/${res.data.threshold} signatures)`, 'success', 6000);
       resetProposeForm();
-      loadPendingTx(res.data.safe_id);
+      loadPendingTx(getSafeById(res.data.safe_id));
     } catch (e) {
       addToast(extractErrorMessage(e, 'Failed to propose transaction'), 'error');
     } finally {
@@ -1896,8 +2035,11 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
   };
 
   const handleConnectedSign = async (txId, safeId, safeTxHash) => {
-    if (!walletAddress) {
-      addToast('Connected wallet address unavailable', 'error');
+    const safe = getSafeById(safeId);
+    const safeOwnerWallet = getSafeOwnerWallet(safe);
+
+    if (!safeOwnerWallet || safeOwnerWallet.wallet_type !== 'connected') {
+      addToast('No connected wallet you control is an owner of this Safe', 'error');
       return;
     }
 
@@ -1912,17 +2054,16 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
     }
 
     setActionLoading((prev) => ({ ...prev, [txId]: 'sign' }));
-
     try {
       const signature = await walletProvider.request({
         method: 'eth_sign',
-        params: [walletAddress, safeTxHash],
+        params: [safeOwnerWallet.address, safeTxHash],
       });
 
       const res = await api.post(
         `/safe/transactions/${txId}/sign-connected`,
         {
-          wallet_id: walletId,
+          wallet_id: safeOwnerWallet.id,
           signature,
         }
       );
@@ -1932,7 +2073,7 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
         'success'
       );
 
-      loadPendingTx(safeId);
+      loadPendingTx(getSafeById(safeId));
     } catch (e) {
       addToast(
         extractErrorMessage(e, 'Failed to sign with connected wallet'),
@@ -1945,11 +2086,23 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
 
   const handleSign = async (txId, safeId, password) => {
     if (!password) { addToast('Password required', 'error'); return; }
+
+    const safe = getSafeById(safeId);
+    const safeOwnerWallet = getSafeOwnerWallet(safe);
+
+    if (!safeOwnerWallet || safeOwnerWallet.wallet_type !== 'custodial') {
+      addToast('No custodial wallet you control is an owner of this Safe', 'error');
+      return;
+    }
+
     setActionLoading((prev) => ({ ...prev, [txId]: 'sign' }));
     try {
-      const res = await api.post(`/safe/transactions/${txId}/sign`, { password, wallet_id: walletId });
+      const res = await api.post(
+        `/safe/transactions/${txId}/sign`,
+        { password, wallet_id: safeOwnerWallet.id }
+      );
       addToast(`Signed (${res.data.signatures_collected}/${res.data.threshold})`, 'success');
-      loadPendingTx(safeId);
+      loadPendingTx(getSafeById(safeId));
     } catch (e) {
       addToast(extractErrorMessage(e, 'Failed to sign'), 'error');
     } finally {
@@ -1960,11 +2113,23 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
 
   const handleExecute = async (txId, safeId, password) => {
     if (!password) { addToast('Password required', 'error'); return; }
+
+    const safe = getSafeById(safeId);
+    const safeOwnerWallet = getSafeOwnerWallet(safe);
+
+    if (!safeOwnerWallet || safeOwnerWallet.wallet_type !== 'custodial') {
+      addToast('No custodial wallet you control is an owner of this Safe', 'error');
+      return;
+    }
+
     setActionLoading((prev) => ({ ...prev, [txId]: 'execute' }));
     try {
-      const res = await api.post(`/safe/transactions/${txId}/execute`, { password, wallet_id: walletId });
+      const res = await api.post(
+        `/safe/transactions/${txId}/execute`,
+        { password, wallet_id: safeOwnerWallet.id }
+      );
       addToast(`Executed: ${res.data.exec_tx_hash.slice(0, 12)}...`, 'success', 6000);
-      loadPendingTx(safeId);
+      loadPendingTx(getSafeById(safeId));
       loadSafes();
     } catch (e) {
       addToast(extractErrorMessage(e, 'Failed to execute'), 'error');
@@ -1973,6 +2138,7 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
       setShowActionPassword(null);
     }
   };
+
 
   return (
     <div className="space-y-6">
@@ -2067,7 +2233,10 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
                       <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wide mb-1.5">Pending Proposals</p>
                       <div className="space-y-2">
                         {pendingTx[s.id].map((tx) => {
-                          const alreadySigned = tx.signers.some((addr) => addr.toLowerCase() === walletAddress?.toLowerCase());
+                          const safeOwnerWallet = getSafeOwnerWallet(s);
+                          const alreadySigned = tx.signers.some(
+                            (addr) => addr.toLowerCase() === safeOwnerWallet?.address?.toLowerCase()
+                          );
                           const readyToExecute = tx.signatures_collected >= tx.threshold;
                           const loadingState = actionLoading[tx.id];
                           return (
@@ -2080,7 +2249,7 @@ function SafeWallet({ walletId, walletAddress, walletType }) {
                               </p>
                               <div className="flex gap-2 mt-2">
                                 {!alreadySigned && !readyToExecute && (
-                                  walletType === 'connected' ? (
+                                  safeOwnerWallet?.wallet_type === 'connected' ? (
                                     <button
                                       onClick={() => handleConnectedSign(tx.id, s.id, tx.safe_tx_hash)}
                                       disabled={!!loadingState}
@@ -3643,6 +3812,7 @@ export default function Vault() {
           walletId={activeWalletId}
           walletAddress={activeAddress}
           walletType={activeWallet?.wallet_type}
+          allWallets={allWallets}
         />
       )}
       {tab === 'staking' && <Staking />}
